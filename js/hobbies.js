@@ -1703,11 +1703,18 @@ function startConducir(subtype) {
     const isMoto = subtype === 'moto';
     const maxGear = isMoto ? 6 : 5;
 
+    // Perspective constants
+    const horizonY = H * 0.35;
+    const dashH = H * 0.25;
+    const dashY = H - dashH;
+    const roadBottom = dashY;
+    const vpX = W / 2; // vanishing point X (shifts with curves)
+
     // Car state
-    let carX = W / 2;
-    let speed = 0; // km/h conceptual
+    let steerX = 0; // -1 to 1 steering position
+    let speed = 0;
     let rpm = 800;
-    let gear = isManual ? 0 : 1; // 0=N, 1-5(6)=gears, -1=R
+    let gear = isManual ? 0 : 1;
     let clutchPressed = false;
     let gasPressed = false;
     let brakePressed = false;
@@ -1715,12 +1722,16 @@ function startConducir(subtype) {
     let smoothBonus = 0;
     let penalties = 0;
     let stalls = 0;
+    let playerLane = 0; // -1 left, 0 center, 1 right
 
     // Road state
     let roadOffset = 0;
     let roadCurve = 0;
     let roadCurveTarget = 0;
     let roadCurveTimer = 0;
+
+    // Screen shake
+    let shakeX = 0, shakeY = 0, shakeDuration = 0;
 
     // Traffic
     let trafficCars = [];
@@ -1729,6 +1740,10 @@ function startConducir(subtype) {
     // Traffic lights
     let trafficLights = [];
     let nextLightDist = 80;
+
+    // Scenery objects (trees, posts)
+    let sceneryObjects = [];
+    let nextSceneryDist = 10;
 
     // Speed limit zones
     let speedLimit = 60;
@@ -1741,7 +1756,6 @@ function startConducir(subtype) {
 
     // Instruction overlay
     let showInstructions = true;
-    let instructionTimer = 180; // 3 seconds at 60fps
 
     // Gear ratios for manual
     const gearRatios = [0, 0.8, 1.2, 1.6, 2.0, 2.4, 2.8];
@@ -1749,17 +1763,44 @@ function startConducir(subtype) {
 
     let keys = {};
 
-    // Generate initial traffic
+    // --- Perspective helpers ---
+    // Convert a world Z distance (0=near, 1=at horizon) to screen Y
+    function zToScreenY(z) {
+        return horizonY + (roadBottom - horizonY) * (1 - z);
+    }
+    // Get road width at a given screen Y
+    function roadWidthAtY(sy) {
+        const t = (sy - horizonY) / (roadBottom - horizonY);
+        return W * 0.06 + t * (W * 0.9 - W * 0.06);
+    }
+    // Get vanishing point X with curve offset
+    function getVPX() {
+        return W / 2 + roadCurve * 2;
+    }
+    // Get road center X at screen Y
+    function roadCenterAtY(sy) {
+        const t = (sy - horizonY) / (roadBottom - horizonY);
+        const vp = getVPX();
+        return vp + (W / 2 - vp) * (1 - t) * 0 + (W / 2) * 0 + vp * (1 - t) + (W / 2) * t;
+    }
+
+    // Simpler: road center interpolates from VPX at horizon to W/2 at bottom
+    function getRoadCenterX(sy) {
+        const t = (sy - horizonY) / (roadBottom - horizonY);
+        return getVPX() * (1 - t) + (W / 2 + steerX * W * 0.02) * t;
+    }
+
+    // Spawn functions
     function spawnTraffic() {
         if (trafficCars.length > 5) return;
-        const lane = Math.random() < 0.5 ? -1 : 1; // -1 = left lane, 1 = right lane
+        const lane = Math.random() < 0.33 ? -1 : (Math.random() < 0.5 ? 0 : 1);
         const carSpeed = 20 + Math.random() * 40;
         trafficCars.push({
             lane: lane,
-            relDist: 200 + Math.random() * 150, // distance ahead
+            relDist: 200 + Math.random() * 150,
             speed: carSpeed,
-            emoji: randomFrom(['🚗', '🚙', '🚕', '🚐', '🚎']),
-            color: randomFrom(['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6'])
+            color: randomFrom(['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c']),
+            hit: false
         });
     }
 
@@ -1767,260 +1808,750 @@ function startConducir(subtype) {
         trafficLights.push({
             relDist: 150 + Math.random() * 100,
             state: 'green',
-            timer: 120 + Math.random() * 120, // frames until change
+            timer: 120 + Math.random() * 120,
             stateTimer: 0
+        });
+    }
+
+    function spawnScenery() {
+        const side = Math.random() < 0.5 ? -1 : 1;
+        const type = Math.random() < 0.6 ? 'tree' : (Math.random() < 0.5 ? 'post' : 'building');
+        sceneryObjects.push({
+            side: side,
+            relDist: 180 + Math.random() * 100,
+            type: type,
+            height: type === 'building' ? 30 + Math.random() * 40 : (type === 'tree' ? 20 + Math.random() * 15 : 15),
+            color: type === 'tree' ? randomFrom(['#1a7a2e', '#2d8a4e', '#0f5c1e', '#3a9d5c']) :
+                   type === 'building' ? randomFrom(['#6b7b8d', '#8b7355', '#5a6a7a', '#7a6b5a']) : '#888'
         });
     }
 
     // Initial spawns
     for (let i = 0; i < 3; i++) spawnTraffic();
     spawnLight();
-
-    function drawRoad() {
-        // Sky
-        const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.3);
-        skyGrad.addColorStop(0, '#1a1a2e');
-        skyGrad.addColorStop(1, '#16213e');
-        ctx.fillStyle = skyGrad;
-        ctx.fillRect(0, 0, W, H * 0.3);
-
-        // Grass sides
-        ctx.fillStyle = '#1a5c2a';
-        ctx.fillRect(0, H * 0.3, W, H * 0.7);
-
-        // Road
-        const roadW = W * 0.5;
-        const roadL = W / 2 - roadW / 2 + roadCurve;
-        const roadR = W / 2 + roadW / 2 + roadCurve;
-
-        ctx.fillStyle = '#333';
-        ctx.fillRect(roadL, H * 0.3, roadW, H * 0.7);
-
-        // Road edges
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(roadL - 3, H * 0.3, 3, H * 0.7);
-        ctx.fillRect(roadR, H * 0.3, 3, H * 0.7);
-
-        // Lane markings (scrolling)
-        ctx.fillStyle = '#ffcc00';
-        const markSpacing = 50;
-        const markOffset = roadOffset % markSpacing;
-        for (let y = H * 0.3 - markOffset; y < H; y += markSpacing) {
-            ctx.fillRect(W / 2 + roadCurve - 2, y, 4, 25);
-        }
-
-        // Road shoulder dashes
-        ctx.fillStyle = 'rgba(255,255,255,0.5)';
-        for (let y = H * 0.3 - markOffset; y < H; y += markSpacing) {
-            ctx.fillRect(roadL + 8, y, 12, 3);
-            ctx.fillRect(roadR - 20, y, 12, 3);
-        }
-    }
-
-    function drawTraffic() {
-        const roadW = W * 0.5;
-        const roadCenter = W / 2 + roadCurve;
-        const laneOffset = roadW * 0.22;
-
-        trafficCars.forEach(tc => {
-            // Convert relative distance to screen Y position
-            const screenY = H * 0.8 - (tc.relDist / 200) * H * 0.5;
-            if (screenY < H * 0.2 || screenY > H) return;
-            const tcX = roadCenter + tc.lane * laneOffset;
-            const scale = Math.max(0.5, 1 - (H * 0.8 - screenY) / (H * 0.6));
-            ctx.font = `${Math.floor(30 * scale)}px serif`;
-            ctx.textAlign = 'center';
-            ctx.fillText(tc.emoji, tcX, screenY);
+    for (let i = 0; i < 8; i++) {
+        sceneryObjects.push({
+            side: i % 2 === 0 ? -1 : 1,
+            relDist: 30 + i * 25,
+            type: Math.random() < 0.6 ? 'tree' : 'post',
+            height: 20 + Math.random() * 15,
+            color: randomFrom(['#1a7a2e', '#2d8a4e', '#0f5c1e', '#888'])
         });
     }
 
-    function drawTrafficLights() {
-        trafficLights.forEach(tl => {
-            const screenY = H * 0.8 - (tl.relDist / 200) * H * 0.5;
-            if (screenY < H * 0.2 || screenY > H) return;
-            const roadCenter = W / 2 + roadCurve;
-            const roadW = W * 0.5;
-            // Draw light post on right side
-            const lx = roadCenter + roadW / 2 + 20;
-            ctx.fillStyle = '#555';
-            ctx.fillRect(lx - 3, screenY - 30, 6, 30);
-            // Light box
-            ctx.fillStyle = '#222';
-            ctx.fillRect(lx - 10, screenY - 50, 20, 30);
-            // Light colors
-            const colors = { red: '#ff3333', yellow: '#ffcc00', green: '#33ff33' };
-            ['red', 'yellow', 'green'].forEach((c, i) => {
+    // --- DRAWING ---
+
+    function drawSkyAndHorizon() {
+        // Sky gradient
+        const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+        skyGrad.addColorStop(0, '#1a6dd4');
+        skyGrad.addColorStop(0.6, '#5ba3e6');
+        skyGrad.addColorStop(1, '#a8d8f0');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, W, horizonY + 5);
+
+        // Mountains silhouette
+        ctx.fillStyle = '#3a5a3a';
+        ctx.beginPath();
+        ctx.moveTo(0, horizonY);
+        const mountainVPX = getVPX();
+        for (let x = 0; x <= W; x += 3) {
+            const baseH = 15 + Math.sin(x * 0.008 + distance * 0.00005) * 20 +
+                          Math.sin(x * 0.02 + 1.5) * 8 + Math.sin(x * 0.005 + 3) * 12;
+            ctx.lineTo(x, horizonY - baseH);
+        }
+        ctx.lineTo(W, horizonY);
+        ctx.closePath();
+        ctx.fill();
+
+        // Distant mountain layer
+        ctx.fillStyle = '#2a4a3a';
+        ctx.beginPath();
+        ctx.moveTo(0, horizonY);
+        for (let x = 0; x <= W; x += 4) {
+            const baseH = 8 + Math.sin(x * 0.012 + distance * 0.00002 + 2) * 15 +
+                          Math.sin(x * 0.004) * 10;
+            ctx.lineTo(x, horizonY - baseH);
+        }
+        ctx.lineTo(W, horizonY);
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    function drawRoadPerspective() {
+        const vx = getVPX();
+        const numSegments = 60;
+
+        // Draw ground (grass) first
+        ctx.fillStyle = '#2a7a3a';
+        ctx.fillRect(0, horizonY, W, roadBottom - horizonY);
+
+        // Draw road segments from horizon to bottom for depth shading
+        for (let i = 0; i < numSegments; i++) {
+            const t0 = i / numSegments;
+            const t1 = (i + 1) / numSegments;
+            const y0 = horizonY + t0 * (roadBottom - horizonY);
+            const y1 = horizonY + t1 * (roadBottom - horizonY);
+
+            // Road width grows with perspective
+            const w0 = W * 0.04 + t0 * t0 * W * 0.8;
+            const w1 = W * 0.04 + t1 * t1 * W * 0.8;
+
+            // Center X interpolates from vanishing point
+            const cx0 = vx + (W / 2 - vx) * t0;
+            const cx1 = vx + (W / 2 - vx) * t1;
+
+            // Road surface - darker near bottom, lighter near horizon
+            const shade = Math.floor(40 + t0 * 20);
+            ctx.fillStyle = `rgb(${shade},${shade},${shade + 5})`;
+            ctx.beginPath();
+            ctx.moveTo(cx0 - w0 / 2, y0);
+            ctx.lineTo(cx0 + w0 / 2, y0);
+            ctx.lineTo(cx1 + w1 / 2, y1);
+            ctx.lineTo(cx1 - w1 / 2, y1);
+            ctx.closePath();
+            ctx.fill();
+
+            // Road edge lines (white)
+            ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+            ctx.lineWidth = Math.max(1, t0 * 3);
+            // Left edge
+            ctx.beginPath();
+            ctx.moveTo(cx0 - w0 / 2, y0);
+            ctx.lineTo(cx1 - w1 / 2, y1);
+            ctx.stroke();
+            // Right edge
+            ctx.beginPath();
+            ctx.moveTo(cx0 + w0 / 2, y0);
+            ctx.lineTo(cx1 + w1 / 2, y1);
+            ctx.stroke();
+        }
+
+        // Lane markings (dashed center line) - drawn as trapezoids scrolling toward camera
+        const markWorldSpacing = 30;
+        const scrollPhase = (roadOffset * 0.15) % markWorldSpacing;
+        for (let d = -scrollPhase; d < 250; d += markWorldSpacing) {
+            if (d < 0) continue;
+            const z0 = Math.max(0, 1 - d / 250);
+            const z1 = Math.max(0, 1 - (d + markWorldSpacing * 0.4) / 250);
+            if (z0 <= 0 && z1 <= 0) continue;
+            const t0 = 1 - z0;
+            const t1 = 1 - z1;
+            if (t0 < 0 || t1 > 1) continue;
+
+            const y0 = horizonY + t0 * (roadBottom - horizonY);
+            const y1 = horizonY + t1 * (roadBottom - horizonY);
+            const cx0 = vx + (W / 2 - vx) * t0;
+            const cx1 = vx + (W / 2 - vx) * t1;
+            const mw0 = Math.max(1, t0 * 4);
+            const mw1 = Math.max(1, t1 * 4);
+
+            ctx.fillStyle = '#ffcc00';
+            ctx.beginPath();
+            ctx.moveTo(cx0 - mw0 / 2, y0);
+            ctx.lineTo(cx0 + mw0 / 2, y0);
+            ctx.lineTo(cx1 + mw1 / 2, y1);
+            ctx.lineTo(cx1 - mw1 / 2, y1);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Shoulder dashes on both sides
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        for (let d = -scrollPhase; d < 250; d += markWorldSpacing * 1.5) {
+            if (d < 0) continue;
+            const z = Math.max(0.01, 1 - d / 250);
+            const t = 1 - z;
+            if (t < 0 || t > 1) continue;
+            const y = horizonY + t * (roadBottom - horizonY);
+            const cx = vx + (W / 2 - vx) * t;
+            const rw = W * 0.04 + t * t * W * 0.8;
+            const dashW = Math.max(2, t * 12);
+            const dashH2 = Math.max(1, t * 3);
+            ctx.fillRect(cx - rw / 2 + dashW * 0.5, y, dashW, dashH2);
+            ctx.fillRect(cx + rw / 2 - dashW * 1.5, y, dashW, dashH2);
+        }
+    }
+
+    function drawScenery() {
+        const vx = getVPX();
+        sceneryObjects.forEach(obj => {
+            const z = Math.max(0.01, 1 - obj.relDist / 250);
+            if (z <= 0.01 || z > 1) return;
+            const t = 1 - z;
+            const sy = horizonY + t * (roadBottom - horizonY);
+            const cx = vx + (W / 2 - vx) * t;
+            const rw = W * 0.04 + t * t * W * 0.8;
+            const scale = t * t;
+            const offsetX = obj.side * (rw / 2 + 20 * scale + 15);
+
+            if (obj.type === 'tree') {
+                // Trunk
+                const trunkW = Math.max(2, 4 * scale);
+                const trunkH = Math.max(5, obj.height * scale * 1.5);
+                ctx.fillStyle = '#4a3520';
+                ctx.fillRect(cx + offsetX - trunkW / 2, sy - trunkH, trunkW, trunkH);
+                // Canopy
+                const canopyR = Math.max(3, 12 * scale);
+                ctx.fillStyle = obj.color;
                 ctx.beginPath();
-                ctx.arc(lx, screenY - 43 + i * 10, 4, 0, Math.PI * 2);
-                ctx.fillStyle = tl.state === c ? colors[c] : '#444';
+                ctx.arc(cx + offsetX, sy - trunkH - canopyR * 0.5, canopyR, 0, Math.PI * 2);
                 ctx.fill();
-            });
-            // Line on road
-            if (tl.state === 'red' && tl.relDist < 30 && tl.relDist > -5) {
-                ctx.fillStyle = 'rgba(255,0,0,0.3)';
-                ctx.fillRect(roadCenter - roadW / 2, screenY, roadW, 4);
+                // Darker accent
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.beginPath();
+                ctx.arc(cx + offsetX + canopyR * 0.3, sy - trunkH - canopyR * 0.3, canopyR * 0.7, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obj.type === 'post') {
+                const postW = Math.max(1, 2 * scale);
+                const postH = Math.max(4, 20 * scale);
+                ctx.fillStyle = '#888';
+                ctx.fillRect(cx + offsetX - postW / 2, sy - postH, postW, postH);
+                // Reflector
+                ctx.fillStyle = '#ff6600';
+                ctx.fillRect(cx + offsetX - postW, sy - postH, postW * 2, Math.max(1, 3 * scale));
+            } else if (obj.type === 'building') {
+                const bw = Math.max(8, 30 * scale);
+                const bh = Math.max(10, obj.height * scale * 1.5);
+                ctx.fillStyle = obj.color;
+                ctx.fillRect(cx + offsetX - bw / 2, sy - bh, bw, bh);
+                // Windows
+                ctx.fillStyle = 'rgba(255,255,150,0.6)';
+                const winSize = Math.max(1, 3 * scale);
+                for (let wy = sy - bh + winSize * 2; wy < sy - winSize; wy += winSize * 3) {
+                    for (let wx = cx + offsetX - bw / 2 + winSize; wx < cx + offsetX + bw / 2 - winSize; wx += winSize * 2.5) {
+                        ctx.fillRect(wx, wy, winSize, winSize);
+                    }
+                }
+                // Roof line
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                ctx.fillRect(cx + offsetX - bw / 2, sy - bh, bw, Math.max(1, 2 * scale));
             }
         });
     }
 
-    function drawCar() {
-        const carEmoji = isMoto ? '🏍️' : '🚘';
-        ctx.font = '40px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(carEmoji, carX, H * 0.82);
+    function drawTrafficCars() {
+        const vx = getVPX();
+        // Sort by distance (far first) for proper layering
+        const sorted = [...trafficCars].sort((a, b) => b.relDist - a.relDist);
+        sorted.forEach(tc => {
+            const z = Math.max(0, 1 - tc.relDist / 250);
+            if (z <= 0 || z > 1) return;
+            const t = 1 - z;
+            const sy = horizonY + t * (roadBottom - horizonY);
+            if (sy < horizonY || sy > roadBottom) return;
+
+            const cx = vx + (W / 2 - vx) * t;
+            const rw = W * 0.04 + t * t * W * 0.8;
+            const laneOffset = rw * 0.25 * tc.lane;
+            const carScreenX = cx + laneOffset;
+            const scale = t * t;
+            const carW = Math.max(6, 35 * scale);
+            const carH = Math.max(4, 20 * scale);
+
+            // Car body
+            ctx.fillStyle = tc.color;
+            const bodyR = Math.max(1, 3 * scale);
+            ctx.beginPath();
+            ctx.moveTo(carScreenX - carW / 2 + bodyR, sy - carH);
+            ctx.lineTo(carScreenX + carW / 2 - bodyR, sy - carH);
+            ctx.quadraticCurveTo(carScreenX + carW / 2, sy - carH, carScreenX + carW / 2, sy - carH + bodyR);
+            ctx.lineTo(carScreenX + carW / 2, sy - bodyR);
+            ctx.quadraticCurveTo(carScreenX + carW / 2, sy, carScreenX + carW / 2 - bodyR, sy);
+            ctx.lineTo(carScreenX - carW / 2 + bodyR, sy);
+            ctx.quadraticCurveTo(carScreenX - carW / 2, sy, carScreenX - carW / 2, sy - bodyR);
+            ctx.lineTo(carScreenX - carW / 2, sy - carH + bodyR);
+            ctx.quadraticCurveTo(carScreenX - carW / 2, sy - carH, carScreenX - carW / 2 + bodyR, sy - carH);
+            ctx.closePath();
+            ctx.fill();
+
+            // Windshield (rear view of car ahead)
+            ctx.fillStyle = 'rgba(150,200,255,0.5)';
+            const wsW = carW * 0.7;
+            const wsH = carH * 0.35;
+            ctx.fillRect(carScreenX - wsW / 2, sy - carH + 1, wsW, wsH);
+
+            // Tail lights
+            if (scale > 0.15) {
+                ctx.fillStyle = '#ff3333';
+                const tlS = Math.max(1, 3 * scale);
+                ctx.fillRect(carScreenX - carW / 2 + 1, sy - tlS - 1, tlS, tlS);
+                ctx.fillRect(carScreenX + carW / 2 - tlS - 1, sy - tlS - 1, tlS, tlS);
+            }
+        });
+    }
+
+    function drawTrafficLightsPerspective() {
+        const vx = getVPX();
+        trafficLights.forEach(tl => {
+            const z = Math.max(0, 1 - tl.relDist / 250);
+            if (z <= 0 || z > 1) return;
+            const t = 1 - z;
+            const sy = horizonY + t * (roadBottom - horizonY);
+            if (sy < horizonY || sy > roadBottom) return;
+
+            const cx = vx + (W / 2 - vx) * t;
+            const rw = W * 0.04 + t * t * W * 0.8;
+            const scale = t * t;
+
+            // Post on right side of road
+            const postX = cx + rw / 2 + 10 * scale;
+            const postW = Math.max(1, 3 * scale);
+            const postH = Math.max(8, 40 * scale);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(postX - postW / 2, sy - postH, postW, postH);
+
+            // Arm extending over road
+            const armLen = Math.max(5, 20 * scale);
+            ctx.fillRect(postX - armLen, sy - postH, armLen, Math.max(1, 2 * scale));
+
+            // Light box
+            const boxW = Math.max(4, 10 * scale);
+            const boxH = Math.max(8, 24 * scale);
+            const boxX = postX - armLen;
+            const boxY = sy - postH - boxH;
+            ctx.fillStyle = '#1a1a1a';
+            ctx.fillRect(boxX - boxW / 2, boxY, boxW, boxH);
+
+            // Lights
+            const lightR = Math.max(1.5, 3 * scale);
+            const colors = { red: '#ff3333', yellow: '#ffcc00', green: '#33ff33' };
+            ['red', 'yellow', 'green'].forEach((c, i) => {
+                ctx.beginPath();
+                ctx.arc(boxX, boxY + lightR + 1 + i * (lightR * 2 + 1), lightR, 0, Math.PI * 2);
+                ctx.fillStyle = tl.state === c ? colors[c] : '#333';
+                ctx.fill();
+                // Glow effect for active light
+                if (tl.state === c && scale > 0.2) {
+                    ctx.beginPath();
+                    ctx.arc(boxX, boxY + lightR + 1 + i * (lightR * 2 + 1), lightR * 2, 0, Math.PI * 2);
+                    ctx.fillStyle = c === 'red' ? 'rgba(255,50,50,0.15)' : c === 'yellow' ? 'rgba(255,200,0,0.15)' : 'rgba(50,255,50,0.15)';
+                    ctx.fill();
+                }
+            });
+
+            // Stop line on road for red
+            if (tl.state === 'red' && tl.relDist < 30 && tl.relDist > -5) {
+                ctx.fillStyle = 'rgba(255,0,0,0.35)';
+                ctx.fillRect(cx - rw / 2, sy - 1, rw, Math.max(2, 3 * scale));
+            }
+        });
+    }
+
+    function drawSpeedSign() {
+        // Draw upcoming speed limit sign on right side
+        const vx = getVPX();
+        const signDist = 80;
+        const z = Math.max(0, 1 - signDist / 250);
+        if (z <= 0) return;
+        const t = 1 - z;
+        const sy = horizonY + t * (roadBottom - horizonY);
+        const cx = vx + (W / 2 - vx) * t;
+        const rw = W * 0.04 + t * t * W * 0.8;
+        const scale = t * t;
+        if (scale < 0.05) return;
+
+        const signX = cx + rw / 2 + 25 * scale;
+        const signR = Math.max(4, 12 * scale);
+
+        // Post
+        ctx.fillStyle = '#777';
+        ctx.fillRect(signX - 1, sy - signR * 3, 2, signR * 3);
+
+        // Sign circle
+        ctx.fillStyle = '#fff';
+        ctx.beginPath();
+        ctx.arc(signX, sy - signR * 3, signR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = Math.max(1, 2 * scale);
+        ctx.beginPath();
+        ctx.arc(signX, sy - signR * 3, signR, 0, Math.PI * 2);
+        ctx.stroke();
+        if (scale > 0.1) {
+            ctx.fillStyle = '#000';
+            ctx.font = `bold ${Math.max(5, Math.floor(8 * scale))}px Poppins, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(speedLimit, signX, sy - signR * 3);
+            ctx.textBaseline = 'alphabetic';
+        }
+    }
+
+    function drawWindshieldFrame() {
+        // Subtle dark border simulating windshield frame
+        const frameW = 6;
+        ctx.fillStyle = 'rgba(20,20,20,0.6)';
+        // Top frame
+        ctx.fillRect(0, 0, W, frameW);
+        // Left pillar
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(frameW * 3, 0);
+        ctx.lineTo(frameW * 1.5, roadBottom);
+        ctx.lineTo(0, roadBottom);
+        ctx.closePath();
+        ctx.fill();
+        // Right pillar
+        ctx.beginPath();
+        ctx.moveTo(W, 0);
+        ctx.lineTo(W - frameW * 3, 0);
+        ctx.lineTo(W - frameW * 1.5, roadBottom);
+        ctx.lineTo(W, roadBottom);
+        ctx.closePath();
+        ctx.fill();
+
+        // Rear-view mirror at top center
+        if (!isMoto) {
+            const mirW = W * 0.12;
+            const mirH = H * 0.06;
+            const mirX = W / 2 - mirW / 2;
+            const mirY = frameW + 2;
+            // Mirror frame
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.moveTo(mirX + 4, mirY);
+            ctx.lineTo(mirX + mirW - 4, mirY);
+            ctx.quadraticCurveTo(mirX + mirW, mirY, mirX + mirW, mirY + 4);
+            ctx.lineTo(mirX + mirW, mirY + mirH - 4);
+            ctx.quadraticCurveTo(mirX + mirW, mirY + mirH, mirX + mirW - 4, mirY + mirH);
+            ctx.lineTo(mirX + 4, mirY + mirH);
+            ctx.quadraticCurveTo(mirX, mirY + mirH, mirX, mirY + mirH - 4);
+            ctx.lineTo(mirX, mirY + 4);
+            ctx.quadraticCurveTo(mirX, mirY, mirX + 4, mirY);
+            ctx.closePath();
+            ctx.fill();
+            // Mirror glass
+            const mgGrad = ctx.createLinearGradient(mirX, mirY, mirX + mirW, mirY + mirH);
+            mgGrad.addColorStop(0, '#3a5a8a');
+            mgGrad.addColorStop(0.5, '#5a8aba');
+            mgGrad.addColorStop(1, '#3a5a8a');
+            ctx.fillStyle = mgGrad;
+            ctx.fillRect(mirX + 2, mirY + 2, mirW - 4, mirH - 4);
+            // Stem
+            ctx.fillStyle = '#333';
+            ctx.fillRect(W / 2 - 2, mirY + mirH, 4, 6);
+        } else {
+            // Motorcycle mirrors - two small ones on sides
+            const mirR = Math.min(W * 0.03, 12);
+            // Left mirror
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(frameW * 3 + mirR + 5, frameW + mirR + 10, mirR * 1.2, mirR, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4a7aaa';
+            ctx.beginPath();
+            ctx.ellipse(frameW * 3 + mirR + 5, frameW + mirR + 10, mirR * 1 - 1, mirR - 1, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            // Right mirror
+            ctx.fillStyle = '#222';
+            ctx.beginPath();
+            ctx.ellipse(W - frameW * 3 - mirR - 5, frameW + mirR + 10, mirR * 1.2, mirR, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#4a7aaa';
+            ctx.beginPath();
+            ctx.ellipse(W - frameW * 3 - mirR - 5, frameW + mirR + 10, mirR * 1 - 1, mirR - 1, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
     }
 
     function drawDashboard() {
-        const dashH = H * 0.18;
-        const dashY = H - dashH;
-
         // Dashboard background
-        ctx.fillStyle = 'rgba(0,0,0,0.8)';
+        const dashGrad = ctx.createLinearGradient(0, dashY, 0, H);
+        dashGrad.addColorStop(0, '#1a1a1a');
+        dashGrad.addColorStop(0.3, '#252525');
+        dashGrad.addColorStop(1, '#111');
+        ctx.fillStyle = dashGrad;
         ctx.fillRect(0, dashY, W, dashH);
+
+        // Dashboard top edge highlight
         ctx.strokeStyle = '#444';
         ctx.lineWidth = 1;
         ctx.beginPath();
-        ctx.moveTo(0, dashY); ctx.lineTo(W, dashY);
+        ctx.moveTo(0, dashY);
+        ctx.lineTo(W, dashY);
         ctx.stroke();
 
-        // Speedometer dial
-        const dialCX = W * 0.2;
-        const dialCY = dashY + dashH * 0.55;
-        const dialR = Math.min(dashH * 0.4, 35);
+        // Padded area
+        const padX = W * 0.03;
+        const padY = dashY + 8;
+        const innerH = dashH - 16;
 
+        // --- Steering wheel ---
+        const wheelCX = W / 2;
+        const wheelCY = dashY + dashH * 0.65;
+        const wheelR = Math.min(dashH * 0.38, W * 0.12);
+        const wheelAngle = steerX * 0.6; // rotation based on steering
+
+        ctx.save();
+        ctx.translate(wheelCX, wheelCY);
+        ctx.rotate(wheelAngle);
+
+        // Wheel rim
         ctx.strokeStyle = '#555';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = Math.max(3, wheelR * 0.15);
         ctx.beginPath();
-        ctx.arc(dialCX, dialCY, dialR, Math.PI * 0.8, Math.PI * 2.2);
+        ctx.arc(0, 0, wheelR, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Speed ticks
-        for (let s = 0; s <= 180; s += 30) {
-            const angle = Math.PI * 0.8 + (s / 180) * Math.PI * 1.4;
-            const x1 = dialCX + Math.cos(angle) * (dialR - 5);
-            const y1 = dialCY + Math.sin(angle) * (dialR - 5);
-            const x2 = dialCX + Math.cos(angle) * dialR;
-            const y2 = dialCY + Math.sin(angle) * dialR;
-            ctx.strokeStyle = '#888';
-            ctx.lineWidth = 1;
-            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        // Wheel spokes (3-spoke)
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = Math.max(2, wheelR * 0.1);
+        for (let a = 0; a < 3; a++) {
+            const angle = (a * Math.PI * 2) / 3 - Math.PI / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * wheelR * 0.85, Math.sin(angle) * wheelR * 0.85);
+            ctx.stroke();
+        }
+
+        // Center hub
+        ctx.fillStyle = '#333';
+        ctx.beginPath();
+        ctx.arc(0, 0, wheelR * 0.22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.restore();
+
+        // --- Speedometer (left side) ---
+        const spdCX = padX + innerH * 0.45;
+        const spdCY = padY + innerH * 0.5;
+        const spdR = Math.min(innerH * 0.42, W * 0.1);
+
+        // Gauge background
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(spdCX, spdCY, spdR + 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#444';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(spdCX, spdCY, spdR, Math.PI * 0.75, Math.PI * 2.25);
+        ctx.stroke();
+
+        // Speed ticks and numbers
+        for (let s = 0; s <= 200; s += 20) {
+            const angle = Math.PI * 0.75 + (s / 200) * Math.PI * 1.5;
+            const inner = spdR - Math.max(3, spdR * 0.15);
+            const outer = spdR;
+            ctx.strokeStyle = s % 60 === 0 ? '#aaa' : '#555';
+            ctx.lineWidth = s % 60 === 0 ? 2 : 1;
+            ctx.beginPath();
+            ctx.moveTo(spdCX + Math.cos(angle) * inner, spdCY + Math.sin(angle) * inner);
+            ctx.lineTo(spdCX + Math.cos(angle) * outer, spdCY + Math.sin(angle) * outer);
+            ctx.stroke();
+            if (s % 40 === 0 && spdR > 20) {
+                ctx.fillStyle = '#888';
+                ctx.font = `${Math.max(6, Math.floor(spdR * 0.2))}px Poppins, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(s, spdCX + Math.cos(angle) * (inner - spdR * 0.15), spdCY + Math.sin(angle) * (inner - spdR * 0.15));
+            }
         }
 
         // Speed needle
-        const sAngle = Math.PI * 0.8 + (Math.min(speed, 180) / 180) * Math.PI * 1.4;
+        const spdAngle = Math.PI * 0.75 + (Math.min(speed, 200) / 200) * Math.PI * 1.5;
         ctx.strokeStyle = '#ff4444';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(dialCX, dialCY);
-        ctx.lineTo(dialCX + Math.cos(sAngle) * (dialR - 8), dialCY + Math.sin(sAngle) * (dialR - 8));
+        ctx.moveTo(spdCX, spdCY);
+        ctx.lineTo(spdCX + Math.cos(spdAngle) * (spdR - 6), spdCY + Math.sin(spdAngle) * (spdR - 6));
         ctx.stroke();
+
+        // Center dot
+        ctx.fillStyle = '#ff4444';
+        ctx.beginPath();
+        ctx.arc(spdCX, spdCY, 3, 0, Math.PI * 2);
+        ctx.fill();
 
         // Speed text
         ctx.fillStyle = '#fff';
-        ctx.font = 'bold 14px Poppins, sans-serif';
+        ctx.font = `bold ${Math.max(10, Math.floor(spdR * 0.35))}px Poppins, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(`${Math.floor(speed)}`, dialCX, dialCY + dialR + 14);
-        ctx.font = '8px Poppins, sans-serif';
-        ctx.fillText('km/h', dialCX, dialCY + dialR + 23);
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(`${Math.floor(speed)}`, spdCX, spdCY + spdR * 0.55);
+        ctx.font = `${Math.max(6, Math.floor(spdR * 0.18))}px Poppins, sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.fillText('km/h', spdCX, spdCY + spdR * 0.75);
 
-        // RPM gauge (manual only)
+        // --- RPM Gauge (right of speedometer, manual only) ---
         if (isManual) {
-            const rpmCX = W * 0.42;
-            const rpmCY = dialCY;
-            const rpmR = Math.min(dashH * 0.35, 28);
-            ctx.strokeStyle = '#555';
-            ctx.lineWidth = 2;
+            const rpmCX = W - padX - innerH * 0.45;
+            const rpmCY = padY + innerH * 0.5;
+            const rpmR = Math.min(innerH * 0.38, W * 0.08);
+
+            ctx.fillStyle = '#111';
             ctx.beginPath();
-            ctx.arc(rpmCX, rpmCY, rpmR, Math.PI * 0.8, Math.PI * 2.2);
+            ctx.arc(rpmCX, rpmCY, rpmR + 2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Colored zones on RPM gauge
+            // Green zone: 1000-4500
+            ctx.strokeStyle = 'rgba(46,204,113,0.3)';
+            ctx.lineWidth = Math.max(2, rpmR * 0.12);
+            ctx.beginPath();
+            ctx.arc(rpmCX, rpmCY, rpmR - 1,
+                Math.PI * 0.75 + (1000 / 8000) * Math.PI * 1.5,
+                Math.PI * 0.75 + (4500 / 8000) * Math.PI * 1.5);
             ctx.stroke();
-            const rpmAngle = Math.PI * 0.8 + (Math.min(rpm, 8000) / 8000) * Math.PI * 1.4;
+            // Yellow zone: 4500-6500
+            ctx.strokeStyle = 'rgba(241,196,15,0.3)';
+            ctx.beginPath();
+            ctx.arc(rpmCX, rpmCY, rpmR - 1,
+                Math.PI * 0.75 + (4500 / 8000) * Math.PI * 1.5,
+                Math.PI * 0.75 + (6500 / 8000) * Math.PI * 1.5);
+            ctx.stroke();
+            // Red zone: 6500-8000
+            ctx.strokeStyle = 'rgba(231,76,60,0.4)';
+            ctx.beginPath();
+            ctx.arc(rpmCX, rpmCY, rpmR - 1,
+                Math.PI * 0.75 + (6500 / 8000) * Math.PI * 1.5,
+                Math.PI * 0.75 + Math.PI * 1.5);
+            ctx.stroke();
+
+            // Ticks
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 1;
+            for (let r = 0; r <= 8; r++) {
+                const angle = Math.PI * 0.75 + (r / 8) * Math.PI * 1.5;
+                ctx.beginPath();
+                ctx.moveTo(rpmCX + Math.cos(angle) * (rpmR - 4), rpmCY + Math.sin(angle) * (rpmR - 4));
+                ctx.lineTo(rpmCX + Math.cos(angle) * rpmR, rpmCY + Math.sin(angle) * rpmR);
+                ctx.stroke();
+            }
+
+            // RPM needle
+            const rpmAngle = Math.PI * 0.75 + (Math.min(rpm, 8000) / 8000) * Math.PI * 1.5;
             ctx.strokeStyle = rpm > 6500 ? '#ff4444' : '#ffaa00';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(rpmCX, rpmCY);
-            ctx.lineTo(rpmCX + Math.cos(rpmAngle) * (rpmR - 5), rpmCY + Math.sin(rpmAngle) * (rpmR - 5));
+            ctx.lineTo(rpmCX + Math.cos(rpmAngle) * (rpmR - 4), rpmCY + Math.sin(rpmAngle) * (rpmR - 4));
             ctx.stroke();
+
+            ctx.fillStyle = rpm > 6500 ? '#ff4444' : '#ffaa00';
+            ctx.beginPath();
+            ctx.arc(rpmCX, rpmCY, 2, 0, Math.PI * 2);
+            ctx.fill();
+
             ctx.fillStyle = '#fff';
-            ctx.font = '10px Poppins, sans-serif';
-            ctx.fillText(`${Math.floor(rpm / 1000)}k RPM`, rpmCX, rpmCY + rpmR + 12);
+            ctx.font = `${Math.max(7, Math.floor(rpmR * 0.3))}px Poppins, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText(`${(rpm / 1000).toFixed(1)}`, rpmCX, rpmCY + rpmR * 0.5);
+            ctx.font = `${Math.max(5, Math.floor(rpmR * 0.2))}px Poppins, sans-serif`;
+            ctx.fillStyle = '#888';
+            ctx.fillText('x1000 RPM', rpmCX, rpmCY + rpmR * 0.72);
         }
 
-        // Gear indicator
-        const gearX = isManual ? W * 0.6 : W * 0.45;
-        ctx.fillStyle = '#222';
-        ctx.fillRect(gearX - 18, dashY + 8, 36, 28);
+        // --- Gear indicator (center, above steering wheel) ---
+        const gearBoxW = Math.max(28, W * 0.06);
+        const gearBoxH = Math.max(22, dashH * 0.2);
+        const gearBoxX = W / 2 - gearBoxW / 2;
+        const gearBoxY = padY;
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(gearBoxX, gearBoxY, gearBoxW, gearBoxH);
         ctx.strokeStyle = '#667eea';
         ctx.lineWidth = 2;
-        ctx.strokeRect(gearX - 18, dashY + 8, 36, 28);
-        ctx.fillStyle = '#667eea';
-        ctx.font = 'bold 16px Poppins, sans-serif';
-        ctx.textAlign = 'center';
+        ctx.strokeRect(gearBoxX, gearBoxY, gearBoxW, gearBoxH);
         const gearText = gear === -1 ? 'R' : gear === 0 ? 'N' : `${gear}`;
-        ctx.fillText(gearText, gearX, dashY + 28);
+        ctx.fillStyle = '#667eea';
+        ctx.font = `bold ${Math.max(12, Math.floor(gearBoxH * 0.7))}px Poppins, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(gearText, W / 2, gearBoxY + gearBoxH / 2);
+        ctx.textBaseline = 'alphabetic';
 
-        // Distance counter
+        // --- Distance counter (top right of dash) ---
         ctx.fillStyle = '#aaa';
-        ctx.font = '11px Poppins, sans-serif';
+        ctx.font = `${Math.max(9, Math.floor(innerH * 0.12))}px Poppins, sans-serif`;
         ctx.textAlign = 'right';
-        ctx.fillText(`${(distance / 1000).toFixed(1)} km`, W - 10, dashY + 18);
+        ctx.fillText(`${(distance / 1000).toFixed(2)} km`, W - padX, padY + 14);
 
-        // Time left
+        // --- Timer (below distance) ---
         ctx.fillStyle = timeLeft < 10 ? '#ff4444' : '#fff';
-        ctx.font = 'bold 12px Poppins, sans-serif';
-        ctx.fillText(`${timeLeft}s`, W - 10, dashY + 34);
+        ctx.font = `bold ${Math.max(10, Math.floor(innerH * 0.14))}px Poppins, sans-serif`;
+        ctx.fillText(`${timeLeft}s`, W - padX, padY + 30);
 
-        // Speed limit
+        // --- Speed limit sign (small, top-left of dash) ---
+        const slX = padX + spdR * 2 + 15;
+        const slY = padY + 14;
+        const slR = Math.max(8, innerH * 0.12);
         ctx.fillStyle = '#fff';
         ctx.beginPath();
-        ctx.arc(W - 50, dashY + 26, 14, 0, Math.PI * 2);
+        ctx.arc(slX, slY, slR, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle = '#ff0000';
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#ff0000';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(W - 50, dashY + 26, 14, 0, Math.PI * 2);
+        ctx.arc(slX, slY, slR, 0, Math.PI * 2);
         ctx.stroke();
         ctx.fillStyle = '#000';
-        ctx.font = 'bold 10px Poppins, sans-serif';
+        ctx.font = `bold ${Math.max(6, Math.floor(slR * 0.9))}px Poppins, sans-serif`;
         ctx.textAlign = 'center';
-        ctx.fillText(speedLimit, W - 50, dashY + 30);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(speedLimit, slX, slY);
+        ctx.textBaseline = 'alphabetic';
 
-        // Penalties/bonus
-        ctx.fillStyle = '#aaa';
-        ctx.font = '9px Poppins, sans-serif';
+        // --- Bonus/Penalties bar ---
+        ctx.fillStyle = '#666';
+        ctx.font = `${Math.max(7, Math.floor(innerH * 0.09))}px Poppins, sans-serif`;
         ctx.textAlign = 'left';
-        ctx.fillText(`Bonus: +${smoothBonus} | Penalizaciones: -${penalties}`, 10, dashY + dashH - 5);
+        ctx.fillText(`+${Math.floor(smoothBonus)} bonus  -${Math.floor(penalties)} pen.`, padX, dashY + dashH - 6);
 
-        // Clutch indicator (manual)
+        // --- Clutch indicator ---
         if (isManual && clutchPressed) {
             ctx.fillStyle = '#667eea';
-            ctx.font = '10px Poppins, sans-serif';
+            ctx.font = `bold ${Math.max(8, Math.floor(innerH * 0.1))}px Poppins, sans-serif`;
             ctx.textAlign = 'center';
-            ctx.fillText('EMBRAGUE', W / 2, dashY + dashH - 5);
+            ctx.fillText('EMBRAGUE', W / 2, dashY + dashH - 6);
         }
 
-        // RPM warning
+        // --- RPM warning ---
         if (isManual && rpm > 6500) {
             ctx.fillStyle = '#ff4444';
-            ctx.font = 'bold 10px Poppins, sans-serif';
+            ctx.font = `bold ${Math.max(9, Math.floor(innerH * 0.12))}px Poppins, sans-serif`;
             ctx.textAlign = 'center';
-            ctx.fillText('CAMBIA MARCHA!', W / 2, dashY + 15);
+            ctx.fillText('CAMBIA MARCHA!', W / 2, padY + gearBoxH + 14);
+        }
+
+        // --- Speeding warning ---
+        if (speed > speedLimit + 10) {
+            ctx.fillStyle = 'rgba(255,0,0,0.7)';
+            ctx.font = `bold ${Math.max(8, Math.floor(innerH * 0.1))}px Poppins, sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.fillText('EXCESO VELOCIDAD', W - padX, padY + 44);
+        }
+
+        // --- Stall indicator ---
+        if (isManual && rpm === 0 && gear === 0 && stalls > 0) {
+            ctx.fillStyle = '#ff8800';
+            ctx.font = `bold ${Math.max(9, Math.floor(innerH * 0.12))}px Poppins, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('MOTOR CALADO - Pulsa Espacio', W / 2, padY + gearBoxH + 14);
         }
     }
 
     function drawInstructions() {
         if (!showInstructions) return;
-        ctx.fillStyle = 'rgba(0,0,0,0.85)';
+        ctx.fillStyle = 'rgba(0,0,0,0.88)';
         ctx.fillRect(0, 0, W, H);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 20px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(isMoto ? 'Simulador de Moto' : isManual ? 'Conduccion Manual' : 'Conduccion Automatica', W / 2, H * 0.12);
+        ctx.fillText(isMoto ? 'Simulador de Moto' : isManual ? 'Conduccion Manual' : 'Conduccion Automatica', W / 2, H * 0.1);
+
+        ctx.font = '12px Poppins, sans-serif';
+        ctx.fillStyle = '#eee';
+        ctx.fillText('Vista en primera persona', W / 2, H * 0.16);
 
         ctx.font = '13px Poppins, sans-serif';
         ctx.fillStyle = '#ccc';
-        let y = H * 0.22;
+        let y = H * 0.24;
         const lines = [
-            '← / → o A / D: Girar',
+            '\u2190 / \u2192 o A / D: Girar',
             'Espacio: Gas (mantener)',
             'Shift: Freno (mantener)',
         ];
@@ -2036,6 +2567,8 @@ function startConducir(subtype) {
         lines.push('Respeta limites de velocidad');
         lines.push('Evita chocar con otros coches');
         lines.push('');
+        lines.push('60 segundos - conduce lo mas lejos posible!');
+        lines.push('');
         lines.push('Pulsa cualquier tecla para empezar...');
 
         lines.forEach(l => {
@@ -2046,31 +2579,66 @@ function startConducir(subtype) {
 
     function draw() {
         ctx.setTransform(1, 0, 0, 1, 0, 0);
-        drawRoad();
-        drawTraffic();
-        drawTrafficLights();
-        drawCar();
+
+        // Apply screen shake
+        if (shakeDuration > 0) {
+            ctx.translate(shakeX, shakeY);
+        }
+
+        drawSkyAndHorizon();
+        drawRoadPerspective();
+        drawScenery();
+        drawSpeedSign();
+        drawTrafficCars();
+        drawTrafficLightsPerspective();
+        drawWindshieldFrame();
+
+        // Reset transform for dashboard (no shake on dashboard)
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         drawDashboard();
-        if (showInstructions) drawInstructions();
+
+        if (showInstructions) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            drawInstructions();
+        }
     }
 
     function updatePhysics() {
         if (!gameStarted) return;
 
         // Steering
-        const steerSpeed = Math.max(2, 5 - speed * 0.02);
-        const roadW = W * 0.5;
-        const roadCenter = W / 2 + roadCurve;
-        if (keys['ArrowLeft'] || keys['a'] || keys['A']) carX = Math.max(roadCenter - roadW / 2 + 25, carX - steerSpeed);
-        if (keys['ArrowRight'] || keys['d'] || keys['D']) carX = Math.min(roadCenter + roadW / 2 - 25, carX + steerSpeed);
+        const steerSpeed = 0.04;
+        const steerReturn = 0.03;
+        if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+            steerX = Math.max(-1, steerX - steerSpeed);
+            playerLane = steerX < -0.3 ? -1 : (steerX > 0.3 ? 1 : 0);
+        } else if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+            steerX = Math.min(1, steerX + steerSpeed);
+            playerLane = steerX < -0.3 ? -1 : (steerX > 0.3 ? 1 : 0);
+        } else {
+            // Return to center
+            if (Math.abs(steerX) < steerReturn) steerX = 0;
+            else steerX += steerX > 0 ? -steerReturn : steerReturn;
+            playerLane = steerX < -0.3 ? -1 : (steerX > 0.3 ? 1 : 0);
+        }
 
         // Road curves
         roadCurveTimer--;
         if (roadCurveTimer <= 0) {
-            roadCurveTarget = (Math.random() - 0.5) * W * 0.15;
+            roadCurveTarget = (Math.random() - 0.5) * W * 0.2;
             roadCurveTimer = 120 + Math.random() * 180;
         }
-        roadCurve += (roadCurveTarget - roadCurve) * 0.01;
+        roadCurve += (roadCurveTarget - roadCurve) * 0.008;
+
+        // Screen shake decay
+        if (shakeDuration > 0) {
+            shakeDuration--;
+            shakeX = (Math.random() - 0.5) * shakeDuration * 0.8;
+            shakeY = (Math.random() - 0.5) * shakeDuration * 0.5;
+        } else {
+            shakeX = 0;
+            shakeY = 0;
+        }
 
         if (isManual) {
             // Manual transmission physics
@@ -2130,10 +2698,10 @@ function startConducir(subtype) {
             }
             // Auto gear calculation for RPM display
             if (gear > 0) {
-                if (speed < 25) rpm = 1000 + speed * 80;
-                else if (speed < 50) rpm = 1200 + (speed - 25) * 60;
-                else if (speed < 90) rpm = 1500 + (speed - 50) * 50;
-                else rpm = 2000 + (speed - 90) * 40;
+                if (speed < 25) { rpm = 1000 + speed * 80; gear = 1; }
+                else if (speed < 50) { rpm = 1200 + (speed - 25) * 60; gear = 2; }
+                else if (speed < 90) { rpm = 1500 + (speed - 50) * 50; gear = 3; }
+                else { rpm = 2000 + (speed - 90) * 40; gear = Math.min(5, 4 + Math.floor((speed - 90) / 30)); }
             } else {
                 rpm = 800;
             }
@@ -2147,7 +2715,6 @@ function startConducir(subtype) {
         trafficCars.forEach(tc => {
             tc.relDist -= (speed - tc.speed) * 0.05;
         });
-        // Remove passed traffic and spawn new
         trafficCars = trafficCars.filter(tc => tc.relDist > -30 && tc.relDist < 300);
         if (distance > nextTrafficDist) {
             spawnTraffic();
@@ -2171,25 +2738,37 @@ function startConducir(subtype) {
             nextLightDist = distance + 100 + Math.random() * 80;
         }
 
+        // Scenery
+        sceneryObjects.forEach(obj => {
+            obj.relDist -= speed * 0.05;
+        });
+        sceneryObjects = sceneryObjects.filter(obj => obj.relDist > -10);
+        if (distance > nextSceneryDist) {
+            spawnScenery();
+            nextSceneryDist = distance + 8 + Math.random() * 15;
+        }
+
         // Speed limit changes
         if (distance > speedLimitChangeDist) {
             speedLimit = randomFrom([30, 50, 60, 80, 100]);
             speedLimitChangeDist = distance + 100 + Math.random() * 100;
         }
 
-        // Collision check with traffic
-        const roadW2 = W * 0.5;
-        const roadCenter2 = W / 2 + roadCurve;
-        const laneOffset = roadW2 * 0.22;
+        // Collision check with traffic (perspective-based)
         trafficCars.forEach(tc => {
+            if (tc.hit) return;
             if (tc.relDist > 0 && tc.relDist < 15) {
-                const tcScreenX = roadCenter2 + tc.lane * laneOffset;
-                if (Math.abs(carX - tcScreenX) < 30) {
+                // Check if player lane overlaps with traffic lane
+                const laneDiff = Math.abs(playerLane - tc.lane);
+                const steerOverlap = Math.abs(steerX - tc.lane * 0.5) < 0.5;
+                if (laneDiff === 0 || steerOverlap) {
                     // Bump!
                     speed = Math.max(0, speed - 20);
                     tc.relDist += 15;
+                    tc.hit = true;
                     penalties += 20;
                     addScore(-20);
+                    shakeDuration = 15;
                 }
             }
         });
@@ -2221,24 +2800,27 @@ function startConducir(subtype) {
     }
 
     // Keyboard handlers
+    function startGameTimer() {
+        gameTimer = setInterval(() => {
+            if (!running) return;
+            timeLeft--;
+            if (timeLeft <= 0) {
+                running = false;
+                clearInterval(gameTimer);
+                const finalScore = Math.max(0, Math.floor(distance / 10 + smoothBonus - penalties));
+                showResult('Conduccion terminada!', `${(distance / 1000).toFixed(1)} km`,
+                    `Puntos: ${finalScore} | Bonus: +${Math.floor(smoothBonus)} | Penalizaciones: -${Math.floor(penalties)}`,
+                    () => startConducir(subtype));
+            }
+        }, 1000);
+    }
+
     const kbDown = (e) => {
         keys[e.key] = true;
         if (showInstructions) {
             showInstructions = false;
             gameStarted = true;
-            // Start game timer
-            gameTimer = setInterval(() => {
-                if (!running) return;
-                timeLeft--;
-                if (timeLeft <= 0) {
-                    running = false;
-                    clearInterval(gameTimer);
-                    const finalScore = Math.max(0, Math.floor(distance / 10 + smoothBonus - penalties));
-                    showResult('Conduccion terminada!', `${(distance / 1000).toFixed(1)} km`,
-                        `Puntos: ${finalScore} | Bonus: +${Math.floor(smoothBonus)} | Penalizaciones: -${Math.floor(penalties)}`,
-                        () => startConducir(subtype));
-                }
-            }, 1000);
+            startGameTimer();
             return;
         }
         if (e.code === 'Space') { e.preventDefault(); gasPressed = true; }
@@ -2271,10 +2853,10 @@ function startConducir(subtype) {
         controls.innerHTML = `
             <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
                 <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
-                    <button class="control-btn" id="dr-steer-l" style="flex:1;min-width:40px;">←</button>
+                    <button class="control-btn" id="dr-steer-l" style="flex:1;min-width:40px;">\u2190</button>
                     <button class="control-btn" id="dr-gas" style="flex:2;min-width:60px;background:linear-gradient(135deg,#43e97b44,#38f9d744);">GAS</button>
                     <button class="control-btn" id="dr-brake" style="flex:1.5;min-width:50px;background:linear-gradient(135deg,#ff512f44,#dd247644);">FRENO</button>
-                    <button class="control-btn" id="dr-steer-r" style="flex:1;min-width:40px;">→</button>
+                    <button class="control-btn" id="dr-steer-r" style="flex:1;min-width:40px;">\u2192</button>
                 </div>
                 <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
                     <button class="control-btn" id="dr-clutch" style="flex:1;font-size:0.7rem;">EMB (Z)</button>
@@ -2291,13 +2873,13 @@ function startConducir(subtype) {
             el.addEventListener('mousedown', (e) => { e.preventDefault(); onDown(); });
             el.addEventListener('mouseup', (e) => { e.preventDefault(); onUp(); });
             el.addEventListener('mouseleave', (e) => { onUp(); });
-            el.addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameStarted) { showInstructions = false; gameStarted = true; gameTimer = setInterval(() => { if (!running) return; timeLeft--; if (timeLeft <= 0) { running = false; clearInterval(gameTimer); const finalScore = Math.max(0, Math.floor(distance / 10 + smoothBonus - penalties)); showResult('Conduccion terminada!', `${(distance / 1000).toFixed(1)} km`, `Puntos: ${finalScore}`, () => startConducir(subtype)); } }, 1000); } onDown(); });
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameStarted) { showInstructions = false; gameStarted = true; startGameTimer(); } onDown(); });
             el.addEventListener('touchend', (e) => { e.preventDefault(); onUp(); });
         };
 
         let steerLInt, steerRInt;
-        const steerL = () => { const roadCenter = W / 2 + roadCurve; carX = Math.max(roadCenter - W * 0.25 + 25, carX - 5); };
-        const steerR = () => { const roadCenter = W / 2 + roadCurve; carX = Math.min(roadCenter + W * 0.25 - 25, carX + 5); };
+        const steerL = () => { steerX = Math.max(-1, steerX - 0.08); };
+        const steerR = () => { steerX = Math.min(1, steerX + 0.08); };
         document.getElementById('dr-steer-l').addEventListener('mousedown', () => { steerL(); steerLInt = setInterval(steerL, 30); });
         document.getElementById('dr-steer-l').addEventListener('mouseup', () => clearInterval(steerLInt));
         document.getElementById('dr-steer-l').addEventListener('mouseleave', () => clearInterval(steerLInt));
@@ -2320,14 +2902,14 @@ function startConducir(subtype) {
             if (el) el.onclick = () => { if (clutchPressed || speed <= 3) gear = i; };
         }
 
-        controls.insertAdjacentHTML('beforeend', `<div style="text-align:center;width:100%;color:#666;font-size:0.6rem;margin-top:2px;">←/→: girar | Espacio: gas | Shift: freno | Z: embrague | 1-${maxGear}/R/N: marchas</div>`);
+        controls.insertAdjacentHTML('beforeend', `<div style="text-align:center;width:100%;color:#666;font-size:0.6rem;margin-top:2px;">\u2190/\u2192: girar | Espacio: gas | Shift: freno | Z: embrague | 1-${maxGear}/R/N: marchas</div>`);
     } else {
         controls.innerHTML = `
             <div style="display:flex;gap:4px;width:100%;justify-content:center;flex-wrap:wrap;">
-                <button class="control-btn" id="dr-steer-l" style="flex:1;min-width:40px;">←</button>
+                <button class="control-btn" id="dr-steer-l" style="flex:1;min-width:40px;">\u2190</button>
                 <button class="control-btn" id="dr-gas" style="flex:2;min-width:60px;background:linear-gradient(135deg,#43e97b44,#38f9d744);">GAS</button>
                 <button class="control-btn" id="dr-brake" style="flex:1.5;min-width:50px;background:linear-gradient(135deg,#ff512f44,#dd247644);">FRENO</button>
-                <button class="control-btn" id="dr-steer-r" style="flex:1;min-width:40px;">→</button>
+                <button class="control-btn" id="dr-steer-r" style="flex:1;min-width:40px;">\u2192</button>
                 <div style="display:flex;gap:4px;">
                     <button class="control-btn" id="dr-gp" style="min-width:35px;">P</button>
                     <button class="control-btn" id="dr-gra" style="min-width:35px;">R</button>
@@ -2342,13 +2924,13 @@ function startConducir(subtype) {
             el.addEventListener('mousedown', (e) => { e.preventDefault(); onDown(); });
             el.addEventListener('mouseup', (e) => { e.preventDefault(); onUp(); });
             el.addEventListener('mouseleave', () => { onUp(); });
-            el.addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameStarted) { showInstructions = false; gameStarted = true; gameTimer = setInterval(() => { if (!running) return; timeLeft--; if (timeLeft <= 0) { running = false; clearInterval(gameTimer); const finalScore = Math.max(0, Math.floor(distance / 10 + smoothBonus - penalties)); showResult('Conduccion terminada!', `${(distance / 1000).toFixed(1)} km`, `Puntos: ${finalScore}`, () => startConducir(subtype)); } }, 1000); } onDown(); });
+            el.addEventListener('touchstart', (e) => { e.preventDefault(); if (!gameStarted) { showInstructions = false; gameStarted = true; startGameTimer(); } onDown(); });
             el.addEventListener('touchend', (e) => { e.preventDefault(); onUp(); });
         };
 
         let steerLInt, steerRInt;
-        const steerL = () => { const roadCenter = W / 2 + roadCurve; carX = Math.max(roadCenter - W * 0.25 + 25, carX - 5); };
-        const steerR = () => { const roadCenter = W / 2 + roadCurve; carX = Math.min(roadCenter + W * 0.25 - 25, carX + 5); };
+        const steerL = () => { steerX = Math.max(-1, steerX - 0.08); };
+        const steerR = () => { steerX = Math.min(1, steerX + 0.08); };
         document.getElementById('dr-steer-l').addEventListener('mousedown', () => { steerL(); steerLInt = setInterval(steerL, 30); });
         document.getElementById('dr-steer-l').addEventListener('mouseup', () => clearInterval(steerLInt));
         document.getElementById('dr-steer-l').addEventListener('mouseleave', () => clearInterval(steerLInt));
@@ -2367,7 +2949,7 @@ function startConducir(subtype) {
         document.getElementById('dr-gra').onclick = () => { gear = -1; };
         document.getElementById('dr-gd').onclick = () => { gear = 1; };
 
-        controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.6rem;margin-top:2px;">←/→: girar | Espacio: gas | Shift: freno | P/R/D: marchas</div>');
+        controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.6rem;margin-top:2px;">\u2190/\u2192: girar | Espacio: gas | Shift: freno | P/R/D: marchas</div>');
     }
 
     loop();

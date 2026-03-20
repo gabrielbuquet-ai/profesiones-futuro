@@ -1,5 +1,6 @@
 // ==========================================
 // ARQUITECTURA - Todos los modos en 3D Isometrico
+// (Interiores usa vista primera persona estilo Minecraft)
 // ==========================================
 
 // ============ DEFINICIONES 3D POR MODO ============
@@ -82,10 +83,1115 @@ const ARQ_FINISH_MSG = {
 // ============ LANZADOR ============
 
 function startArquitectura(subtype) {
-    startIso3D(subtype);
+    if (subtype === 'interiores') {
+        startInterioresFP(subtype);
+    } else {
+        startIso3D(subtype);
+    }
 }
 
-// ============ MOTOR ISOMETRICO GENERICO ============
+// ============================================================
+// INTERIORES - FIRST-PERSON MINECRAFT-STYLE ROOM VIEW
+// ============================================================
+
+function startInterioresFP(subtype) {
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('game-container');
+    const ui = document.getElementById('game-ui');
+    const controls = document.getElementById('game-controls');
+
+    canvas.width = container.clientWidth * 2;
+    canvas.height = container.clientHeight * 2;
+    canvas.style.display = 'block';
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    const W = container.clientWidth;
+    const H = container.clientHeight;
+
+    const items = ISO_ITEMS.interiores;
+    let selectedTool = null;
+    let placedCount = 0;
+    let animFrame;
+
+    // --- Vanishing-point perspective geometry ---
+    const VPx = W / 2;
+    const VPy = H * 0.38;
+
+    // Back wall rectangle (where perspective lines converge to)
+    const margin = 0.22;
+    const BWL = W * margin;          // back wall left
+    const BWR = W * (1 - margin);    // back wall right
+    const BWT = H * 0.12;            // back wall top
+    const BWB = H * 0.62;            // back wall bottom
+
+    // Room outer corners (canvas edges, with slight inset)
+    const RL = 0, RR = W, RT = 0, RB = H;
+
+    // --- Floor grid (5 cols x 3 rows) ---
+    const FLOOR_COLS = 5;
+    const FLOOR_ROWS = 3;
+    // Floor spans from BWB (back) to RB (front), BWL..BWR at back, RL..RR at front
+
+    function getFloorSlotQuad(r, c) {
+        // r=0 is nearest to back wall, r=FLOOR_ROWS-1 is nearest to viewer
+        // Interpolate between back wall edge and screen edge
+        const t0 = r / FLOOR_ROWS;
+        const t1 = (r + 1) / FLOOR_ROWS;
+
+        const y0 = BWB + (RB - BWB) * t0;
+        const y1 = BWB + (RB - BWB) * t1;
+
+        // At each y, the floor width expands from back-wall width to full screen width
+        const lx0 = BWL + (RL - BWL) * t0;
+        const rx0 = BWR + (RR - BWR) * t0;
+        const lx1 = BWL + (RL - BWL) * t1;
+        const rx1 = BWR + (RR - BWR) * t1;
+
+        // Column subdivision
+        const c0_frac = c / FLOOR_COLS;
+        const c1_frac = (c + 1) / FLOOR_COLS;
+
+        return [
+            { x: lx0 + (rx0 - lx0) * c0_frac, y: y0 },  // top-left
+            { x: lx0 + (rx0 - lx0) * c1_frac, y: y0 },  // top-right
+            { x: lx1 + (rx1 - lx1) * c1_frac, y: y1 },  // bottom-right
+            { x: lx1 + (rx1 - lx1) * c0_frac, y: y1 },  // bottom-left
+        ];
+    }
+
+    function getFloorSlotCenter(r, c) {
+        const q = getFloorSlotQuad(r, c);
+        return { x: (q[0].x + q[1].x + q[2].x + q[3].x) / 4, y: (q[0].y + q[1].y + q[2].y + q[3].y) / 4 };
+    }
+
+    function getFloorSlotScale(r) {
+        // Items near back wall (r=0) are small, near viewer (r=FLOOR_ROWS-1) are large
+        return 0.55 + 0.45 * ((r + 0.5) / FLOOR_ROWS);
+    }
+
+    // --- Back wall grid (4 cols x 2 rows) ---
+    const BWALL_COLS = 4;
+    const BWALL_ROWS = 2;
+
+    function getBackWallSlotRect(r, c) {
+        const padX = 16, padY = 12;
+        const slotW = (BWR - BWL - padX * 2) / BWALL_COLS;
+        const slotH = (BWB - BWT - padY * 2) / BWALL_ROWS;
+        const x = BWL + padX + c * slotW;
+        const y = BWT + padY + r * slotH;
+        return { x, y, w: slotW, h: slotH, cx: x + slotW / 2, cy: y + slotH / 2 };
+    }
+
+    // --- Side wall slots (2 per side) ---
+    const SIDE_SLOTS = 2; // per side
+
+    function getLeftWallSlotQuad(index) {
+        const t0 = 0.2 + index * 0.35;
+        const t1 = t0 + 0.3;
+        // Left wall is trapezoid from (RL,RT)-(BWL,BWT) top to (RL,RB)-(BWL,BWB) bottom
+        // Parameterize vertically
+        const yBack0 = BWT + (BWB - BWT) * t0;
+        const yBack1 = BWT + (BWB - BWT) * t1;
+        const yFront0 = RT + (RB - RT) * t0;
+        const yFront1 = RT + (RB - RT) * t1;
+        // Wall is between x=RL and x=BWL, use middle portion
+        const inset = 0.25;
+        return [
+            { x: RL + (BWL - RL) * inset, y: yFront0 + (yBack0 - yFront0) * inset },
+            { x: BWL - (BWL - RL) * 0.05, y: yBack0 },
+            { x: BWL - (BWL - RL) * 0.05, y: yBack1 },
+            { x: RL + (BWL - RL) * inset, y: yFront1 + (yBack1 - yFront1) * inset },
+        ];
+    }
+
+    function getRightWallSlotQuad(index) {
+        const t0 = 0.2 + index * 0.35;
+        const t1 = t0 + 0.3;
+        const yBack0 = BWT + (BWB - BWT) * t0;
+        const yBack1 = BWT + (BWB - BWT) * t1;
+        const yFront0 = RT + (RB - RT) * t0;
+        const yFront1 = RT + (RB - RT) * t1;
+        const inset = 0.25;
+        return [
+            { x: BWR + (RR - BWR) * 0.05, y: yBack0 },
+            { x: RR - (RR - BWR) * inset, y: yFront0 + (yBack0 - yFront0) * inset },
+            { x: RR - (RR - BWR) * inset, y: yFront1 + (yBack1 - yFront1) * inset },
+            { x: BWR + (RR - BWR) * 0.05, y: yBack1 },
+        ];
+    }
+
+    function getSideWallSlotCenter(quad) {
+        return { x: (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4, y: (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4 };
+    }
+
+    // --- Grid data ---
+    const floorGrid = Array(FLOOR_ROWS).fill(null).map(() => Array(FLOOR_COLS).fill(null));
+    const backWallGrid = Array(BWALL_ROWS).fill(null).map(() => Array(BWALL_COLS).fill(null));
+    const leftWallGrid = Array(SIDE_SLOTS).fill(null);
+    const rightWallGrid = Array(SIDE_SLOTS).fill(null);
+
+    let hoverType = null; // 'floor', 'backwall', 'leftwall', 'rightwall'
+    let hoverR = -1, hoverC = -1;
+
+    // --- Point-in-quad test ---
+    function pointInQuad(px, py, quad) {
+        // Use cross product winding
+        let inside = true;
+        for (let i = 0; i < 4; i++) {
+            const a = quad[i], b = quad[(i + 1) % 4];
+            const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+            if (cross < 0) { inside = false; break; }
+        }
+        if (inside) return true;
+        // Try reverse winding
+        inside = true;
+        for (let i = 0; i < 4; i++) {
+            const a = quad[i], b = quad[(i + 1) % 4];
+            const cross = (b.x - a.x) * (py - a.y) - (b.y - a.y) * (px - a.x);
+            if (cross > 0) { inside = false; break; }
+        }
+        return inside;
+    }
+
+    function pointInRect(px, py, rect) {
+        return px >= rect.x && px <= rect.x + rect.w && py >= rect.y && py <= rect.y + rect.h;
+    }
+
+    function hitTest(mx, my) {
+        // Check back wall slots first
+        for (let r = 0; r < BWALL_ROWS; r++) {
+            for (let c = 0; c < BWALL_COLS; c++) {
+                const rect = getBackWallSlotRect(r, c);
+                if (pointInRect(mx, my, rect)) return { type: 'backwall', r, c };
+            }
+        }
+        // Left wall
+        for (let i = 0; i < SIDE_SLOTS; i++) {
+            if (pointInQuad(mx, my, getLeftWallSlotQuad(i))) return { type: 'leftwall', r: i, c: 0 };
+        }
+        // Right wall
+        for (let i = 0; i < SIDE_SLOTS; i++) {
+            if (pointInQuad(mx, my, getRightWallSlotQuad(i))) return { type: 'rightwall', r: i, c: 0 };
+        }
+        // Floor slots (check back-to-front so front slots take priority)
+        for (let r = 0; r < FLOOR_ROWS; r++) {
+            for (let c = 0; c < FLOOR_COLS; c++) {
+                if (pointInQuad(mx, my, getFloorSlotQuad(r, c))) return { type: 'floor', r, c };
+            }
+        }
+        return null;
+    }
+
+    function getGridAt(type, r, c) {
+        if (type === 'floor') return floorGrid[r][c];
+        if (type === 'backwall') return backWallGrid[r][c];
+        if (type === 'leftwall') return leftWallGrid[r];
+        if (type === 'rightwall') return rightWallGrid[r];
+        return null;
+    }
+    function setGridAt(type, r, c, val) {
+        if (type === 'floor') floorGrid[r][c] = val;
+        else if (type === 'backwall') backWallGrid[r][c] = val;
+        else if (type === 'leftwall') leftWallGrid[r] = val;
+        else if (type === 'rightwall') rightWallGrid[r] = val;
+    }
+
+    function canPlaceItem(item, slotType) {
+        if (!item) return false;
+        if (item.name === 'eraser') return true;
+        if (item.wall) return slotType === 'backwall' || slotType === 'leftwall' || slotType === 'rightwall';
+        return slotType === 'floor';
+    }
+
+    // --- Color helpers ---
+    function darken(hex, amt) {
+        let n = parseInt(hex.replace('#', ''), 16);
+        let r = Math.max(0, (n >> 16) - amt), g = Math.max(0, ((n >> 8) & 0xFF) - amt), b = Math.max(0, (n & 0xFF) - amt);
+        return `rgb(${r},${g},${b})`;
+    }
+    function lighten(hex, amt) {
+        let n = parseInt(hex.replace('#', ''), 16);
+        let r = Math.min(255, (n >> 16) + amt), g = Math.min(255, ((n >> 8) & 0xFF) + amt), b = Math.min(255, (n & 0xFF) + amt);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    // ===================== ROOM DRAWING =====================
+
+    function drawRoom() {
+        // -- Ceiling trapezoid --
+        ctx.fillStyle = '#f2f0ec';
+        ctx.beginPath();
+        ctx.moveTo(RL, RT); ctx.lineTo(RR, RT); ctx.lineTo(BWR, BWT); ctx.lineTo(BWL, BWT);
+        ctx.closePath(); ctx.fill();
+        // Ceiling subtle lines
+        ctx.strokeStyle = 'rgba(200,195,185,0.18)';
+        ctx.lineWidth = 0.5;
+        for (let i = 1; i < 6; i++) {
+            const t = i / 6;
+            const y = RT + (BWT - RT) * t;
+            const lx = RL + (BWL - RL) * t;
+            const rx = RR + (BWR - RR) * t;
+            ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(rx, y); ctx.stroke();
+        }
+
+        // -- Left wall trapezoid --
+        const leftWallGrad = ctx.createLinearGradient(RL, 0, BWL, 0);
+        leftWallGrad.addColorStop(0, '#d8d2c8');
+        leftWallGrad.addColorStop(1, '#e4ddd3');
+        ctx.fillStyle = leftWallGrad;
+        ctx.beginPath();
+        ctx.moveTo(RL, RT); ctx.lineTo(BWL, BWT); ctx.lineTo(BWL, BWB); ctx.lineTo(RL, RB);
+        ctx.closePath(); ctx.fill();
+        // Left wall panel lines
+        ctx.strokeStyle = 'rgba(180,172,158,0.12)';
+        ctx.lineWidth = 0.5;
+        for (let i = 1; i < 4; i++) {
+            const t = i / 4;
+            const xTop = RL + (BWL - RL) * t;
+            const xBot = RL + (BWL - RL) * t;
+            const yTop = RT + (BWT - RT) * t;
+            const yBot = RB + (BWB - RB) * t;
+            ctx.beginPath(); ctx.moveTo(xTop, yTop); ctx.lineTo(xBot, yBot); ctx.stroke();
+        }
+
+        // -- Right wall trapezoid --
+        const rightWallGrad = ctx.createLinearGradient(BWR, 0, RR, 0);
+        rightWallGrad.addColorStop(0, '#e4ddd3');
+        rightWallGrad.addColorStop(1, '#d8d2c8');
+        ctx.fillStyle = rightWallGrad;
+        ctx.beginPath();
+        ctx.moveTo(BWR, BWT); ctx.lineTo(RR, RT); ctx.lineTo(RR, RB); ctx.lineTo(BWR, BWB);
+        ctx.closePath(); ctx.fill();
+        // Right wall panel lines
+        ctx.strokeStyle = 'rgba(180,172,158,0.12)';
+        for (let i = 1; i < 4; i++) {
+            const t = i / 4;
+            const xTop = BWR + (RR - BWR) * t;
+            const xBot = BWR + (RR - BWR) * t;
+            const yTop = BWT + (RT - BWT) * t;
+            const yBot = BWB + (RB - BWB) * t;
+            ctx.beginPath(); ctx.moveTo(xTop, yTop); ctx.lineTo(xBot, yBot); ctx.stroke();
+        }
+
+        // -- Back wall --
+        const backGrad = ctx.createLinearGradient(0, BWT, 0, BWB);
+        backGrad.addColorStop(0, '#ede8e0');
+        backGrad.addColorStop(0.5, '#e6e0d6');
+        backGrad.addColorStop(1, '#ddd6ca');
+        ctx.fillStyle = backGrad;
+        ctx.fillRect(BWL, BWT, BWR - BWL, BWB - BWT);
+        // Back wall subtle panel lines
+        ctx.strokeStyle = 'rgba(190,182,168,0.13)';
+        ctx.lineWidth = 0.5;
+        const panelW = (BWR - BWL) / 5;
+        for (let i = 1; i < 5; i++) {
+            ctx.beginPath(); ctx.moveTo(BWL + i * panelW, BWT); ctx.lineTo(BWL + i * panelW, BWB); ctx.stroke();
+        }
+        // Horizontal line mid
+        ctx.beginPath(); ctx.moveTo(BWL, (BWT + BWB) / 2); ctx.lineTo(BWR, (BWT + BWB) / 2); ctx.stroke();
+
+        // -- Window on back wall --
+        const winW = (BWR - BWL) * 0.28;
+        const winH = (BWB - BWT) * 0.52;
+        const winX = VPx - winW / 2;
+        const winY = BWT + (BWB - BWT) * 0.08;
+
+        // Light glow behind window
+        const glowG = ctx.createRadialGradient(VPx, winY + winH / 2, 10, VPx, winY + winH / 2, winW * 1.5);
+        glowG.addColorStop(0, 'rgba(255,248,220,0.22)');
+        glowG.addColorStop(1, 'rgba(255,248,220,0)');
+        ctx.fillStyle = glowG;
+        ctx.fillRect(winX - winW * 0.5, winY - winH * 0.3, winW * 2, winH * 1.8);
+
+        // Window frame outer
+        ctx.fillStyle = '#d8d0c2';
+        ctx.fillRect(winX - 4, winY - 4, winW + 8, winH + 8);
+        // Sky
+        const skyG = ctx.createLinearGradient(0, winY, 0, winY + winH);
+        skyG.addColorStop(0, '#87CEEB');
+        skyG.addColorStop(0.6, '#B0E0E6');
+        skyG.addColorStop(1, '#c8e6c9');
+        ctx.fillStyle = skyG;
+        ctx.fillRect(winX, winY, winW, winH);
+        // Clouds in window
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath(); ctx.arc(winX + winW * 0.3, winY + winH * 0.25, 6, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(winX + winW * 0.4, winY + winH * 0.22, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(winX + winW * 0.7, winY + winH * 0.35, 4, 0, Math.PI * 2); ctx.fill();
+        // Frame dividers
+        ctx.fillStyle = '#cec6b8';
+        ctx.fillRect(VPx - 1.5, winY, 3, winH);
+        ctx.fillRect(winX, winY + winH / 2 - 1.5, winW, 3);
+        // Curtains
+        ctx.fillStyle = 'rgba(140,130,118,0.18)';
+        ctx.beginPath();
+        ctx.moveTo(winX - 8, winY - 6);
+        ctx.quadraticCurveTo(winX - 14, winY + winH / 2, winX - 6, winY + winH + 4);
+        ctx.lineTo(winX - 2, winY + winH + 4);
+        ctx.quadraticCurveTo(winX - 8, winY + winH / 2, winX - 2, winY - 6);
+        ctx.closePath(); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(winX + winW + 8, winY - 6);
+        ctx.quadraticCurveTo(winX + winW + 14, winY + winH / 2, winX + winW + 6, winY + winH + 4);
+        ctx.lineTo(winX + winW + 2, winY + winH + 4);
+        ctx.quadraticCurveTo(winX + winW + 8, winY + winH / 2, winX + winW + 2, winY - 6);
+        ctx.closePath(); ctx.fill();
+        // Curtain rod
+        ctx.fillStyle = '#b0a898';
+        ctx.fillRect(winX - 16, winY - 8, winW + 32, 2.5);
+        ctx.beginPath(); ctx.arc(winX - 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(winX + winW + 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // Light rays from window onto floor
+        ctx.fillStyle = 'rgba(255,248,220,0.06)';
+        ctx.beginPath();
+        ctx.moveTo(winX, BWB);
+        ctx.lineTo(winX - 40, RB);
+        ctx.lineTo(winX + winW + 40, RB);
+        ctx.lineTo(winX + winW, BWB);
+        ctx.closePath(); ctx.fill();
+
+        // -- Baseboard (wall-floor junction) --
+        // Back wall baseboard
+        ctx.fillStyle = '#c4baa8';
+        ctx.fillRect(BWL, BWB - 3, BWR - BWL, 6);
+        // Left baseboard (perspective line)
+        ctx.beginPath();
+        ctx.moveTo(RL, RB); ctx.lineTo(BWL, BWB - 3); ctx.lineTo(BWL, BWB + 3); ctx.lineTo(RL, RB);
+        ctx.closePath(); ctx.fill();
+        // Right baseboard
+        ctx.beginPath();
+        ctx.moveTo(RR, RB); ctx.lineTo(BWR, BWB - 3); ctx.lineTo(BWR, BWB + 3); ctx.lineTo(RR, RB);
+        ctx.closePath(); ctx.fill();
+
+        // -- Floor trapezoid --
+        const floorG = ctx.createLinearGradient(0, BWB, 0, RB);
+        floorG.addColorStop(0, '#c9b898');
+        floorG.addColorStop(0.4, '#c0ad8a');
+        floorG.addColorStop(1, '#b5a078');
+        ctx.fillStyle = floorG;
+        ctx.beginPath();
+        ctx.moveTo(BWL, BWB); ctx.lineTo(BWR, BWB); ctx.lineTo(RR, RB); ctx.lineTo(RL, RB);
+        ctx.closePath(); ctx.fill();
+
+        // Floor plank lines (perspective convergence to VP)
+        ctx.strokeStyle = 'rgba(150,132,100,0.18)';
+        ctx.lineWidth = 0.5;
+        // Vertical planks converging to VP
+        const plankCount = 12;
+        for (let i = 0; i <= plankCount; i++) {
+            const frac = i / plankCount;
+            const botX = RL + (RR - RL) * frac;
+            const topX = BWL + (BWR - BWL) * frac;
+            ctx.beginPath(); ctx.moveTo(botX, RB); ctx.lineTo(topX, BWB); ctx.stroke();
+        }
+        // Horizontal plank lines
+        ctx.strokeStyle = 'rgba(150,132,100,0.13)';
+        for (let i = 1; i < 8; i++) {
+            const t = i / 8;
+            const y = BWB + (RB - BWB) * t;
+            const lx = BWL + (RL - BWL) * t;
+            const rx = BWR + (RR - BWR) * t;
+            ctx.beginPath(); ctx.moveTo(lx, y); ctx.lineTo(rx, y); ctx.stroke();
+        }
+
+        // -- Crown molding (wall-ceiling junction) --
+        ctx.strokeStyle = 'rgba(200,192,178,0.3)';
+        ctx.lineWidth = 1.5;
+        // Back wall top
+        ctx.beginPath(); ctx.moveTo(BWL, BWT); ctx.lineTo(BWR, BWT); ctx.stroke();
+        // Left wall top edge
+        ctx.beginPath(); ctx.moveTo(RL, RT); ctx.lineTo(BWL, BWT); ctx.stroke();
+        // Right wall top edge
+        ctx.beginPath(); ctx.moveTo(BWR, BWT); ctx.lineTo(RR, RT); ctx.stroke();
+    }
+
+    // ===================== FLOOR GRID DRAWING =====================
+
+    function drawFloorGrid() {
+        for (let r = 0; r < FLOOR_ROWS; r++) {
+            for (let c = 0; c < FLOOR_COLS; c++) {
+                const quad = getFloorSlotQuad(r, c);
+                const isHover = (hoverType === 'floor' && hoverR === r && hoverC === c);
+                const occupied = floorGrid[r][c];
+
+                // Draw grid cell outline
+                if (!occupied) {
+                    ctx.strokeStyle = isHover && selectedTool && !selectedTool.wall ? 'rgba(255,200,60,0.6)' : 'rgba(180,165,140,0.15)';
+                    ctx.lineWidth = isHover ? 1.5 : 0.5;
+                    if (!isHover) { ctx.setLineDash([3, 4]); }
+                    ctx.beginPath();
+                    ctx.moveTo(quad[0].x, quad[0].y);
+                    for (let i = 1; i < 4; i++) ctx.lineTo(quad[i].x, quad[i].y);
+                    ctx.closePath(); ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    if (isHover && selectedTool && !selectedTool.wall && selectedTool.name !== 'eraser') {
+                        // Highlight fill
+                        ctx.fillStyle = 'rgba(255,220,100,0.12)';
+                        ctx.beginPath();
+                        ctx.moveTo(quad[0].x, quad[0].y);
+                        for (let i = 1; i < 4; i++) ctx.lineTo(quad[i].x, quad[i].y);
+                        ctx.closePath(); ctx.fill();
+                    }
+                }
+            }
+        }
+    }
+
+    function drawBackWallGrid() {
+        for (let r = 0; r < BWALL_ROWS; r++) {
+            for (let c = 0; c < BWALL_COLS; c++) {
+                const rect = getBackWallSlotRect(r, c);
+                const isHover = (hoverType === 'backwall' && hoverR === r && hoverC === c);
+                const occupied = backWallGrid[r][c];
+
+                if (!occupied) {
+                    if (selectedTool && selectedTool.wall) {
+                        ctx.strokeStyle = isHover ? 'rgba(255,200,60,0.5)' : 'rgba(180,170,155,0.15)';
+                        ctx.lineWidth = isHover ? 1.5 : 0.5;
+                        if (!isHover) ctx.setLineDash([3, 3]);
+                        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+                        ctx.setLineDash([]);
+                    }
+                    if (isHover && selectedTool && selectedTool.wall && selectedTool.name !== 'eraser') {
+                        ctx.fillStyle = 'rgba(255,220,100,0.1)';
+                        ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+                    }
+                }
+            }
+        }
+    }
+
+    function drawSideWallSlots() {
+        for (let i = 0; i < SIDE_SLOTS; i++) {
+            const lq = getLeftWallSlotQuad(i);
+            const isLHover = (hoverType === 'leftwall' && hoverR === i);
+            if (!leftWallGrid[i] && selectedTool && selectedTool.wall) {
+                ctx.strokeStyle = isLHover ? 'rgba(255,200,60,0.5)' : 'rgba(180,170,155,0.12)';
+                ctx.lineWidth = isLHover ? 1.5 : 0.5;
+                if (!isLHover) ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(lq[0].x, lq[0].y);
+                for (let j = 1; j < 4; j++) ctx.lineTo(lq[j].x, lq[j].y);
+                ctx.closePath(); ctx.stroke();
+                ctx.setLineDash([]);
+            }
+
+            const rq = getRightWallSlotQuad(i);
+            const isRHover = (hoverType === 'rightwall' && hoverR === i);
+            if (!rightWallGrid[i] && selectedTool && selectedTool.wall) {
+                ctx.strokeStyle = isRHover ? 'rgba(255,200,60,0.5)' : 'rgba(180,170,155,0.12)';
+                ctx.lineWidth = isRHover ? 1.5 : 0.5;
+                if (!isRHover) ctx.setLineDash([3, 3]);
+                ctx.beginPath();
+                ctx.moveTo(rq[0].x, rq[0].y);
+                for (let j = 1; j < 4; j++) ctx.lineTo(rq[j].x, rq[j].y);
+                ctx.closePath(); ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
+    }
+
+    // ===================== ITEM DRAWING (PERSPECTIVE) =====================
+
+    function drawFloorItemAt(cx, cy, scale, item, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
+        // Draw item centered at 0,0
+        drawFloorItemShape(item);
+        ctx.restore();
+    }
+
+    function drawFloorItemShape(item) {
+        const rt = item.roofType;
+
+        if (rt === 'modern_sofa') {
+            // Sofa from front view
+            ctx.fillStyle = darken(item.baseColor, 15);
+            // Back
+            ctx.fillRect(-28, -22, 56, 12);
+            // Seat
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-28, -10, 56, 14);
+            // Cushion highlights
+            ctx.fillStyle = lighten(item.baseColor, 15);
+            ctx.fillRect(-26, -8, 24, 10);
+            ctx.fillRect(2, -8, 24, 10);
+            // Arm rests
+            ctx.fillStyle = darken(item.baseColor, 20);
+            ctx.fillRect(-32, -20, 5, 26);
+            ctx.fillRect(27, -20, 5, 26);
+            // Legs
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-28, 4, 3, 6);
+            ctx.fillRect(25, 4, 3, 6);
+            // Pillow
+            ctx.fillStyle = '#e8c9a0';
+            ctx.beginPath(); ctx.ellipse(-18, -14, 6, 4, -0.2, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'flat_tv') {
+            // TV on a stand
+            ctx.fillStyle = '#4a3a2a';
+            ctx.fillRect(-22, 0, 44, 10);
+            // Legs
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-18, 10, 3, 5);
+            ctx.fillRect(15, 10, 3, 5);
+            // TV screen
+            ctx.fillStyle = '#111';
+            ctx.fillRect(-20, -28, 40, 26);
+            const scrG = ctx.createLinearGradient(-18, -26, 18, 0);
+            scrG.addColorStop(0, '#1a237e');
+            scrG.addColorStop(0.5, '#283593');
+            scrG.addColorStop(1, '#1a237e');
+            ctx.fillStyle = scrG;
+            ctx.fillRect(-18, -26, 36, 22);
+            // Screen shimmer
+            ctx.fillStyle = 'rgba(100,200,255,0.12)';
+            ctx.fillRect(-16, -24, 32, 8);
+            // Stand neck
+            ctx.fillStyle = '#333';
+            ctx.fillRect(-2, -2, 4, 4);
+
+        } else if (rt === 'coffee_table') {
+            // Coffee table front view
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-20, -4, 40, 5);
+            // Legs (angled)
+            ctx.strokeStyle = '#8a7a6a';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(-16, 1); ctx.lineTo(-20, 14); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(16, 1); ctx.lineTo(20, 14); ctx.stroke();
+            // Magazine
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(-5, -7, 10, 3);
+
+        } else if (rt === 'floor_lamp') {
+            // Base
+            ctx.fillStyle = '#444';
+            ctx.beginPath(); ctx.ellipse(0, 14, 8, 3, 0, 0, Math.PI * 2); ctx.fill();
+            // Pole
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-1.5, -30, 3, 44);
+            // Shade
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-10, -40, 20, 12);
+            ctx.fillStyle = lighten(item.baseColor, 20);
+            ctx.beginPath(); ctx.ellipse(0, -40, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+            // Glow
+            const glow = ctx.createRadialGradient(0, -28, 2, 0, -28, 24);
+            glow.addColorStop(0, 'rgba(255,241,180,0.35)');
+            glow.addColorStop(1, 'rgba(255,241,180,0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(0, -28, 24, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'dining_table') {
+            // Table top
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-24, -4, 48, 5);
+            // Legs
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(-20, 1); ctx.lineTo(-22, 16); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(20, 1); ctx.lineTo(22, 16); ctx.stroke();
+            // Plates
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(-8, -7, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(8, -7, 5, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'modern_bed') {
+            // Headboard
+            ctx.fillStyle = '#5a4a3a';
+            ctx.fillRect(-26, -28, 52, 18);
+            // Mattress
+            ctx.fillStyle = '#f5f0e8';
+            ctx.fillRect(-26, -10, 52, 16);
+            // Duvet
+            ctx.fillStyle = item.baseColor;
+            ctx.globalAlpha *= 0.7;
+            ctx.fillRect(-24, -4, 48, 12);
+            ctx.globalAlpha /= 0.7;
+            // Pillows
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(-12, -16, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#f0f0f0';
+            ctx.beginPath(); ctx.ellipse(10, -16, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+            // Legs
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-26, 6, 3, 5);
+            ctx.fillRect(23, 6, 3, 5);
+
+        } else if (rt === 'desk_computer') {
+            // Desk surface
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-22, -2, 44, 5);
+            // Legs
+            ctx.fillStyle = '#666';
+            ctx.fillRect(-20, 3, 2, 12);
+            ctx.fillRect(18, 3, 2, 12);
+            // Monitor
+            ctx.fillStyle = '#222';
+            ctx.fillRect(-10, -22, 20, 16);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(-8, -20, 16, 12);
+            // Stand
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-1.5, -6, 3, 5);
+            ctx.fillRect(-5, -2, 10, 2);
+            // Keyboard
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-8, 0, 16, 3);
+
+        } else if (rt === 'bookshelf') {
+            // Shelf frame
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-16, -36, 32, 48);
+            ctx.fillStyle = darken(item.baseColor, 15);
+            ctx.strokeStyle = darken(item.baseColor, 25);
+            ctx.lineWidth = 0.5;
+            ctx.strokeRect(-16, -36, 32, 48);
+            // Shelves and books
+            const shelfColors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#f4511e'];
+            for (let shelf = 0; shelf < 4; shelf++) {
+                const sy = -32 + shelf * 12;
+                ctx.fillStyle = darken(item.baseColor, 10);
+                ctx.fillRect(-14, sy + 9, 28, 2);
+                for (let b = 0; b < 4; b++) {
+                    const bx = -12 + b * 7;
+                    const bh = 5 + (shelf * 3 + b) % 4;
+                    ctx.fillStyle = shelfColors[(shelf * 4 + b) % shelfColors.length];
+                    ctx.fillRect(bx, sy + 9 - bh, 5, bh);
+                }
+            }
+
+        } else if (rt === 'modern_plant') {
+            // Pot
+            ctx.fillStyle = '#e0e0e0';
+            ctx.beginPath();
+            ctx.moveTo(-8, 4); ctx.lineTo(8, 4); ctx.lineTo(6, 16); ctx.lineTo(-6, 16);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(-9, 2, 18, 3);
+            // Stem
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(0, 2); ctx.lineTo(0, -12); ctx.stroke();
+            // Leaves
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath(); ctx.ellipse(-7, -10, 6, 10, -0.3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#66BB6A';
+            ctx.beginPath(); ctx.ellipse(6, -14, 5, 8, 0.4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#43A047';
+            ctx.beginPath(); ctx.ellipse(-2, -20, 5, 7, -0.1, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'modern_rug') {
+            // Flat rug (draw as perspective rectangle on floor)
+            ctx.fillStyle = item.baseColor;
+            ctx.globalAlpha *= 0.75;
+            ctx.fillRect(-24, -6, 48, 12);
+            // Border
+            ctx.strokeStyle = darken(item.baseColor, 30);
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(-22, -4, 44, 8);
+            // Center pattern
+            ctx.fillStyle = darken(item.baseColor, 20);
+            ctx.beginPath();
+            ctx.moveTo(0, -4); ctx.lineTo(6, 0); ctx.lineTo(0, 4); ctx.lineTo(-6, 0);
+            ctx.closePath(); ctx.fill();
+            ctx.globalAlpha /= 0.75;
+        }
+
+        // Label
+        ctx.fillStyle = 'rgba(60,40,15,0.85)';
+        ctx.font = 'bold 9px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.name, 0, 24);
+    }
+
+    // ---- Wall item drawing (back wall, centered in slot) ----
+    function drawWallItemAt(cx, cy, slotW, slotH, item, alpha) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(cx, cy);
+        const sc = Math.min(slotW / 60, slotH / 50);
+        ctx.scale(sc, sc);
+        drawWallItemShape(item);
+        ctx.restore();
+    }
+
+    function drawWallItemShape(item) {
+        const rt = item.roofType;
+
+        if (rt === 'wall_painting') {
+            const pw = 34, ph = 24;
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(-pw / 2 + 2, -ph / 2 + 2, pw, ph);
+            ctx.fillStyle = '#3e3e3e';
+            ctx.fillRect(-pw / 2 - 2, -ph / 2 - 2, pw + 4, ph + 4);
+            ctx.fillStyle = '#f5f0e8';
+            ctx.fillRect(-pw / 2, -ph / 2, pw, ph);
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-pw / 2 + 2, -ph / 2 + 2, pw / 2 - 2, ph / 2 - 2);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(1, -ph / 2 + 2, pw / 2 - 2, ph / 2 - 2);
+            ctx.fillStyle = '#f39c12';
+            ctx.fillRect(-pw / 2 + 2, 1, pw / 2 - 2, ph / 2 - 2);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(1, 1, pw / 2 - 2, ph / 2 - 2);
+
+        } else if (rt === 'wall_shelf') {
+            const sw = 40;
+            ctx.fillStyle = '#8a7a6a';
+            ctx.fillRect(-10, 2, 2, 8);
+            ctx.fillRect(8, 2, 2, 8);
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(-sw / 2, 0, sw, 3);
+            ctx.fillStyle = darken(item.baseColor, 20);
+            ctx.fillRect(-sw / 2, 3, sw, 1);
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(-14, -10, 6, 10);
+            ctx.beginPath(); ctx.arc(-11, -10, 3.5, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(-3, -8, 4, 8);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(2, -9, 4, 9);
+            ctx.fillStyle = '#f5c542';
+            ctx.fillRect(12, -6, 2, 6);
+            ctx.fillStyle = '#ff9800';
+            ctx.beginPath(); ctx.arc(13, -7, 1.8, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'wall_clock') {
+            const rad = 14;
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.beginPath(); ctx.arc(1, 1, rad + 1, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = item.baseColor;
+            ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(0, 0, rad, 0, Math.PI * 2); ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(0, 0, rad - 2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#333';
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                ctx.beginPath(); ctx.arc(Math.cos(a) * (rad - 4), Math.sin(a) * (rad - 4), 1, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(4, -7); ctx.stroke();
+            ctx.strokeStyle = '#555'; ctx.lineWidth = 0.8;
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-2, -9); ctx.stroke();
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath(); ctx.arc(0, 0, 1.5, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'wall_mirror') {
+            const mw = 24, mh = 32;
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.fillRect(-mw / 2 + 2, -mh / 2 + 2, mw, mh);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-mw / 2 - 1.5, -mh / 2 - 1.5, mw + 3, mh + 3);
+            const mirG = ctx.createLinearGradient(-mw / 2, -mh / 2, mw / 2, mh / 2);
+            mirG.addColorStop(0, '#e8f4f8');
+            mirG.addColorStop(0.3, '#d0e8f0');
+            mirG.addColorStop(0.7, '#d5eaf2');
+            mirG.addColorStop(1, '#e0f0f5');
+            ctx.fillStyle = mirG;
+            ctx.fillRect(-mw / 2, -mh / 2, mw, mh);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.moveTo(-mw / 2 + 3, -mh / 2); ctx.lineTo(-mw / 2 + 7, -mh / 2);
+            ctx.lineTo(-mw / 2 + 3, mh / 2); ctx.lineTo(-mw / 2, mh / 2);
+            ctx.closePath(); ctx.fill();
+
+        } else if (rt === 'wall_tv') {
+            const tw = 48, th = 28;
+            ctx.fillStyle = 'rgba(0,0,0,0.12)';
+            ctx.fillRect(-tw / 2 + 2, -th / 2 + 2, tw, th);
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(-tw / 2, -th / 2, tw, th);
+            const scrG = ctx.createLinearGradient(-tw / 2 + 2, -th / 2 + 2, tw / 2 - 2, th / 2 - 2);
+            scrG.addColorStop(0, '#1a237e');
+            scrG.addColorStop(0.5, '#283593');
+            scrG.addColorStop(1, '#1a237e');
+            ctx.fillStyle = scrG;
+            ctx.fillRect(-tw / 2 + 2, -th / 2 + 2, tw - 4, th - 4);
+            ctx.fillStyle = 'rgba(100,180,255,0.15)';
+            ctx.fillRect(-tw / 2 + 4, -th / 2 + 4, tw - 8, th / 2 - 4);
+            ctx.fillStyle = 'rgba(50,200,100,0.12)';
+            ctx.fillRect(-tw / 2 + 4, 0, tw - 8, th / 2 - 4);
+            ctx.fillStyle = '#444';
+            ctx.fillRect(-3, th / 2, 6, 3);
+
+        } else if (rt === 'wall_sconce') {
+            ctx.fillStyle = '#888';
+            ctx.fillRect(-3, -2, 6, 10);
+            ctx.fillStyle = '#777';
+            ctx.fillRect(-1, -8, 2, 8);
+            ctx.fillStyle = '#f5f0e0';
+            ctx.beginPath();
+            ctx.moveTo(-9, -8); ctx.lineTo(9, -8); ctx.lineTo(6, -16); ctx.lineTo(-6, -16);
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#ddd'; ctx.lineWidth = 0.5; ctx.stroke();
+            const glow = ctx.createRadialGradient(0, -12, 2, 0, -12, 20);
+            glow.addColorStop(0, 'rgba(255,241,118,0.35)');
+            glow.addColorStop(1, 'rgba(255,241,118,0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(0, -12, 20, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Label
+        ctx.fillStyle = 'rgba(60,40,15,0.8)';
+        ctx.font = 'bold 8px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.name, 0, 24);
+    }
+
+    // Draw side-wall item with perspective skew
+    function drawSideWallItemAt(quad, item, alpha) {
+        const center = getSideWallSlotCenter(quad);
+        const slotW = Math.abs(quad[1].x - quad[0].x);
+        const slotH = Math.abs(quad[2].y - quad[0].y);
+        // Just draw it centered with a scale, slight skew effect via simple scale
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(center.x, center.y);
+        const sc = Math.min(slotW / 70, slotH / 60) * 0.8;
+        ctx.scale(sc, sc);
+        drawWallItemShape(item);
+        ctx.restore();
+    }
+
+    // ===================== PLACED ITEMS DRAWING =====================
+
+    function drawPlacedItems() {
+        // Back wall items (drawn first, behind floor items)
+        for (let r = 0; r < BWALL_ROWS; r++) {
+            for (let c = 0; c < BWALL_COLS; c++) {
+                if (backWallGrid[r][c]) {
+                    const rect = getBackWallSlotRect(r, c);
+                    drawWallItemAt(rect.cx, rect.cy, rect.w, rect.h, backWallGrid[r][c], 1);
+                }
+            }
+        }
+
+        // Side wall items
+        for (let i = 0; i < SIDE_SLOTS; i++) {
+            if (leftWallGrid[i]) {
+                drawSideWallItemAt(getLeftWallSlotQuad(i), leftWallGrid[i], 1);
+            }
+            if (rightWallGrid[i]) {
+                drawSideWallItemAt(getRightWallSlotQuad(i), rightWallGrid[i], 1);
+            }
+        }
+
+        // Floor items (back to front for correct overlap)
+        for (let r = 0; r < FLOOR_ROWS; r++) {
+            for (let c = 0; c < FLOOR_COLS; c++) {
+                if (floorGrid[r][c]) {
+                    const center = getFloorSlotCenter(r, c);
+                    const scale = getFloorSlotScale(r);
+                    drawFloorItemAt(center.x, center.y, scale, floorGrid[r][c], 1);
+                }
+            }
+        }
+    }
+
+    // ===================== GHOST PREVIEWS =====================
+
+    function drawGhostPreviews() {
+        if (!selectedTool || selectedTool.name === 'eraser') return;
+
+        if (hoverType === 'floor' && !selectedTool.wall) {
+            const center = getFloorSlotCenter(hoverR, hoverC);
+            const scale = getFloorSlotScale(hoverR);
+            if (!floorGrid[hoverR][hoverC]) {
+                drawFloorItemAt(center.x, center.y, scale, selectedTool, 0.4);
+            }
+        } else if (hoverType === 'backwall' && selectedTool.wall) {
+            const rect = getBackWallSlotRect(hoverR, hoverC);
+            if (!backWallGrid[hoverR][hoverC]) {
+                drawWallItemAt(rect.cx, rect.cy, rect.w, rect.h, selectedTool, 0.4);
+            }
+        } else if (hoverType === 'leftwall' && selectedTool.wall) {
+            if (!leftWallGrid[hoverR]) {
+                drawSideWallItemAt(getLeftWallSlotQuad(hoverR), selectedTool, 0.4);
+            }
+        } else if (hoverType === 'rightwall' && selectedTool.wall) {
+            if (!rightWallGrid[hoverR]) {
+                drawSideWallItemAt(getRightWallSlotQuad(hoverR), selectedTool, 0.4);
+            }
+        }
+    }
+
+    // Eraser hover indicator
+    function drawEraserHover() {
+        if (!selectedTool || selectedTool.name !== 'eraser' || !hoverType) return;
+        const occupied = getGridAt(hoverType, hoverR, hoverC);
+        if (!occupied) return;
+
+        let cx, cy;
+        if (hoverType === 'floor') {
+            const center = getFloorSlotCenter(hoverR, hoverC);
+            cx = center.x; cy = center.y;
+        } else if (hoverType === 'backwall') {
+            const rect = getBackWallSlotRect(hoverR, hoverC);
+            cx = rect.cx; cy = rect.cy;
+        } else if (hoverType === 'leftwall') {
+            const center = getSideWallSlotCenter(getLeftWallSlotQuad(hoverR));
+            cx = center.x; cy = center.y;
+        } else if (hoverType === 'rightwall') {
+            const center = getSideWallSlotCenter(getRightWallSlotQuad(hoverR));
+            cx = center.x; cy = center.y;
+        }
+        if (cx !== undefined) {
+            ctx.fillStyle = 'rgba(255,0,0,0.4)';
+            ctx.font = '22px serif'; ctx.textAlign = 'center';
+            ctx.fillText('\uD83D\uDDD1\uFE0F', cx, cy + 6);
+        }
+    }
+
+    // ===================== RENDER LOOP =====================
+
+    function render() {
+        ctx.clearRect(0, 0, W, H);
+        drawRoom();
+        drawBackWallGrid();
+        drawSideWallSlots();
+        drawPlacedItems();
+        drawFloorGrid();
+        drawGhostPreviews();
+        drawEraserHover();
+        animFrame = requestAnimationFrame(render);
+    }
+
+    // ===================== INPUT =====================
+
+    function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const sx = W / rect.width, sy = H / rect.height;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: (cx - rect.left) * sx, y: (cy - rect.top) * sy };
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        const pos = getMousePos(e);
+        const hit = hitTest(pos.x, pos.y);
+        if (hit) {
+            hoverType = hit.type;
+            hoverR = hit.r;
+            hoverC = hit.c;
+        } else {
+            hoverType = null;
+            hoverR = -1;
+            hoverC = -1;
+        }
+    });
+
+    function handlePlace(e) {
+        const pos = getMousePos(e);
+        const hit = hitTest(pos.x, pos.y);
+        if (!hit || !selectedTool) return;
+
+        if (selectedTool.name === 'eraser') {
+            const existing = getGridAt(hit.type, hit.r, hit.c);
+            if (existing) {
+                setGridAt(hit.type, hit.r, hit.c, null);
+                placedCount--;
+                addScore(-5);
+            }
+            return;
+        }
+
+        if (!canPlaceItem(selectedTool, hit.type)) return;
+        if (getGridAt(hit.type, hit.r, hit.c)) return;
+
+        setGridAt(hit.type, hit.r, hit.c, selectedTool);
+        placedCount++;
+        addScore(10);
+    }
+
+    canvas.addEventListener('click', handlePlace);
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePlace(e); });
+
+    // ===================== TOOLBAR =====================
+
+    controls.innerHTML = '<div class="toolbar" id="arq-toolbar"></div>';
+    const toolbar = document.getElementById('arq-toolbar');
+
+    items.forEach(b => {
+        const item = document.createElement('div');
+        item.className = 'tool-item';
+        const wallTag = b.wall ? ' <span style="font-size:0.5rem;opacity:0.6">PARED</span>' : '';
+        item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}${wallTag}</span>`;
+        item.onclick = () => {
+            document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
+            item.classList.add('selected');
+            selectedTool = b;
+        };
+        toolbar.appendChild(item);
+    });
+
+    const eraser = document.createElement('div');
+    eraser.className = 'tool-item';
+    eraser.innerHTML = `<span class="tool-icon">\uD83D\uDDD1\uFE0F</span><span class="tool-label">Borrar</span>`;
+    eraser.onclick = () => {
+        document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
+        eraser.classList.add('selected');
+        selectedTool = { name: 'eraser' };
+    };
+    toolbar.appendChild(eraser);
+
+    const finishBtn = document.createElement('div');
+    finishBtn.className = 'tool-item';
+    finishBtn.style.background = 'linear-gradient(135deg, #43e97b44, #38f9d744)';
+    finishBtn.style.borderColor = '#43e97b';
+    finishBtn.innerHTML = `<span class="tool-icon">\u2705</span><span class="tool-label">Terminar</span>`;
+    finishBtn.onclick = () => {
+        const uniqueTypes = new Set();
+        for (let r = 0; r < FLOOR_ROWS; r++)
+            for (let c = 0; c < FLOOR_COLS; c++)
+                if (floorGrid[r][c]) uniqueTypes.add(floorGrid[r][c].name);
+        for (let r = 0; r < BWALL_ROWS; r++)
+            for (let c = 0; c < BWALL_COLS; c++)
+                if (backWallGrid[r][c]) uniqueTypes.add(backWallGrid[r][c].name);
+        for (let i = 0; i < SIDE_SLOTS; i++) {
+            if (leftWallGrid[i]) uniqueTypes.add(leftWallGrid[i].name);
+            if (rightWallGrid[i]) uniqueTypes.add(rightWallGrid[i].name);
+        }
+        addScore(uniqueTypes.size * 15);
+        let stars = placedCount >= 15 ? 5 : placedCount >= 10 ? 4 : placedCount >= 6 ? 3 : placedCount >= 3 ? 2 : 1;
+        let starsHtml = '';
+        for (let i = 0; i < 5; i++) starsHtml += `<span class="star ${i < stars ? 'filled' : 'empty'}">\u2605</span>`;
+        cancelAnimationFrame(animFrame);
+        showResult(ARQ_FINISH_MSG[subtype], `<div class="stars">${starsHtml}</div>`,
+            `Has colocado ${placedCount} elementos con ${uniqueTypes.size} tipos diferentes.`,
+            () => startInterioresFP(subtype));
+    };
+    toolbar.appendChild(finishBtn);
+
+    // Goal
+    ui.innerHTML = `<div style="padding: 8px 14px; font-size: 0.7rem; color: rgba(255,255,255,0.8); text-align: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);">
+        ${ARQ_GOALS[subtype]}
+    </div>`;
+    ui.style.pointerEvents = 'none';
+
+    render();
+
+    currentGame = {
+        cleanup: () => {
+            cancelAnimationFrame(animFrame);
+            canvas.style.display = 'none';
+            ui.innerHTML = '';
+            ui.style.pointerEvents = '';
+            controls.innerHTML = '';
+        }
+    };
+}
+
+// ============ MOTOR ISOMETRICO GENERICO (urbanismo, paisajismo, sostenible) ============
 
 function startIso3D(subtype) {
     const canvas = document.getElementById('game-canvas');
@@ -111,19 +1217,8 @@ function startIso3D(subtype) {
     let placedCount = 0;
     let animFrame;
 
-    // For interiores wall items, we use a separate wall grid
-    const WALL_SLOTS = 8; // number of wall placement slots
-    const wallGrid = Array(WALL_SLOTS).fill(null);
-    let hoverWall = -1;
-
     const originX = W / 2;
-    const originY = subtype === 'interiores' ? 90 : 60;
-
-    // Wall region for interiores (the back wall area)
-    const wallTop = 15;
-    const wallBottom = originY - 12;
-    const wallLeft = 20;
-    const wallRight = W - 20;
+    const originY = 60;
 
     function toIso(r, c) {
         return { x: originX + (c - r) * (TILE_W / 2), y: originY + (c + r) * (TILE_H / 2) };
@@ -136,23 +1231,6 @@ function startIso3D(subtype) {
         const ri = Math.floor(r), ci = Math.floor(c);
         if (ri >= 0 && ri < GRID && ci >= 0 && ci < GRID) return { r: ri, c: ci };
         return null;
-    }
-
-    // Wall slot positioning for interiores
-    function getWallSlotPos(index) {
-        const slotW = (wallRight - wallLeft) / WALL_SLOTS;
-        const cx = wallLeft + slotW * index + slotW / 2;
-        const cy = (wallTop + wallBottom) / 2;
-        return { x: cx, y: cy };
-    }
-
-    function fromScreenWall(mx, my) {
-        if (my < wallTop || my > wallBottom + 5) return -1;
-        if (mx < wallLeft || mx > wallRight) return -1;
-        const slotW = (wallRight - wallLeft) / WALL_SLOTS;
-        const idx = Math.floor((mx - wallLeft) / slotW);
-        if (idx >= 0 && idx < WALL_SLOTS) return idx;
-        return -1;
     }
 
     // ========== COLOR UTILS ==========
@@ -200,175 +1278,26 @@ function startIso3D(subtype) {
         ctx.lineTo(W, originY+50); ctx.lineTo(0, originY+50); ctx.fill();
     }
 
-    function drawBgInteriores() {
-        // === IMMERSIVE ROOM VIEW ===
-        // Ceiling
-        ctx.fillStyle = '#f8f8f8';
-        ctx.fillRect(0, 0, W, 12);
-
-        // Back wall - main surface
-        const wallGrad = ctx.createLinearGradient(0, 0, 0, wallBottom);
-        wallGrad.addColorStop(0, '#f0ebe3');
-        wallGrad.addColorStop(0.5, '#e8e0d4');
-        wallGrad.addColorStop(1, '#ddd5c8');
-        ctx.fillStyle = wallGrad;
-        ctx.fillRect(0, 8, W, wallBottom - 8);
-
-        // Subtle wall texture - horizontal lines
-        ctx.strokeStyle = 'rgba(200, 190, 175, 0.15)';
-        ctx.lineWidth = 0.5;
-        for (let yy = 15; yy < wallBottom; yy += 12) {
-            ctx.beginPath();
-            ctx.moveTo(0, yy);
-            ctx.lineTo(W, yy);
-            ctx.stroke();
-        }
-
-        // Subtle vertical panel lines on wall
-        ctx.strokeStyle = 'rgba(190, 180, 165, 0.1)';
-        ctx.lineWidth = 0.5;
-        for (let xx = 0; xx < W; xx += 60) {
-            ctx.beginPath();
-            ctx.moveTo(xx, 10);
-            ctx.lineTo(xx, wallBottom);
-            ctx.stroke();
-        }
-
-        // Window on back wall with light effect
-        const winX = W / 2 - 40;
-        const winY = 18;
-        const winW = 80;
-        const winH = 48;
-
-        // Window light glow behind
-        const glowGrad = ctx.createRadialGradient(winX + winW/2, winY + winH/2, 10, winX + winW/2, winY + winH/2, 80);
-        glowGrad.addColorStop(0, 'rgba(255, 248, 220, 0.25)');
-        glowGrad.addColorStop(1, 'rgba(255, 248, 220, 0)');
-        ctx.fillStyle = glowGrad;
-        ctx.fillRect(winX - 40, winY - 20, winW + 80, winH + 60);
-
-        // Window frame outer
-        ctx.fillStyle = '#e0d8cc';
-        ctx.fillRect(winX - 4, winY - 4, winW + 8, winH + 8);
-
-        // Window sky
-        const skyGrad = ctx.createLinearGradient(0, winY, 0, winY + winH);
-        skyGrad.addColorStop(0, '#87CEEB');
-        skyGrad.addColorStop(0.6, '#B0E0E6');
-        skyGrad.addColorStop(1, '#c8e6c9');
-        ctx.fillStyle = skyGrad;
-        ctx.fillRect(winX, winY, winW, winH);
-
-        // Window frame dividers
-        ctx.fillStyle = '#d8d0c4';
-        ctx.fillRect(winX + winW/2 - 1.5, winY, 3, winH); // vertical
-        ctx.fillRect(winX, winY + winH/2 - 1.5, winW, 3); // horizontal
-
-        // Light rays from window onto floor
-        ctx.fillStyle = 'rgba(255, 248, 220, 0.08)';
-        ctx.beginPath();
-        ctx.moveTo(winX, winY + winH);
-        ctx.lineTo(winX - 30, originY + 60);
-        ctx.lineTo(winX + winW + 30, originY + 60);
-        ctx.lineTo(winX + winW, winY + winH);
-        ctx.closePath();
-        ctx.fill();
-
-        // Curtains
-        ctx.fillStyle = 'rgba(120, 130, 150, 0.2)';
-        // Left curtain
-        ctx.beginPath();
-        ctx.moveTo(winX - 8, winY - 6);
-        ctx.quadraticCurveTo(winX - 14, winY + winH/2, winX - 6, winY + winH + 4);
-        ctx.lineTo(winX - 2, winY + winH + 4);
-        ctx.quadraticCurveTo(winX - 8, winY + winH/2, winX - 2, winY - 6);
-        ctx.closePath();
-        ctx.fill();
-        // Right curtain
-        ctx.beginPath();
-        ctx.moveTo(winX + winW + 8, winY - 6);
-        ctx.quadraticCurveTo(winX + winW + 14, winY + winH/2, winX + winW + 6, winY + winH + 4);
-        ctx.lineTo(winX + winW + 2, winY + winH + 4);
-        ctx.quadraticCurveTo(winX + winW + 8, winY + winH/2, winX + winW + 2, winY - 6);
-        ctx.closePath();
-        ctx.fill();
-
-        // Curtain rod
-        ctx.fillStyle = '#b0a898';
-        ctx.fillRect(winX - 16, winY - 8, winW + 32, 2.5);
-        // Rod ends
-        ctx.beginPath(); ctx.arc(winX - 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(winX + winW + 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
-
-        // Baseboard (where wall meets floor)
-        ctx.fillStyle = '#c8bfb0';
-        ctx.fillRect(0, wallBottom - 2, W, 8);
-        // Baseboard shadow
-        ctx.fillStyle = 'rgba(0,0,0,0.05)';
-        ctx.fillRect(0, wallBottom + 6, W, 2);
-
-        // Floor - modern light wood / grey tiles
-        const floorG = ctx.createLinearGradient(0, wallBottom + 6, 0, H);
-        floorG.addColorStop(0, '#d4c4a8');
-        floorG.addColorStop(0.3, '#c9b898');
-        floorG.addColorStop(1, '#b8a585');
-        ctx.fillStyle = floorG;
-        ctx.fillRect(0, wallBottom + 6, W, H - wallBottom - 6);
-
-        // Floor plank lines (perspective effect)
-        ctx.strokeStyle = 'rgba(160, 140, 110, 0.2)';
-        ctx.lineWidth = 0.5;
-        // Horizontal plank lines
-        for (let yy = wallBottom + 16; yy < H; yy += 14) {
-            ctx.beginPath();
-            ctx.moveTo(0, yy);
-            ctx.lineTo(W, yy);
-            ctx.stroke();
-        }
-        // Vertical plank lines with perspective convergence
-        const vanishX = W / 2;
-        const vanishY = wallBottom - 20;
-        ctx.strokeStyle = 'rgba(160, 140, 110, 0.12)';
-        for (let xx = 0; xx < W; xx += 30) {
-            ctx.beginPath();
-            ctx.moveTo(xx, H);
-            // Lines converge slightly toward vanishing point
-            const targetX = xx + (vanishX - xx) * 0.15;
-            ctx.lineTo(targetX, wallBottom + 6);
-            ctx.stroke();
-        }
-
-        // Wall slot indicators (subtle) for wall items
-        ctx.strokeStyle = 'rgba(180, 170, 155, 0.0)'; // invisible unless hovering
-        // We draw hover indicators in the render loop instead
-    }
-
     function drawBgPaisajismo() {
-        // Garden / park background
         const g = ctx.createLinearGradient(0, 0, 0, H);
         g.addColorStop(0, '#4FC3F7'); g.addColorStop(0.25, '#81D4FA'); g.addColorStop(0.4, '#A5D6A7'); g.addColorStop(1, '#2E7D32');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        // Sun
         ctx.fillStyle = '#FFF176'; ctx.beginPath(); ctx.arc(60, 30, 20, 0, Math.PI*2); ctx.fill();
         ctx.fillStyle = '#FFEE58'; ctx.beginPath(); ctx.arc(60, 30, 14, 0, Math.PI*2); ctx.fill();
         drawCloud(W*0.5, 20, 0.6); drawCloud(W*0.8, 30, 0.4);
-        // Distant trees
         ctx.fillStyle = '#388E3C';
         for (let x = 0; x < W; x += 25) {
             const th = 12 + Math.sin(x*0.1)*5;
             ctx.beginPath(); ctx.arc(x, originY - 8, th, 0, Math.PI*2); ctx.fill();
         }
-        // Ground
         ctx.fillStyle = '#43A047';
         ctx.fillRect(0, originY - 5, W, H);
     }
 
     function drawBgSostenible() {
-        // Eco / green futuristic
         const g = ctx.createLinearGradient(0, 0, 0, H);
         g.addColorStop(0, '#E0F7FA'); g.addColorStop(0.3, '#B2EBF2'); g.addColorStop(0.5, '#C8E6C9'); g.addColorStop(1, '#1B5E20');
         ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-        // Sun with rays
         ctx.fillStyle = '#FFB300'; ctx.beginPath(); ctx.arc(W-50, 30, 18, 0, Math.PI*2); ctx.fill();
         for (let a = 0; a < Math.PI*2; a += 0.5) {
             ctx.strokeStyle = '#FFD54F'; ctx.lineWidth = 1.5;
@@ -376,18 +1305,16 @@ function startIso3D(subtype) {
             ctx.lineTo(W-50+Math.cos(a)*30, 30+Math.sin(a)*30); ctx.stroke();
         }
         drawCloud(40, 20, 0.5); drawCloud(W*0.4, 12, 0.4);
-        // Rolling hills
         ctx.fillStyle = '#4CAF50'; ctx.beginPath(); ctx.moveTo(0, originY);
         for (let x = 0; x <= W; x += 20) ctx.lineTo(x, originY - 3 + Math.sin(x*0.03)*6);
         ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
     }
 
-    const bgDrawers = { urbanismo: drawBgUrbanismo, interiores: drawBgInteriores, paisajismo: drawBgPaisajismo, sostenible: drawBgSostenible };
+    const bgDrawers = { urbanismo: drawBgUrbanismo, paisajismo: drawBgPaisajismo, sostenible: drawBgSostenible };
 
     // ========== TILE STYLE PER MODE ==========
     function getTileColors(isHover) {
         switch (subtype) {
-            case 'interiores': return { base: isHover ? '#d4a76a' : '#c49a6c', border: isHover ? '#a0724a' : '#b8906088' };
             case 'paisajismo': return { base: isHover ? '#66BB6A' : '#4CAF50', border: isHover ? '#2E7D32' : '#388E3C' };
             case 'sostenible': return { base: isHover ? '#81C784' : '#66BB6A', border: isHover ? '#2E7D32' : '#43A047' };
             default: return { base: isHover ? '#66BB6A' : '#4CAF50', border: isHover ? '#558B2F' : '#388E3C' };
@@ -396,7 +1323,6 @@ function startIso3D(subtype) {
 
     function getOccupiedTileColor() {
         switch (subtype) {
-            case 'interiores': return '#c49a6c';
             case 'paisajismo': return '#A5D6A7';
             case 'sostenible': return '#A5D6A7';
             default: return '#A5D6A7';
@@ -406,13 +1332,10 @@ function startIso3D(subtype) {
     // ========== 3D BOX HELPER ==========
     function drawBox(x, y, bw, bh, color) {
         const hw = TILE_W / 2, hh = TILE_H / 2;
-        // Left
         ctx.beginPath(); ctx.moveTo(x-hw, y+hh); ctx.lineTo(x, y+TILE_H); ctx.lineTo(x, y+TILE_H-bh); ctx.lineTo(x-hw, y+hh-bh); ctx.closePath();
         ctx.fillStyle = darken(color, 25); ctx.fill(); ctx.strokeStyle = darken(color, 50); ctx.lineWidth = 0.5; ctx.stroke();
-        // Right
         ctx.beginPath(); ctx.moveTo(x, y+TILE_H); ctx.lineTo(x+hw, y+hh); ctx.lineTo(x+hw, y+hh-bh); ctx.lineTo(x, y+TILE_H-bh); ctx.closePath();
         ctx.fillStyle = darken(color, 45); ctx.fill(); ctx.strokeStyle = darken(color, 70); ctx.lineWidth = 0.5; ctx.stroke();
-        // Top
         ctx.beginPath(); ctx.moveTo(x, y+TILE_H-bh); ctx.lineTo(x+hw, y+hh-bh); ctx.lineTo(x, y-bh); ctx.lineTo(x-hw, y+hh-bh); ctx.closePath();
         ctx.fillStyle = lighten(color, 20); ctx.fill();
     }
@@ -424,196 +1347,18 @@ function startIso3D(subtype) {
         const floorH = 14;
         const totalH = (item.floors || 0) * floorH;
 
-        // === URBANISMO ITEMS ===
         if (subtype === 'urbanismo') {
             drawUrbanismoItem(x, y, hw, hh, floorH, totalH, item);
-        }
-        // === INTERIORES ITEMS (floor only) ===
-        else if (subtype === 'interiores') {
-            drawInterioresItem(x, y, hw, hh, item);
-        }
-        // === PAISAJISMO ITEMS ===
-        else if (subtype === 'paisajismo') {
+        } else if (subtype === 'paisajismo') {
             drawPaisajismoItem(x, y, hw, hh, item);
-        }
-        // === SOSTENIBLE ITEMS ===
-        else if (subtype === 'sostenible') {
+        } else if (subtype === 'sostenible') {
             drawSostenibleItem(x, y, hw, hh, floorH, totalH, item);
         }
 
-        // Label
-        ctx.fillStyle = subtype === 'interiores' ? 'rgba(80,50,20,0.85)' : 'rgba(255,255,255,0.85)';
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
         ctx.font = 'bold 7px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(item.name, x, y + TILE_H + 8);
-    }
-
-    // Draw wall item at a wall slot position
-    function drawWallItem(index, item) {
-        const { x, y } = getWallSlotPos(index);
-        const rt = item.roofType;
-
-        if (rt === 'wall_painting') {
-            // Modern art painting with frame
-            const pw = 30, ph = 22;
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(x - pw/2 + 2, y - ph/2 + 2, pw, ph);
-            // Frame
-            ctx.fillStyle = '#3e3e3e';
-            ctx.fillRect(x - pw/2 - 2, y - ph/2 - 2, pw + 4, ph + 4);
-            // Canvas
-            ctx.fillStyle = '#f5f0e8';
-            ctx.fillRect(x - pw/2, y - ph/2, pw, ph);
-            // Abstract art - colored blocks
-            ctx.fillStyle = item.baseColor;
-            ctx.fillRect(x - pw/2 + 2, y - ph/2 + 2, pw/2 - 2, ph/2 - 2);
-            ctx.fillStyle = '#3498db';
-            ctx.fillRect(x, y - ph/2 + 2, pw/2 - 2, ph/2 - 2);
-            ctx.fillStyle = '#f39c12';
-            ctx.fillRect(x - pw/2 + 2, y, pw/2 - 2, ph/2 - 2);
-            ctx.fillStyle = '#2ecc71';
-            ctx.fillRect(x, y, pw/2 - 2, ph/2 - 2);
-        } else if (rt === 'wall_shelf') {
-            // Floating shelf with items
-            const sw = 36, sh = 3;
-            // Shelf bracket
-            ctx.fillStyle = '#8a7a6a';
-            ctx.fillRect(x - 8, y + 2, 2, 6);
-            ctx.fillRect(x + 6, y + 2, 2, 6);
-            // Shelf
-            ctx.fillStyle = item.baseColor;
-            ctx.fillRect(x - sw/2, y, sw, sh);
-            ctx.fillStyle = darken(item.baseColor, 20);
-            ctx.fillRect(x - sw/2, y + sh, sw, 1);
-            // Items on shelf: small vase, book, candle
-            ctx.fillStyle = '#e0e0e0';
-            ctx.fillRect(x - 12, y - 8, 5, 8); // vase
-            ctx.beginPath(); ctx.arc(x - 9.5, y - 8, 3, Math.PI, 0); ctx.fill();
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(x - 2, y - 6, 3, 6); // book
-            ctx.fillStyle = '#3498db';
-            ctx.fillRect(x + 2, y - 7, 3, 7); // book
-            ctx.fillStyle = '#f5c542';
-            ctx.fillRect(x + 10, y - 5, 2, 5); // candle
-            ctx.fillStyle = '#ff9800';
-            ctx.beginPath(); ctx.arc(x + 11, y - 6, 1.5, 0, Math.PI * 2); ctx.fill(); // flame
-        } else if (rt === 'wall_clock') {
-            // Modern round clock
-            const r = 12;
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.08)';
-            ctx.beginPath(); ctx.arc(x + 1, y + 1, r + 1, 0, Math.PI * 2); ctx.fill();
-            // Clock body
-            ctx.fillStyle = item.baseColor;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-            // Rim
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
-            // Inner face
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.arc(x, y, r - 2, 0, Math.PI * 2); ctx.fill();
-            // Hour markers
-            ctx.fillStyle = '#333';
-            for (let i = 0; i < 12; i++) {
-                const a = i * Math.PI / 6;
-                const mx = x + Math.cos(a) * (r - 4);
-                const my = y + Math.sin(a) * (r - 4);
-                ctx.beginPath(); ctx.arc(mx, my, 0.8, 0, Math.PI * 2); ctx.fill();
-            }
-            // Hands
-            ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2;
-            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 4, y - 6); ctx.stroke(); // hour
-            ctx.strokeStyle = '#555'; ctx.lineWidth = 0.8;
-            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2, y - 8); ctx.stroke(); // minute
-            // Center dot
-            ctx.fillStyle = '#e74c3c';
-            ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI * 2); ctx.fill();
-        } else if (rt === 'wall_mirror') {
-            // Modern rectangular mirror
-            const mw = 22, mh = 30;
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.08)';
-            ctx.fillRect(x - mw/2 + 2, y - mh/2 + 2, mw, mh);
-            // Frame - thin modern
-            ctx.fillStyle = '#555';
-            ctx.fillRect(x - mw/2 - 1.5, y - mh/2 - 1.5, mw + 3, mh + 3);
-            // Mirror surface
-            const mirGrad = ctx.createLinearGradient(x - mw/2, y - mh/2, x + mw/2, y + mh/2);
-            mirGrad.addColorStop(0, '#e8f4f8');
-            mirGrad.addColorStop(0.3, '#d0e8f0');
-            mirGrad.addColorStop(0.5, '#c0dce8');
-            mirGrad.addColorStop(0.7, '#d5eaf2');
-            mirGrad.addColorStop(1, '#e0f0f5');
-            ctx.fillStyle = mirGrad;
-            ctx.fillRect(x - mw/2, y - mh/2, mw, mh);
-            // Shine streak
-            ctx.fillStyle = 'rgba(255,255,255,0.4)';
-            ctx.beginPath();
-            ctx.moveTo(x - mw/2 + 3, y - mh/2);
-            ctx.lineTo(x - mw/2 + 7, y - mh/2);
-            ctx.lineTo(x - mw/2 + 3, y + mh/2);
-            ctx.lineTo(x - mw/2, y + mh/2);
-            ctx.closePath();
-            ctx.fill();
-        } else if (rt === 'wall_tv') {
-            // Large wall-mounted flat screen TV
-            const tw = 44, th = 26;
-            // Shadow
-            ctx.fillStyle = 'rgba(0,0,0,0.12)';
-            ctx.fillRect(x - tw/2 + 2, y - th/2 + 2, tw, th);
-            // TV body
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(x - tw/2, y - th/2, tw, th);
-            // Screen
-            const scrGrad = ctx.createLinearGradient(x - tw/2 + 2, y - th/2 + 2, x + tw/2 - 2, y + th/2 - 2);
-            scrGrad.addColorStop(0, '#1a237e');
-            scrGrad.addColorStop(0.5, '#283593');
-            scrGrad.addColorStop(1, '#1a237e');
-            ctx.fillStyle = scrGrad;
-            ctx.fillRect(x - tw/2 + 2, y - th/2 + 2, tw - 4, th - 4);
-            // Screen content - abstract gradient
-            ctx.fillStyle = 'rgba(100, 180, 255, 0.15)';
-            ctx.fillRect(x - tw/2 + 4, y - th/2 + 4, tw - 8, th/2 - 4);
-            ctx.fillStyle = 'rgba(50, 200, 100, 0.12)';
-            ctx.fillRect(x - tw/2 + 4, y, tw - 8, th/2 - 4);
-            // Wall mount bracket (small)
-            ctx.fillStyle = '#444';
-            ctx.fillRect(x - 3, y + th/2, 6, 3);
-        } else if (rt === 'wall_sconce') {
-            // Wall sconce light
-            // Mounting plate
-            ctx.fillStyle = '#888';
-            ctx.fillRect(x - 3, y - 2, 6, 10);
-            // Arm
-            ctx.fillStyle = '#777';
-            ctx.fillRect(x - 1, y - 6, 2, 6);
-            // Shade
-            ctx.fillStyle = '#f5f0e0';
-            ctx.beginPath();
-            ctx.moveTo(x - 8, y - 6);
-            ctx.lineTo(x + 8, y - 6);
-            ctx.lineTo(x + 5, y - 14);
-            ctx.lineTo(x - 5, y - 14);
-            ctx.closePath();
-            ctx.fill();
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-            // Glow
-            const glowG = ctx.createRadialGradient(x, y - 10, 2, x, y - 10, 18);
-            glowG.addColorStop(0, 'rgba(255, 241, 118, 0.35)');
-            glowG.addColorStop(1, 'rgba(255, 241, 118, 0)');
-            ctx.fillStyle = glowG;
-            ctx.beginPath(); ctx.arc(x, y - 10, 18, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // Label
-        ctx.fillStyle = 'rgba(80,50,20,0.8)';
-        ctx.font = 'bold 6px Poppins, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(item.name, x, y + 20);
     }
 
     // ---------- URBANISMO ----------
@@ -634,9 +1379,7 @@ function startIso3D(subtype) {
             ctx.fillStyle = '#455A64'; ctx.fillRect(x-12, y-14, 24, 3);
             return;
         }
-        // Standard building box
         drawBox(x, y, TILE_W, totalH, item.baseColor);
-        // Windows
         if (item.windows && item.floors >= 2) {
             for (let f = 0; f < item.floors; f++) {
                 const fy = y + TILE_H - totalH + f*floorH + 3;
@@ -646,7 +1389,6 @@ function startIso3D(subtype) {
         }
         if (item.floors >= 1) { ctx.fillStyle = '#5D4037'; ctx.fillRect(x-5, y+TILE_H-10, 5, 8); }
         if (item.cross) { ctx.fillStyle = '#E53935'; ctx.fillRect(x-2, y+TILE_H-totalH+4, 4, 12); ctx.fillRect(x-6, y+TILE_H-totalH+8, 12, 4); }
-        // Roofs
         if (item.roofType === 'gable') {
             const rb = y - totalH, rp = rb - 14;
             ctx.beginPath(); ctx.moveTo(x-hw-2, rb+hh); ctx.lineTo(x, rp); ctx.lineTo(x, rb+TILE_H); ctx.closePath();
@@ -669,278 +1411,6 @@ function startIso3D(subtype) {
         }
     }
 
-    // ---------- INTERIORES (modern furniture) ----------
-    function drawInterioresItem(x, y, hw, hh, item) {
-        const rt = item.roofType;
-
-        if (rt === 'modern_sofa') {
-            // Modern sleek sofa with thin legs
-            // Legs (thin metal)
-            ctx.fillStyle = '#555';
-            ctx.fillRect(x - hw + 4, y + TILE_H - 3, 2, 4);
-            ctx.fillRect(x + hw - 6, y + TILE_H - 3, 2, 4);
-            ctx.fillRect(x - hw + 4, y + hh + 3, 2, 4);
-            ctx.fillRect(x + hw - 6, y + hh - 1, 2, 4);
-            // Seat base
-            drawBox(x, y, TILE_W, 8, item.baseColor);
-            // Back cushion (left side isometric)
-            ctx.fillStyle = darken(item.baseColor, 15);
-            ctx.beginPath();
-            ctx.moveTo(x - hw, y + hh - 8);
-            ctx.lineTo(x - hw, y + hh - 18);
-            ctx.lineTo(x, y - 18);
-            ctx.lineTo(x, y - 8);
-            ctx.closePath();
-            ctx.fill();
-            // Seat cushions on top (two)
-            ctx.fillStyle = lighten(item.baseColor, 15);
-            const top = y - 8;
-            ctx.beginPath();
-            ctx.moveTo(x, top + TILE_H);
-            ctx.lineTo(x + hw, top + hh);
-            ctx.lineTo(x, top);
-            ctx.lineTo(x - hw, top + hh);
-            ctx.closePath();
-            ctx.fill();
-            // Cushion divider line
-            ctx.strokeStyle = darken(item.baseColor, 10);
-            ctx.lineWidth = 0.5;
-            ctx.beginPath();
-            ctx.moveTo(x - hw/2, top + hh/2);
-            ctx.lineTo(x + hw/2, top + hh + hh/2);
-            ctx.stroke();
-            // Throw pillow
-            ctx.fillStyle = '#e8c9a0';
-            ctx.beginPath(); ctx.ellipse(x - hw + 10, top + hh + 2, 4, 3, -0.5, 0, Math.PI * 2); ctx.fill();
-
-        } else if (rt === 'flat_tv') {
-            // TV stand (low modern cabinet)
-            drawBox(x, y, TILE_W, 6, '#5a4a3a');
-            // Cabinet detail
-            ctx.fillStyle = darken('#5a4a3a', 10);
-            ctx.fillRect(x - 1, y + TILE_H - 6, 2, 4);
-            // Thin flat screen TV on stand
-            ctx.fillStyle = '#111';
-            ctx.fillRect(x - 16, y + hh - 26, 32, 20);
-            // Screen
-            const scrG = ctx.createLinearGradient(x - 14, y + hh - 24, x + 14, y + hh - 8);
-            scrG.addColorStop(0, '#1a237e');
-            scrG.addColorStop(0.5, '#283593');
-            scrG.addColorStop(1, '#1a237e');
-            ctx.fillStyle = scrG;
-            ctx.fillRect(x - 14, y + hh - 24, 28, 16);
-            // Screen content shimmer
-            ctx.fillStyle = 'rgba(100, 200, 255, 0.1)';
-            ctx.fillRect(x - 12, y + hh - 22, 24, 6);
-            // Stand neck
-            ctx.fillStyle = '#333';
-            ctx.fillRect(x - 1.5, y + hh - 6, 3, 3);
-
-        } else if (rt === 'coffee_table') {
-            // Minimalist coffee table - thin top, angled legs
-            // Angled legs
-            ctx.strokeStyle = '#8a7a6a';
-            ctx.lineWidth = 1.5;
-            // Back legs
-            ctx.beginPath(); ctx.moveTo(x - hw + 6, y + hh + 6); ctx.lineTo(x - hw + 10, y + hh - 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x + hw - 6, y + hh - 2); ctx.lineTo(x + hw - 10, y + hh + 6); ctx.stroke();
-            // Front legs
-            ctx.beginPath(); ctx.moveTo(x - 4, y + TILE_H + 4); ctx.lineTo(x - 8, y + TILE_H - 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x + 4, y + TILE_H + 4); ctx.lineTo(x + 8, y + TILE_H - 2); ctx.stroke();
-            // Thin table top
-            drawBox(x, y, TILE_W * 0.85, 3, item.baseColor);
-            // Magazine/book on table
-            ctx.fillStyle = '#e74c3c';
-            ctx.fillRect(x - 3, y + hh - 5, 6, 4);
-
-        } else if (rt === 'floor_lamp') {
-            // Modern floor lamp - thin pole with geometric shade
-            // Base (circle)
-            ctx.fillStyle = '#444';
-            ctx.beginPath(); ctx.ellipse(x, y + TILE_H - 2, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
-            // Thin pole
-            ctx.fillStyle = '#555';
-            ctx.fillRect(x - 1, y - 28, 2, 30);
-            // Geometric shade (cylinder/drum shape)
-            ctx.fillStyle = item.baseColor;
-            ctx.fillRect(x - 7, y - 36, 14, 10);
-            ctx.fillStyle = lighten(item.baseColor, 20);
-            ctx.beginPath(); ctx.ellipse(x, y - 36, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = darken(item.baseColor, 10);
-            ctx.beginPath(); ctx.ellipse(x, y - 26, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            // Glow effect
-            const glowG = ctx.createRadialGradient(x, y - 24, 2, x, y - 24, 20);
-            glowG.addColorStop(0, 'rgba(255, 241, 180, 0.3)');
-            glowG.addColorStop(1, 'rgba(255, 241, 180, 0)');
-            ctx.fillStyle = glowG;
-            ctx.beginPath(); ctx.arc(x, y - 24, 20, 0, Math.PI * 2); ctx.fill();
-
-        } else if (rt === 'dining_table') {
-            // Contemporary dining table with chairs suggestion
-            // Table legs (thin angled)
-            ctx.strokeStyle = '#999';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(x - hw + 4, y + hh + 4); ctx.lineTo(x - hw + 8, y + hh - 4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x + hw - 4, y + hh - 4); ctx.lineTo(x + hw - 8, y + hh + 4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x - 2, y + TILE_H + 2); ctx.lineTo(x - 6, y + TILE_H - 4); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x + 2, y + TILE_H + 2); ctx.lineTo(x + 6, y + TILE_H - 4); ctx.stroke();
-            // Table top (white/light)
-            drawBox(x, y, TILE_W, 3, item.baseColor);
-            // Plate
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.ellipse(x - 4, y + hh - 4, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.ellipse(x + 6, y + hh + 2, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-
-        } else if (rt === 'modern_bed') {
-            // Modern bed with headboard
-            // Bed frame
-            drawBox(x, y, TILE_W, 7, '#8a7a6a');
-            // Mattress
-            const mTop = y - 7;
-            ctx.fillStyle = '#f5f0e8';
-            ctx.beginPath();
-            ctx.moveTo(x, mTop + TILE_H);
-            ctx.lineTo(x + hw, mTop + hh);
-            ctx.lineTo(x, mTop);
-            ctx.lineTo(x - hw, mTop + hh);
-            ctx.closePath();
-            ctx.fill();
-            // Headboard (tall rectangle at back)
-            ctx.fillStyle = '#5a4a3a';
-            ctx.beginPath();
-            ctx.moveTo(x - hw, mTop + hh);
-            ctx.lineTo(x - hw, mTop + hh - 18);
-            ctx.lineTo(x, mTop - 18);
-            ctx.lineTo(x, mTop);
-            ctx.closePath();
-            ctx.fill();
-            // Headboard right face
-            ctx.fillStyle = darken('#5a4a3a', 15);
-            ctx.beginPath();
-            ctx.moveTo(x, mTop);
-            ctx.lineTo(x, mTop - 18);
-            ctx.lineTo(x + 3, mTop - 19);
-            ctx.lineTo(x + 3, mTop - 1);
-            ctx.closePath();
-            ctx.fill();
-            // Pillows
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.ellipse(x - hw + 10, mTop + hh - 4, 6, 3, -0.4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#f0f0f0';
-            ctx.beginPath(); ctx.ellipse(x - hw + 20, mTop + hh + 1, 6, 3, -0.4, 0, Math.PI * 2); ctx.fill();
-            // Duvet
-            ctx.fillStyle = item.baseColor;
-            ctx.globalAlpha = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(x + 5, mTop + TILE_H);
-            ctx.lineTo(x + hw, mTop + hh + 4);
-            ctx.lineTo(x + 5, mTop + 6);
-            ctx.lineTo(x - hw + 14, mTop + hh + 4);
-            ctx.closePath();
-            ctx.fill();
-            ctx.globalAlpha = 1;
-
-        } else if (rt === 'desk_computer') {
-            // Modern desk with computer
-            // Desk legs
-            ctx.fillStyle = '#666';
-            ctx.fillRect(x - hw + 4, y + hh, 2, 10);
-            ctx.fillRect(x + hw - 6, y + hh - 6, 2, 10);
-            ctx.fillRect(x - 4, y + TILE_H - 2, 2, 8);
-            ctx.fillRect(x + 2, y + TILE_H - 6, 2, 8);
-            // Desk surface
-            drawBox(x, y, TILE_W, 3, item.baseColor);
-            // Monitor
-            ctx.fillStyle = '#222';
-            ctx.fillRect(x - 8, y + hh - 20, 16, 12);
-            ctx.fillStyle = '#3498db';
-            ctx.fillRect(x - 7, y + hh - 19, 14, 10);
-            // Monitor stand
-            ctx.fillStyle = '#444';
-            ctx.fillRect(x - 1, y + hh - 8, 2, 4);
-            ctx.fillRect(x - 4, y + hh - 4, 8, 1.5);
-            // Keyboard
-            ctx.fillStyle = '#555';
-            ctx.fillRect(x - 6, y + hh + 2, 12, 3);
-            ctx.fillStyle = '#666';
-            ctx.fillRect(x - 5, y + hh + 2.5, 10, 2);
-
-        } else if (rt === 'bookshelf') {
-            // Tall modern bookshelf
-            drawBox(x, y, TILE_W * 0.7, 32, item.baseColor);
-            // Shelves and books
-            const shelfColors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#f4511e'];
-            for (let shelf = 0; shelf < 4; shelf++) {
-                const sy = y + hh - 30 + shelf * 8;
-                // Shelf line
-                ctx.fillStyle = darken(item.baseColor, 10);
-                ctx.fillRect(x - hw * 0.6, sy + 6, hw * 1.2, 1);
-                // Books on shelf
-                for (let b = 0; b < 4; b++) {
-                    const bx = x - hw * 0.5 + b * 7;
-                    const bh = 4 + Math.random() * 2;
-                    ctx.fillStyle = shelfColors[(shelf * 4 + b) % shelfColors.length];
-                    ctx.fillRect(bx, sy + 6 - bh, 5, bh);
-                }
-            }
-
-        } else if (rt === 'modern_plant') {
-            // Modern geometric pot with plant
-            // Pot (geometric/angular)
-            ctx.fillStyle = '#e0e0e0';
-            ctx.beginPath();
-            ctx.moveTo(x - 7, y + 4);
-            ctx.lineTo(x + 7, y + 4);
-            ctx.lineTo(x + 5, y + 14);
-            ctx.lineTo(x - 5, y + 14);
-            ctx.closePath();
-            ctx.fill();
-            // Pot rim
-            ctx.fillStyle = '#ccc';
-            ctx.fillRect(x - 8, y + 2, 16, 3);
-            // Stem
-            ctx.strokeStyle = '#388E3C';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(x, y + 2); ctx.lineTo(x, y - 10); ctx.stroke();
-            // Leaves (modern fiddle-leaf style)
-            ctx.fillStyle = '#4CAF50';
-            ctx.beginPath(); ctx.ellipse(x - 6, y - 8, 5, 8, -0.3, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#66BB6A';
-            ctx.beginPath(); ctx.ellipse(x + 5, y - 12, 4, 7, 0.4, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#43A047';
-            ctx.beginPath(); ctx.ellipse(x - 2, y - 16, 4, 6, -0.1, 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#81C784';
-            ctx.beginPath(); ctx.ellipse(x + 3, y - 4, 3, 5, 0.6, 0, Math.PI * 2); ctx.fill();
-
-        } else if (rt === 'modern_rug') {
-            // Modern flat rug with pattern
-            ctx.globalAlpha = 0.75;
-            drawDiamond(x, y, item.baseColor, darken(item.baseColor, 20), false);
-            // Inner border pattern
-            ctx.strokeStyle = darken(item.baseColor, 30);
-            ctx.lineWidth = 1;
-            const inset = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(x, y + 4);
-            ctx.lineTo(x + hw * inset, y + hh);
-            ctx.lineTo(x, y + TILE_H - 4);
-            ctx.lineTo(x - hw * inset, y + hh);
-            ctx.closePath();
-            ctx.stroke();
-            // Center geometric pattern
-            ctx.fillStyle = darken(item.baseColor, 15);
-            ctx.beginPath();
-            ctx.moveTo(x, y + hh - 4);
-            ctx.lineTo(x + 6, y + hh);
-            ctx.lineTo(x, y + hh + 4);
-            ctx.lineTo(x - 6, y + hh);
-            ctx.closePath();
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        }
-    }
-
     // ---------- PAISAJISMO ----------
     function drawPaisajismoItem(x, y, hw, hh, item) {
         const rt = item.roofType;
@@ -951,7 +1421,6 @@ function startIso3D(subtype) {
             ctx.fillStyle = '#388E3C'; ctx.beginPath(); ctx.arc(x+7, y-33, 12, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#43A047'; ctx.beginPath(); ctx.arc(x-3, y-46, 10, 0, Math.PI*2); ctx.fill();
         } else if (rt === 'flowers') {
-            // Flower bed
             const cols = ['#E91E63','#FF5722','#FF9800','#FFEB3B','#E040FB'];
             for (let i = 0; i < 7; i++) {
                 const fx = x - 10 + Math.random()*20, fy = y - 2 + Math.random()*10;
@@ -959,17 +1428,13 @@ function startIso3D(subtype) {
                 ctx.fillStyle = cols[i % cols.length]; ctx.beginPath(); ctx.arc(fx+0.5, fy-1, 3, 0, Math.PI*2); ctx.fill();
             }
         } else if (rt === 'fountain') {
-            // Base
             ctx.fillStyle = '#90A4AE';
             ctx.beginPath(); ctx.ellipse(x, y+8, 16, 8, 0, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#B0BEC5';
             ctx.beginPath(); ctx.ellipse(x, y+6, 14, 6, 0, 0, Math.PI*2); ctx.fill();
-            // Water
             ctx.fillStyle = '#4FC3F7';
             ctx.beginPath(); ctx.ellipse(x, y+5, 11, 5, 0, 0, Math.PI*2); ctx.fill();
-            // Pillar
             ctx.fillStyle = '#CFD8DC'; ctx.fillRect(x-2, y-12, 4, 16);
-            // Water jet
             ctx.strokeStyle = '#29B6F6'; ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(x, y-12); ctx.quadraticCurveTo(x-6, y-20, x-10, y-4); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(x, y-12); ctx.quadraticCurveTo(x+6, y-20, x+10, y-4); ctx.stroke();
@@ -981,18 +1446,14 @@ function startIso3D(subtype) {
             ctx.fillStyle = '#607D8B';
             ctx.beginPath(); ctx.ellipse(x, y-1, 5, 3, 0, 0, Math.PI*2); ctx.fill();
         } else if (rt === 'hedge') {
-            // Rectangular hedge
             drawBox(x, y, TILE_W * 0.9, 12, '#388E3C');
             ctx.fillStyle = '#4CAF50';
             const top = y - 12;
             ctx.beginPath(); ctx.moveTo(x, top+TILE_H); ctx.lineTo(x+hw*0.9, top+hh); ctx.lineTo(x, top); ctx.lineTo(x-hw*0.9, top+hh); ctx.closePath(); ctx.fill();
         } else if (rt === 'bench') {
-            // Legs
             ctx.fillStyle = '#5D4037';
             ctx.fillRect(x-10, y+4, 2, 8); ctx.fillRect(x+8, y+4, 2, 8);
-            // Seat
             ctx.fillStyle = '#8D6E63'; ctx.fillRect(x-12, y+2, 24, 3);
-            // Back
             ctx.fillStyle = '#795548'; ctx.fillRect(x-12, y-4, 24, 3);
             ctx.fillRect(x-10, y-4, 2, 6); ctx.fillRect(x+8, y-4, 2, 6);
         } else if (rt === 'pond') {
@@ -1002,23 +1463,19 @@ function startIso3D(subtype) {
             ctx.beginPath(); ctx.ellipse(x, y+5, 15, 8, 0, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#4FC3F7';
             ctx.beginPath(); ctx.ellipse(x-3, y+3, 6, 3, 0, 0, Math.PI*2); ctx.fill();
-            // Lily pad
             ctx.fillStyle = '#66BB6A';
             ctx.beginPath(); ctx.ellipse(x+6, y+7, 4, 2.5, 0.3, 0, Math.PI*2); ctx.fill();
         } else if (rt === 'streetlamp') {
             ctx.fillStyle = '#424242'; ctx.fillRect(x-1.5, y-24, 3, 28);
             ctx.fillStyle = '#616161'; ctx.beginPath(); ctx.ellipse(x, y+4, 5, 2.5, 0, 0, Math.PI*2); ctx.fill();
-            // Lamp head
             ctx.fillStyle = '#212121'; ctx.fillRect(x-5, y-26, 10, 3);
             ctx.fillStyle = '#FFF176'; ctx.beginPath(); ctx.arc(x, y-23, 4, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = 'rgba(255,241,118,0.2)'; ctx.beginPath(); ctx.arc(x, y-20, 14, 0, Math.PI*2); ctx.fill();
         } else if (rt === 'sunflower') {
             ctx.fillStyle = '#4CAF50'; ctx.fillRect(x-1, y-18, 2, 20);
-            // Leaves
             ctx.fillStyle = '#66BB6A';
             ctx.beginPath(); ctx.ellipse(x+5, y-4, 5, 2.5, 0.5, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(x-5, y-10, 5, 2.5, -0.5, 0, Math.PI*2); ctx.fill();
-            // Petals
             for (let a = 0; a < Math.PI*2; a += 0.6) {
                 ctx.fillStyle = '#FDD835';
                 ctx.beginPath(); ctx.ellipse(x+Math.cos(a)*7, y-22+Math.sin(a)*7, 4, 2, a, 0, Math.PI*2); ctx.fill();
@@ -1026,7 +1483,6 @@ function startIso3D(subtype) {
             ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(x, y-22, 5, 0, Math.PI*2); ctx.fill();
         } else if (rt === 'path') {
             drawDiamond(x, y, '#D7CCC8', '#BCAAA4', false);
-            // Stones
             ctx.fillStyle = '#BDBDBD';
             ctx.beginPath(); ctx.ellipse(x-5, y+hh-2, 4, 2.5, 0.2, 0, Math.PI*2); ctx.fill();
             ctx.beginPath(); ctx.ellipse(x+4, y+hh+1, 3.5, 2, -0.3, 0, Math.PI*2); ctx.fill();
@@ -1034,101 +1490,71 @@ function startIso3D(subtype) {
         }
     }
 
-    // ---------- SOSTENIBLE (modern eco items) ----------
+    // ---------- SOSTENIBLE ----------
     function drawSostenibleItem(x, y, hw, hh, floorH, totalH, item) {
         const rt = item.roofType;
 
         if (rt === 'solar_array') {
-            // Modern solar panel array - multiple panels
-            // Support structure
             ctx.fillStyle = '#78909C';
             ctx.fillRect(x - 2, y + 2, 4, 10);
             ctx.fillRect(x - hw + 6, y + hh, 2, 6);
             ctx.fillRect(x + hw - 8, y + hh - 4, 2, 6);
-            // Panel surface (angled)
             ctx.fillStyle = '#0D47A1';
             ctx.beginPath();
             ctx.moveTo(x - hw + 2, y + hh - 2);
             ctx.lineTo(x + hw - 2, y + hh - 6);
             ctx.lineTo(x + hw - 2, y + hh - 16);
             ctx.lineTo(x - hw + 2, y + hh - 12);
-            ctx.closePath();
-            ctx.fill();
-            // Top face
+            ctx.closePath(); ctx.fill();
             ctx.fillStyle = '#1565C0';
             ctx.beginPath();
             ctx.moveTo(x - hw + 2, y + hh - 12);
             ctx.lineTo(x + hw - 2, y + hh - 16);
             ctx.lineTo(x, y - 14);
             ctx.lineTo(x - hw + 6, y + hh - 14);
-            ctx.closePath();
-            ctx.fill();
-            // Grid lines on panel
-            ctx.strokeStyle = '#42A5F5';
-            ctx.lineWidth = 0.4;
+            ctx.closePath(); ctx.fill();
+            ctx.strokeStyle = '#42A5F5'; ctx.lineWidth = 0.4;
             for (let i = 1; i < 5; i++) {
                 ctx.beginPath();
                 ctx.moveTo(x - hw + 2 + i * 5, y + hh - 12);
                 ctx.lineTo(x - hw + 2 + i * 7, y - 6);
                 ctx.stroke();
             }
-            // Shine effect
             ctx.fillStyle = 'rgba(255,255,255,0.12)';
             ctx.fillRect(x - 4, y + hh - 14, 10, 4);
 
         } else if (rt === 'wind_turbine') {
-            // Sleek modern wind turbine
-            // Base
             ctx.fillStyle = '#B0BEC5';
             ctx.beginPath(); ctx.ellipse(x, y + TILE_H - 4, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
-            // Tower (tapered)
             ctx.fillStyle = '#ECEFF1';
             ctx.beginPath();
-            ctx.moveTo(x - 4, y + TILE_H - 4);
-            ctx.lineTo(x + 4, y + TILE_H - 4);
-            ctx.lineTo(x + 2, y - 34);
-            ctx.lineTo(x - 2, y - 34);
-            ctx.closePath();
-            ctx.fill();
-            // Nacelle
+            ctx.moveTo(x - 4, y + TILE_H - 4); ctx.lineTo(x + 4, y + TILE_H - 4);
+            ctx.lineTo(x + 2, y - 34); ctx.lineTo(x - 2, y - 34);
+            ctx.closePath(); ctx.fill();
             ctx.fillStyle = '#CFD8DC';
             ctx.beginPath(); ctx.ellipse(x, y - 34, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            // Blades (3)
-            ctx.strokeStyle = '#ECEFF1';
-            ctx.lineWidth = 2.5;
-            const cx = x, cy = y - 34;
+            ctx.strokeStyle = '#ECEFF1'; ctx.lineWidth = 2.5;
+            const cx2 = x, cy2 = y - 34;
             for (let a = 0; a < 3; a++) {
                 const angle = a * (Math.PI * 2 / 3) + Date.now() * 0.002;
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(angle) * 20, cy + Math.sin(angle) * 20);
-                ctx.stroke();
-                // Blade tip (thinner)
+                ctx.beginPath(); ctx.moveTo(cx2, cy2);
+                ctx.lineTo(cx2 + Math.cos(angle) * 20, cy2 + Math.sin(angle) * 20); ctx.stroke();
                 ctx.lineWidth = 1.5;
                 ctx.beginPath();
-                ctx.moveTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18);
-                ctx.lineTo(cx + Math.cos(angle) * 24, cy + Math.sin(angle) * 24);
-                ctx.stroke();
+                ctx.moveTo(cx2 + Math.cos(angle) * 18, cy2 + Math.sin(angle) * 18);
+                ctx.lineTo(cx2 + Math.cos(angle) * 24, cy2 + Math.sin(angle) * 24); ctx.stroke();
                 ctx.lineWidth = 2.5;
             }
-            // Hub
             ctx.fillStyle = '#455A64';
-            ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(cx2, cy2, 2.5, 0, Math.PI * 2); ctx.fill();
 
         } else if (rt === 'green_roof') {
-            // Green roof module
             drawBox(x, y, TILE_W, 10, '#8D6E63');
-            // Roof top with green
             ctx.fillStyle = '#4CAF50';
             const top = y - 10;
             ctx.beginPath();
-            ctx.moveTo(x, top + TILE_H);
-            ctx.lineTo(x + hw, top + hh);
-            ctx.lineTo(x, top);
-            ctx.lineTo(x - hw, top + hh);
-            ctx.closePath();
-            ctx.fill();
-            // Little plants
+            ctx.moveTo(x, top + TILE_H); ctx.lineTo(x + hw, top + hh); ctx.lineTo(x, top); ctx.lineTo(x - hw, top + hh);
+            ctx.closePath(); ctx.fill();
             ctx.fillStyle = '#66BB6A';
             ctx.beginPath(); ctx.arc(x - 6, top + hh - 1, 3, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(x + 5, top + hh, 2.5, 0, Math.PI * 2); ctx.fill();
@@ -1137,169 +1563,88 @@ function startIso3D(subtype) {
             ctx.beginPath(); ctx.arc(x + 2, top + hh + 3, 2, 0, Math.PI * 2); ctx.fill();
 
         } else if (rt === 'ev_charger') {
-            // Electric vehicle charger station
-            // Post
-            ctx.fillStyle = '#37474F';
-            ctx.fillRect(x - 3, y - 20, 6, 24);
-            // Charger head
-            ctx.fillStyle = '#455A64';
-            ctx.fillRect(x - 6, y - 24, 12, 8);
-            // Screen
-            ctx.fillStyle = '#4CAF50';
-            ctx.fillRect(x - 4, y - 22, 8, 4);
-            // Green indicator
-            ctx.fillStyle = '#76FF03';
-            ctx.beginPath(); ctx.arc(x, y - 16, 1.5, 0, Math.PI * 2); ctx.fill();
-            // Cable
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(x + 4, y - 16);
-            ctx.quadraticCurveTo(x + 12, y - 8, x + 8, y + 4);
-            ctx.stroke();
-            // Plug end
-            ctx.fillStyle = '#444';
-            ctx.fillRect(x + 6, y + 2, 4, 3);
-            // Base
-            ctx.fillStyle = '#546E7A';
-            ctx.fillRect(x - 5, y + 4, 10, 3);
+            ctx.fillStyle = '#37474F'; ctx.fillRect(x - 3, y - 20, 6, 24);
+            ctx.fillStyle = '#455A64'; ctx.fillRect(x - 6, y - 24, 12, 8);
+            ctx.fillStyle = '#4CAF50'; ctx.fillRect(x - 4, y - 22, 8, 4);
+            ctx.fillStyle = '#76FF03'; ctx.beginPath(); ctx.arc(x, y - 16, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x + 4, y - 16); ctx.quadraticCurveTo(x + 12, y - 8, x + 8, y + 4); ctx.stroke();
+            ctx.fillStyle = '#444'; ctx.fillRect(x + 6, y + 2, 4, 3);
+            ctx.fillStyle = '#546E7A'; ctx.fillRect(x - 5, y + 4, 10, 3);
 
         } else if (rt === 'rain_tank') {
-            // Modern rainwater collection tank
-            // Cylinder body
-            ctx.fillStyle = '#00838F';
-            ctx.fillRect(x - 10, y - 10, 20, 22);
-            // Top ellipse
-            ctx.fillStyle = '#0097A7';
-            ctx.beginPath(); ctx.ellipse(x, y - 10, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
-            // Inner top
-            ctx.fillStyle = '#00ACC1';
-            ctx.beginPath(); ctx.ellipse(x, y - 10, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
-            // Water level indicator
-            ctx.fillStyle = '#4FC3F7';
-            ctx.fillRect(x + 10, y - 4, 2, 10);
-            ctx.fillStyle = '#00B0FF';
-            ctx.fillRect(x + 10, y + 2, 2, 4);
-            // Pipe in
-            ctx.fillStyle = '#78909C';
-            ctx.fillRect(x - 14, y - 8, 4, 2);
+            ctx.fillStyle = '#00838F'; ctx.fillRect(x - 10, y - 10, 20, 22);
+            ctx.fillStyle = '#0097A7'; ctx.beginPath(); ctx.ellipse(x, y - 10, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#00ACC1'; ctx.beginPath(); ctx.ellipse(x, y - 10, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#4FC3F7'; ctx.fillRect(x + 10, y - 4, 2, 10);
+            ctx.fillStyle = '#00B0FF'; ctx.fillRect(x + 10, y + 2, 2, 4);
+            ctx.fillStyle = '#78909C'; ctx.fillRect(x - 14, y - 8, 4, 2);
 
         } else if (rt === 'compost') {
-            // Compost bin
             drawBox(x, y, TILE_W * 0.7, 14, '#795548');
-            // Lid
             ctx.fillStyle = '#8D6E63';
             const top = y - 14;
             ctx.beginPath();
-            ctx.moveTo(x, top + TILE_H);
-            ctx.lineTo(x + hw * 0.7, top + hh);
-            ctx.lineTo(x, top);
-            ctx.lineTo(x - hw * 0.7, top + hh);
-            ctx.closePath();
-            ctx.fill();
-            // Handle
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(x - 2, top + hh - 2, 4, 2);
-            // Leaf decoration
+            ctx.moveTo(x, top + TILE_H); ctx.lineTo(x + hw * 0.7, top + hh); ctx.lineTo(x, top); ctx.lineTo(x - hw * 0.7, top + hh);
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle = '#5D4037'; ctx.fillRect(x - 2, top + hh - 2, 4, 2);
             ctx.fillStyle = '#4CAF50';
             ctx.beginPath(); ctx.ellipse(x + 4, top + hh + 2, 3, 2, 0.3, 0, Math.PI * 2); ctx.fill();
-            // Ventilation holes
             ctx.fillStyle = darken('#795548', 20);
             ctx.beginPath(); ctx.arc(x - 4, y + 4, 1.5, 0, Math.PI * 2); ctx.fill();
             ctx.beginPath(); ctx.arc(x + 4, y + 2, 1.5, 0, Math.PI * 2); ctx.fill();
 
         } else if (rt === 'bee_hotel') {
-            // Bee hotel / insect house
-            // Frame
-            ctx.fillStyle = '#8D6E63';
-            ctx.fillRect(x - 10, y - 14, 20, 24);
-            // Roof (small gable)
+            ctx.fillStyle = '#8D6E63'; ctx.fillRect(x - 10, y - 14, 20, 24);
             ctx.fillStyle = '#6D4C41';
-            ctx.beginPath();
-            ctx.moveTo(x - 12, y - 14);
-            ctx.lineTo(x, y - 22);
-            ctx.lineTo(x + 12, y - 14);
-            ctx.closePath();
-            ctx.fill();
-            // Compartments with different fills
+            ctx.beginPath(); ctx.moveTo(x - 12, y - 14); ctx.lineTo(x, y - 22); ctx.lineTo(x + 12, y - 14); ctx.closePath(); ctx.fill();
             const fills = ['#D7CCC8', '#BCAAA4', '#A1887F', '#FFE0B2', '#C8E6C9'];
             for (let row = 0; row < 3; row++) {
                 for (let col = 0; col < 3; col++) {
-                    const cx = x - 7 + col * 7;
-                    const cy = y - 10 + row * 7;
+                    const bx = x - 7 + col * 7;
+                    const by = y - 10 + row * 7;
                     ctx.fillStyle = fills[(row * 3 + col) % fills.length];
-                    ctx.fillRect(cx, cy, 5, 5);
-                    // Holes
+                    ctx.fillRect(bx, by, 5, 5);
                     ctx.fillStyle = darken('#795548', 30);
-                    ctx.beginPath(); ctx.arc(cx + 2.5, cy + 2.5, 1.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(bx + 2.5, by + 2.5, 1.5, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            // Small bee
             ctx.fillStyle = '#FFD54F';
             ctx.beginPath(); ctx.ellipse(x + 14, y - 8, 2.5, 1.5, 0.3, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = '#333';
-            ctx.fillRect(x + 13, y - 9, 1, 3);
-            ctx.fillRect(x + 15, y - 9, 1, 3);
+            ctx.fillRect(x + 13, y - 9, 1, 3); ctx.fillRect(x + 15, y - 9, 1, 3);
 
         } else if (rt === 'smart_lamp') {
-            // LED smart street lamp
-            // Pole
-            ctx.fillStyle = '#78909C';
-            ctx.fillRect(x - 1.5, y - 28, 3, 32);
-            // Base
-            ctx.fillStyle = '#607D8B';
-            ctx.beginPath(); ctx.ellipse(x, y + 4, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
-            // Solar panel on top
-            ctx.fillStyle = '#1565C0';
-            ctx.fillRect(x - 6, y - 32, 12, 3);
-            // LED light head
-            ctx.fillStyle = '#455A64';
-            ctx.fillRect(x - 8, y - 28, 16, 3);
-            // LED glow
-            ctx.fillStyle = item.baseColor;
-            ctx.fillRect(x - 6, y - 25, 12, 2);
-            // Glow effect
+            ctx.fillStyle = '#78909C'; ctx.fillRect(x - 1.5, y - 28, 3, 32);
+            ctx.fillStyle = '#607D8B'; ctx.beginPath(); ctx.ellipse(x, y + 4, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#1565C0'; ctx.fillRect(x - 6, y - 32, 12, 3);
+            ctx.fillStyle = '#455A64'; ctx.fillRect(x - 8, y - 28, 16, 3);
+            ctx.fillStyle = item.baseColor; ctx.fillRect(x - 6, y - 25, 12, 2);
             const glow = ctx.createRadialGradient(x, y - 22, 2, x, y - 22, 16);
             glow.addColorStop(0, 'rgba(144, 202, 249, 0.35)');
             glow.addColorStop(1, 'rgba(144, 202, 249, 0)');
             ctx.fillStyle = glow;
             ctx.beginPath(); ctx.arc(x, y - 22, 16, 0, Math.PI * 2); ctx.fill();
-            // Motion sensor
             ctx.fillStyle = '#B0BEC5';
             ctx.beginPath(); ctx.arc(x + 3, y - 26, 1.5, 0, Math.PI * 2); ctx.fill();
 
         } else if (rt === 'recycle_station') {
-            // Modern recycling station with 3 bins
             const binW = 8;
             const colors = ['#4CAF50', '#2196F3', '#FFC107'];
             const labels = ['O', 'P', 'V'];
             for (let i = 0; i < 3; i++) {
                 const bx = x - 14 + i * 10;
                 const by = y + 2;
-                // Bin body
-                ctx.fillStyle = colors[i];
-                ctx.fillRect(bx, by - 12, binW, 14);
-                // Lid
-                ctx.fillStyle = darken(colors[i], 20);
-                ctx.fillRect(bx - 1, by - 14, binW + 2, 3);
-                // Label
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 5px sans-serif';
-                ctx.textAlign = 'center';
+                ctx.fillStyle = colors[i]; ctx.fillRect(bx, by - 12, binW, 14);
+                ctx.fillStyle = darken(colors[i], 20); ctx.fillRect(bx - 1, by - 14, binW + 2, 3);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 5px sans-serif'; ctx.textAlign = 'center';
                 ctx.fillText(labels[i], bx + binW / 2, by - 4);
             }
-            // Recycling symbol above
-            ctx.fillStyle = '#388E3C';
-            ctx.font = '8px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('♻', x, y - 14);
+            ctx.fillStyle = '#388E3C'; ctx.font = '8px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText('\u267B', x, y - 14);
 
         } else if (rt === 'vertical_garden') {
-            // Vertical garden module / green wall
-            // Frame structure
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(x - 12, y - 18, 24, 28);
-            // Plant grid
+            ctx.fillStyle = '#5D4037'; ctx.fillRect(x - 12, y - 18, 24, 28);
             const plantColors = ['#4CAF50', '#66BB6A', '#81C784', '#388E3C', '#43A047', '#2E7D32'];
             for (let row = 0; row < 4; row++) {
                 for (let col = 0; col < 4; col++) {
@@ -1309,13 +1654,9 @@ function startIso3D(subtype) {
                     ctx.beginPath(); ctx.arc(px + 2, py + 2, 2.5, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            // Frame border
-            ctx.strokeStyle = '#8D6E63';
-            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = '#8D6E63'; ctx.lineWidth = 1.5;
             ctx.strokeRect(x - 12, y - 18, 24, 28);
-            // Drip system at top
-            ctx.fillStyle = '#0097A7';
-            ctx.fillRect(x - 10, y - 20, 20, 2);
+            ctx.fillStyle = '#0097A7'; ctx.fillRect(x - 10, y - 20, 20, 2);
         }
     }
 
@@ -1323,39 +1664,6 @@ function startIso3D(subtype) {
     function render() {
         ctx.clearRect(0, 0, W, H);
         bgDrawers[subtype]();
-
-        // Draw wall items for interiores BEFORE floor grid (they're on the back wall)
-        if (subtype === 'interiores') {
-            // Draw wall slot hover indicators
-            for (let i = 0; i < WALL_SLOTS; i++) {
-                const { x, y } = getWallSlotPos(i);
-                if (wallGrid[i]) {
-                    drawWallItem(i, wallGrid[i]);
-                } else if (i === hoverWall && selectedTool && selectedTool.wall) {
-                    // Ghost preview on wall
-                    ctx.globalAlpha = 0.4;
-                    drawWallItem(i, selectedTool);
-                    ctx.globalAlpha = 1;
-                    // Hover indicator
-                    ctx.strokeStyle = 'rgba(180, 170, 155, 0.5)';
-                    ctx.lineWidth = 1;
-                    ctx.strokeRect(x - 22, y - 18, 44, 36);
-                } else if (selectedTool && selectedTool.wall) {
-                    // Show available wall slots subtly
-                    ctx.strokeStyle = 'rgba(180, 170, 155, 0.15)';
-                    ctx.lineWidth = 0.5;
-                    ctx.setLineDash([3, 3]);
-                    ctx.strokeRect(x - 22, y - 18, 44, 36);
-                    ctx.setLineDash([]);
-                }
-                // Eraser on wall items
-                if (i === hoverWall && selectedTool && selectedTool.name === 'eraser' && wallGrid[i]) {
-                    ctx.fillStyle = 'rgba(255,0,0,0.4)';
-                    ctx.font = '18px serif'; ctx.textAlign = 'center';
-                    ctx.fillText('🗑️', x, y + 5);
-                }
-            }
-        }
 
         for (let r = 0; r < GRID; r++) {
             for (let c = 0; c < GRID; c++) {
@@ -1368,7 +1676,7 @@ function startIso3D(subtype) {
                 } else {
                     const tc = getTileColors(isHover);
                     drawDiamond(x, y, tc.base, tc.border, isHover);
-                    if (isHover && selectedTool && selectedTool.name !== 'eraser' && !selectedTool.wall) {
+                    if (isHover && selectedTool && selectedTool.name !== 'eraser') {
                         ctx.globalAlpha = 0.4;
                         drawItem3D(r, c, selectedTool);
                         ctx.globalAlpha = 1;
@@ -1376,7 +1684,7 @@ function startIso3D(subtype) {
                     if (isHover && selectedTool && selectedTool.name === 'eraser') {
                         ctx.fillStyle = 'rgba(255,0,0,0.4)';
                         ctx.font = '18px serif'; ctx.textAlign = 'center';
-                        ctx.fillText('🗑️', x, y + TILE_H / 2 + 5);
+                        ctx.fillText('\uD83D\uDDD1\uFE0F', x, y + TILE_H / 2 + 5);
                     }
                 }
             }
@@ -1395,25 +1703,6 @@ function startIso3D(subtype) {
 
     function handlePlace(e) {
         const pos = getMousePos(e);
-
-        // Check wall placement first (interiores only)
-        if (subtype === 'interiores') {
-            const wallIdx = fromScreenWall(pos.x, pos.y);
-            if (wallIdx >= 0) {
-                if (selectedTool && selectedTool.name === 'eraser') {
-                    if (wallGrid[wallIdx]) { wallGrid[wallIdx] = null; placedCount--; addScore(-5); }
-                    return;
-                }
-                if (selectedTool && selectedTool.wall) {
-                    if (wallGrid[wallIdx]) return;
-                    wallGrid[wallIdx] = selectedTool;
-                    placedCount++;
-                    addScore(10);
-                    return;
-                }
-            }
-        }
-
         const cell = fromScreen(pos.x, pos.y);
         if (!cell || !selectedTool) return;
         const { r, c } = cell;
@@ -1421,8 +1710,6 @@ function startIso3D(subtype) {
             if (grid[r][c]) { grid[r][c] = null; placedCount--; addScore(-5); }
             return;
         }
-        // Don't place wall items on floor
-        if (selectedTool.wall) return;
         if (grid[r][c]) return;
         grid[r][c] = selectedTool;
         placedCount++;
@@ -1431,12 +1718,6 @@ function startIso3D(subtype) {
 
     canvas.addEventListener('mousemove', (e) => {
         const pos = getMousePos(e);
-
-        // Check wall hover (interiores only)
-        if (subtype === 'interiores') {
-            hoverWall = fromScreenWall(pos.x, pos.y);
-        }
-
         const cell = fromScreen(pos.x, pos.y);
         if (cell) { hoverR = cell.r; hoverC = cell.c; } else { hoverR = -1; hoverC = -1; }
     });
@@ -1450,8 +1731,7 @@ function startIso3D(subtype) {
     items.forEach(b => {
         const item = document.createElement('div');
         item.className = 'tool-item';
-        const wallTag = b.wall ? ' <span style="font-size:0.5rem;opacity:0.6">PARED</span>' : '';
-        item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}${wallTag}</span>`;
+        item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}</span>`;
         item.onclick = () => {
             document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
             item.classList.add('selected');
@@ -1462,7 +1742,7 @@ function startIso3D(subtype) {
 
     const eraser = document.createElement('div');
     eraser.className = 'tool-item';
-    eraser.innerHTML = `<span class="tool-icon">🗑️</span><span class="tool-label">Borrar</span>`;
+    eraser.innerHTML = `<span class="tool-icon">\uD83D\uDDD1\uFE0F</span><span class="tool-label">Borrar</span>`;
     eraser.onclick = () => {
         document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
         eraser.classList.add('selected');
@@ -1474,19 +1754,16 @@ function startIso3D(subtype) {
     finishBtn.className = 'tool-item';
     finishBtn.style.background = 'linear-gradient(135deg, #43e97b44, #38f9d744)';
     finishBtn.style.borderColor = '#43e97b';
-    finishBtn.innerHTML = `<span class="tool-icon">✅</span><span class="tool-label">Terminar</span>`;
+    finishBtn.innerHTML = `<span class="tool-icon">\u2705</span><span class="tool-label">Terminar</span>`;
     finishBtn.onclick = () => {
         const uniqueTypes = new Set();
         for (let r = 0; r < GRID; r++)
             for (let c = 0; c < GRID; c++)
                 if (grid[r][c]) uniqueTypes.add(grid[r][c].name);
-        // Also count wall items
-        for (let i = 0; i < WALL_SLOTS; i++)
-            if (wallGrid[i]) uniqueTypes.add(wallGrid[i].name);
         addScore(uniqueTypes.size * 15);
         let stars = placedCount >= 15 ? 5 : placedCount >= 10 ? 4 : placedCount >= 6 ? 3 : placedCount >= 3 ? 2 : 1;
         let starsHtml = '';
-        for (let i = 0; i < 5; i++) starsHtml += `<span class="star ${i < stars ? 'filled' : 'empty'}">★</span>`;
+        for (let i = 0; i < 5; i++) starsHtml += `<span class="star ${i < stars ? 'filled' : 'empty'}">\u2605</span>`;
         cancelAnimationFrame(animFrame);
         showResult(ARQ_FINISH_MSG[subtype], `<div class="stars">${starsHtml}</div>`,
             `Has colocado ${placedCount} elementos con ${uniqueTypes.size} tipos diferentes.`,
