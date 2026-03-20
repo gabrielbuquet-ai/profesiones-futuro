@@ -3958,3 +3958,735 @@ function musicaDJ(ui, controls) {
     render();
     currentGame = { cleanup: () => { playing = false; clearInterval(beatInterval); document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
+
+// ===================== AJEDREZ =====================
+
+function startAjedrez(subtypeId) {
+    const ui = document.getElementById('game-ui');
+    const controls = document.getElementById('game-controls');
+    const canvas = document.getElementById('game-canvas');
+    ui.style.pointerEvents = 'auto';
+
+    switch (subtypeId) {
+        case 'clasico': ajedrezClasico(ui, controls, canvas, false); break;
+        case 'rapido': ajedrezRapido(ui, controls, canvas); break;
+        case 'puzzle': ajedrezPuzzle(ui, controls, canvas); break;
+    }
+}
+
+// ========== CHESS HELPERS ==========
+
+function chessCreateBoard() {
+    // Board is 8x8 array, row 0 = top (black side), row 7 = bottom (white side)
+    const board = Array.from({ length: 8 }, () => Array(8).fill(null));
+    const backRow = ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'];
+    for (let c = 0; c < 8; c++) {
+        board[0][c] = { type: backRow[c], color: 'b' };
+        board[1][c] = { type: 'P', color: 'b' };
+        board[6][c] = { type: 'P', color: 'w' };
+        board[7][c] = { type: backRow[c], color: 'w' };
+    }
+    return board;
+}
+
+function chessCloneBoard(board) {
+    return board.map(row => row.map(cell => cell ? { ...cell } : null));
+}
+
+const CHESS_UNICODE = {
+    wK: '\u2654', wQ: '\u2655', wR: '\u2656', wB: '\u2657', wN: '\u2658', wP: '\u2659',
+    bK: '\u265A', bQ: '\u265B', bR: '\u265C', bB: '\u265D', bN: '\u265E', bP: '\u265F'
+};
+
+function chessPieceChar(piece) {
+    if (!piece) return '';
+    return CHESS_UNICODE[piece.color + piece.type] || '?';
+}
+
+function chessGetRawMoves(board, r, c) {
+    const piece = board[r][c];
+    if (!piece) return [];
+    const moves = [];
+    const color = piece.color;
+    const enemy = color === 'w' ? 'b' : 'w';
+    const dir = color === 'w' ? -1 : 1;
+    const inBounds = (rr, cc) => rr >= 0 && rr < 8 && cc >= 0 && cc < 8;
+
+    switch (piece.type) {
+        case 'P': {
+            const nr = r + dir;
+            if (inBounds(nr, c) && !board[nr][c]) {
+                moves.push([nr, c]);
+                const startRow = color === 'w' ? 6 : 1;
+                if (r === startRow && !board[r + 2 * dir][c]) moves.push([r + 2 * dir, c]);
+            }
+            for (const dc of [-1, 1]) {
+                const nc = c + dc;
+                if (inBounds(nr, nc) && board[nr][nc] && board[nr][nc].color === enemy) {
+                    moves.push([nr, nc]);
+                }
+            }
+            break;
+        }
+        case 'R': {
+            for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1]]) {
+                for (let i = 1; i < 8; i++) {
+                    const nr = r + dr * i, nc = c + dc * i;
+                    if (!inBounds(nr, nc)) break;
+                    if (board[nr][nc]) { if (board[nr][nc].color === enemy) moves.push([nr, nc]); break; }
+                    moves.push([nr, nc]);
+                }
+            }
+            break;
+        }
+        case 'B': {
+            for (const [dr, dc] of [[1,1],[1,-1],[-1,1],[-1,-1]]) {
+                for (let i = 1; i < 8; i++) {
+                    const nr = r + dr * i, nc = c + dc * i;
+                    if (!inBounds(nr, nc)) break;
+                    if (board[nr][nc]) { if (board[nr][nc].color === enemy) moves.push([nr, nc]); break; }
+                    moves.push([nr, nc]);
+                }
+            }
+            break;
+        }
+        case 'Q': {
+            for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+                for (let i = 1; i < 8; i++) {
+                    const nr = r + dr * i, nc = c + dc * i;
+                    if (!inBounds(nr, nc)) break;
+                    if (board[nr][nc]) { if (board[nr][nc].color === enemy) moves.push([nr, nc]); break; }
+                    moves.push([nr, nc]);
+                }
+            }
+            break;
+        }
+        case 'K': {
+            for (const [dr, dc] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]) {
+                const nr = r + dr, nc = c + dc;
+                if (inBounds(nr, nc) && (!board[nr][nc] || board[nr][nc].color === enemy)) moves.push([nr, nc]);
+            }
+            break;
+        }
+        case 'N': {
+            for (const [dr, dc] of [[2,1],[2,-1],[-2,1],[-2,-1],[1,2],[1,-2],[-1,2],[-1,-2]]) {
+                const nr = r + dr, nc = c + dc;
+                if (inBounds(nr, nc) && (!board[nr][nc] || board[nr][nc].color === enemy)) moves.push([nr, nc]);
+            }
+            break;
+        }
+    }
+    return moves;
+}
+
+function chessFindKing(board, color) {
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+            if (board[r][c] && board[r][c].type === 'K' && board[r][c].color === color) return [r, c];
+    return null;
+}
+
+function chessIsInCheck(board, color) {
+    const king = chessFindKing(board, color);
+    if (!king) return false;
+    const enemy = color === 'w' ? 'b' : 'w';
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+            if (board[r][c] && board[r][c].color === enemy) {
+                const moves = chessGetRawMoves(board, r, c);
+                if (moves.some(m => m[0] === king[0] && m[1] === king[1])) return true;
+            }
+    return false;
+}
+
+function chessGetLegalMoves(board, r, c) {
+    const piece = board[r][c];
+    if (!piece) return [];
+    const raw = chessGetRawMoves(board, r, c);
+    const legal = [];
+    for (const [tr, tc] of raw) {
+        const clone = chessCloneBoard(board);
+        clone[tr][tc] = clone[r][c];
+        clone[r][c] = null;
+        // Pawn promotion
+        if (clone[tr][tc].type === 'P' && (tr === 0 || tr === 7)) clone[tr][tc].type = 'Q';
+        if (!chessIsInCheck(clone, piece.color)) legal.push([tr, tc]);
+    }
+    return legal;
+}
+
+function chessAllLegalMoves(board, color) {
+    const moves = [];
+    for (let r = 0; r < 8; r++)
+        for (let c = 0; c < 8; c++)
+            if (board[r][c] && board[r][c].color === color)
+                for (const [tr, tc] of chessGetLegalMoves(board, r, c))
+                    moves.push({ from: [r, c], to: [tr, tc] });
+    return moves;
+}
+
+function chessAIMove(board, aiDelay, callback) {
+    const moves = chessAllLegalMoves(board, 'b');
+    if (moves.length === 0) { callback(null); return; }
+    // Weight captures higher
+    const weighted = [];
+    for (const m of moves) {
+        const isCapture = board[m.to[0]][m.to[1]] !== null;
+        const weight = isCapture ? 5 : 1;
+        for (let i = 0; i < weight; i++) weighted.push(m);
+    }
+    const chosen = weighted[Math.floor(Math.random() * weighted.length)];
+    setTimeout(() => callback(chosen), aiDelay);
+}
+
+// ========== CLASICO ==========
+
+function ajedrezClasico(ui, controls, canvas, timed) {
+    const container = document.getElementById('game-container');
+    canvas.style.display = 'block';
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const W = canvas.width, H = canvas.height;
+
+    let running = true;
+    let animId;
+    let board = chessCreateBoard();
+    let turn = 'w'; // w = white (player), b = black (AI)
+    let selected = null; // [r, c]
+    let legalMoves = [];
+    let captured = { w: [], b: [] }; // pieces captured BY each color
+    let inCheck = false;
+    let gameOver = false;
+    let gameOverMsg = '';
+    let cursorR = 7, cursorC = 4;
+
+    // Timer for rapido mode
+    let whiteTime = timed ? 300 : null; // 5 min in seconds
+    let blackTime = timed ? 300 : null;
+    let lastTick = timed ? Date.now() : null;
+    let timerInterval = null;
+    const aiDelay = timed ? 500 : 800;
+
+    if (timed) {
+        timerInterval = setInterval(() => {
+            if (gameOver || !running) return;
+            const now = Date.now();
+            const dt = (now - lastTick) / 1000;
+            lastTick = now;
+            if (turn === 'w') whiteTime = Math.max(0, whiteTime - dt);
+            else blackTime = Math.max(0, blackTime - dt);
+            if (whiteTime <= 0) { gameOver = true; gameOverMsg = 'Tiempo agotado - Pierdes!'; showResult('Derrota!', '0:00', 'Se acabó tu tiempo', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false)); }
+            if (blackTime <= 0) { gameOver = true; gameOverMsg = 'Tiempo agotado - ¡Ganas!'; showResult('Victoria!', '0:00', 'La IA se quedó sin tiempo', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false)); }
+        }, 100);
+    }
+
+    const sqSize = Math.min(Math.floor(W / 10), Math.floor((H - 60) / 10));
+    const boardPx = sqSize * 8;
+    const offsetX = Math.floor((W - boardPx) / 2);
+    const offsetY = Math.floor((H - boardPx) / 2) + (timed ? 15 : 0);
+
+    function formatTime(s) {
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function render() {
+        if (!running) return;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, W, H);
+
+        // Turn / status
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold ' + Math.max(11, sqSize * 0.22) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        if (gameOver) {
+            ctx.fillText(gameOverMsg, W / 2, offsetY - 8);
+        } else {
+            const turnTxt = turn === 'w' ? 'Tu turno (Blancas)' : 'IA pensando...';
+            ctx.fillText(turnTxt, W / 2, offsetY - 8);
+        }
+
+        // Timers
+        if (timed) {
+            ctx.font = 'bold ' + Math.max(12, sqSize * 0.28) + 'px monospace';
+            ctx.fillStyle = blackTime !== null && blackTime < 30 ? '#ff4444' : '#ccc';
+            ctx.textAlign = 'left';
+            ctx.fillText('⬛ ' + formatTime(blackTime), offsetX, offsetY - 22);
+            ctx.fillStyle = whiteTime !== null && whiteTime < 30 ? '#ff4444' : '#ccc';
+            ctx.textAlign = 'right';
+            ctx.fillText('⬜ ' + formatTime(whiteTime), offsetX + boardPx, offsetY - 22);
+        }
+
+        // Board
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const x = offsetX + c * sqSize;
+                const y = offsetY + r * sqSize;
+                const isLight = (r + c) % 2 === 0;
+                ctx.fillStyle = isLight ? '#F0D9B5' : '#B58863';
+
+                // Highlights
+                if (selected && selected[0] === r && selected[1] === c) ctx.fillStyle = '#f6f669';
+                if (inCheck) {
+                    const king = chessFindKing(board, turn);
+                    if (king && king[0] === r && king[1] === c) ctx.fillStyle = '#ff4444';
+                }
+                ctx.fillRect(x, y, sqSize, sqSize);
+
+                // Cursor
+                if (cursorR === r && cursorC === c) {
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 1, y + 1, sqSize - 2, sqSize - 2);
+                }
+
+                // Legal move dots
+                if (legalMoves.some(m => m[0] === r && m[1] === c)) {
+                    ctx.fillStyle = 'rgba(0,200,0,0.5)';
+                    if (board[r][c]) {
+                        // Capture indicator - ring around square
+                        ctx.strokeStyle = 'rgba(0,200,0,0.6)';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x + 2, y + 2, sqSize - 4, sqSize - 4);
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(x + sqSize / 2, y + sqSize / 2, sqSize * 0.15, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                // Piece
+                const piece = board[r][c];
+                if (piece) {
+                    ctx.fillStyle = piece.color === 'w' ? '#fff' : '#222';
+                    ctx.font = Math.floor(sqSize * 0.75) + 'px serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(chessPieceChar(piece), x + sqSize / 2, y + sqSize / 2 + 2);
+                }
+            }
+        }
+
+        // Captured pieces
+        ctx.font = Math.max(10, sqSize * 0.35) + 'px serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        const capY1 = offsetY + boardPx + 4;
+        const capY2 = offsetY - (timed ? 40 : 24);
+        ctx.fillStyle = '#ccc';
+        const wCap = captured.w.map(p => chessPieceChar(p)).join('');
+        const bCap = captured.b.map(p => chessPieceChar(p)).join('');
+        ctx.fillText(wCap, offsetX, capY1);
+        ctx.fillText(bCap, offsetX, capY2);
+
+        animId = requestAnimationFrame(render);
+    }
+
+    function trySelect(r, c) {
+        if (gameOver || turn !== 'w') return;
+        if (selected) {
+            // Try to move
+            const mv = legalMoves.find(m => m[0] === r && m[1] === c);
+            if (mv) {
+                doMove(r, c);
+                return;
+            }
+        }
+        // Select a piece
+        if (board[r][c] && board[r][c].color === 'w') {
+            selected = [r, c];
+            legalMoves = chessGetLegalMoves(board, r, c);
+        } else {
+            selected = null;
+            legalMoves = [];
+        }
+    }
+
+    function doMove(tr, tc) {
+        const [sr, sc] = selected;
+        if (board[tr][tc]) captured.w.push(board[tr][tc]);
+        board[tr][tc] = board[sr][sc];
+        board[sr][sc] = null;
+        // Pawn promotion
+        if (board[tr][tc].type === 'P' && tr === 0) board[tr][tc].type = 'Q';
+        selected = null;
+        legalMoves = [];
+        addScore(1);
+
+        // Check end conditions
+        turn = 'b';
+        if (timed) lastTick = Date.now();
+        inCheck = chessIsInCheck(board, 'b');
+        const aiMoves = chessAllLegalMoves(board, 'b');
+        if (aiMoves.length === 0) {
+            gameOver = true;
+            if (inCheck) {
+                gameOverMsg = '¡Jaque Mate! ¡Ganas!';
+                addScore(50);
+                showResult('Jaque Mate!', '♔', '¡Has ganado la partida!', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false));
+            } else {
+                gameOverMsg = 'Tablas (ahogado)';
+                showResult('Tablas', '½-½', 'Rey ahogado', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false));
+            }
+            return;
+        }
+
+        // AI turn
+        chessAIMove(board, aiDelay, (move) => {
+            if (!running || gameOver) return;
+            if (!move) return;
+            if (board[move.to[0]][move.to[1]]) captured.b.push(board[move.to[0]][move.to[1]]);
+            board[move.to[0]][move.to[1]] = board[move.from[0]][move.from[1]];
+            board[move.from[0]][move.from[1]] = null;
+            // Pawn promotion
+            if (board[move.to[0]][move.to[1]].type === 'P' && move.to[0] === 7) board[move.to[0]][move.to[1]].type = 'Q';
+            turn = 'w';
+            if (timed) lastTick = Date.now();
+            inCheck = chessIsInCheck(board, 'w');
+            const pMoves = chessAllLegalMoves(board, 'w');
+            if (pMoves.length === 0) {
+                gameOver = true;
+                if (inCheck) {
+                    gameOverMsg = 'Jaque Mate - Pierdes';
+                    showResult('Jaque Mate', '♚', 'La IA te ha ganado', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false));
+                } else {
+                    gameOverMsg = 'Tablas (ahogado)';
+                    showResult('Tablas', '½-½', 'Rey ahogado', () => timed ? ajedrezRapido(ui, controls, canvas) : ajedrezClasico(ui, controls, canvas, false));
+                }
+            }
+        });
+    }
+
+    // Click / touch
+    function getSquare(ex, ey) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = ex - rect.left;
+        const my = ey - rect.top;
+        const c = Math.floor((mx - offsetX) / sqSize);
+        const r = Math.floor((my - offsetY) / sqSize);
+        if (r >= 0 && r < 8 && c >= 0 && c < 8) return [r, c];
+        return null;
+    }
+
+    const pointerHandler = (e) => {
+        e.preventDefault();
+        const sq = getSquare(e.clientX, e.clientY);
+        if (sq) {
+            cursorR = sq[0]; cursorC = sq[1];
+            trySelect(sq[0], sq[1]);
+        }
+    };
+    canvas.addEventListener('pointerdown', pointerHandler);
+
+    // Keyboard
+    const kbHandler = (e) => {
+        if (gameOver) {
+            if (e.code === 'KeyR') {
+                if (timed) ajedrezRapido(ui, controls, canvas);
+                else ajedrezClasico(ui, controls, canvas, false);
+            }
+            return;
+        }
+        switch (e.code) {
+            case 'ArrowUp': e.preventDefault(); cursorR = Math.max(0, cursorR - 1); break;
+            case 'ArrowDown': e.preventDefault(); cursorR = Math.min(7, cursorR + 1); break;
+            case 'ArrowLeft': e.preventDefault(); cursorC = Math.max(0, cursorC - 1); break;
+            case 'ArrowRight': e.preventDefault(); cursorC = Math.min(7, cursorC + 1); break;
+            case 'Space': e.preventDefault(); trySelect(cursorR, cursorC); break;
+            case 'KeyR': e.preventDefault();
+                if (timed) ajedrezRapido(ui, controls, canvas);
+                else ajedrezClasico(ui, controls, canvas, false);
+                break;
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: mover cursor · Espacio: seleccionar/mover · R: reiniciar</div>';
+
+    render();
+    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); if (timerInterval) clearInterval(timerInterval); canvas.removeEventListener('pointerdown', pointerHandler); document.removeEventListener('keydown', kbHandler); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+}
+
+// ========== RAPIDO ==========
+
+function ajedrezRapido(ui, controls, canvas) {
+    ajedrezClasico(ui, controls, canvas, true);
+}
+
+// ========== PUZZLE ==========
+
+function ajedrezPuzzle(ui, controls, canvas) {
+    const container = document.getElementById('game-container');
+    canvas.style.display = 'block';
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const W = canvas.width, H = canvas.height;
+
+    let running = true;
+    let animId;
+    let score = 0;
+
+    // Puzzles: each has a board setup, player color, and correct move
+    const puzzles = [
+        {
+            name: 'Mate en 1 - Dama',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][4] = { type: 'K', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[4][3] = { type: 'Q', color: 'w' };
+                b[1][0] = { type: 'R', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [4, 3], to: [1, 4] } // Qd5-e7 mate
+        },
+        {
+            name: 'Mate en 1 - Torre',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][7] = { type: 'K', color: 'b' };
+                b[0][6] = { type: 'P', color: 'b' };
+                b[1][7] = { type: 'P', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[5][0] = { type: 'R', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [5, 0], to: [0, 0] } // Ra1# back rank mate
+        },
+        {
+            name: 'Captura ganadora',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][4] = { type: 'K', color: 'b' };
+                b[3][3] = { type: 'Q', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[5][5] = { type: 'N', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [5, 5], to: [3, 3] } // Knight takes queen (fork was prior)
+        },
+        {
+            name: 'Fork - Caballo',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][4] = { type: 'K', color: 'b' };
+                b[0][0] = { type: 'R', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[3][3] = { type: 'N', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [3, 3], to: [1, 2] } // Nc2 forks king and rook
+        },
+        {
+            name: 'Mate en 1 - Alfil + Torre',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][6] = { type: 'K', color: 'b' };
+                b[1][6] = { type: 'P', color: 'b' };
+                b[1][7] = { type: 'P', color: 'b' };
+                b[1][5] = { type: 'P', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[4][2] = { type: 'B', color: 'w' };
+                b[5][7] = { type: 'R', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [5, 7], to: [0, 7] } // Rh1# with bishop covering escape
+        },
+        {
+            name: 'Mate en 1 - Pasillo',
+            setup: () => {
+                const b = Array.from({ length: 8 }, () => Array(8).fill(null));
+                b[0][5] = { type: 'K', color: 'b' };
+                b[0][4] = { type: 'R', color: 'b' };
+                b[1][5] = { type: 'P', color: 'b' };
+                b[1][6] = { type: 'P', color: 'b' };
+                b[7][4] = { type: 'K', color: 'w' };
+                b[7][0] = { type: 'Q', color: 'w' };
+                return b;
+            },
+            color: 'w',
+            answer: { from: [7, 0], to: [0, 0] } // Qa8# corridor mate
+        }
+    ];
+
+    let puzzleIdx = 0;
+    let board = puzzles[0].setup();
+    let selected = null;
+    let legalMoves = [];
+    let feedback = '';
+    let feedbackTimer = 0;
+    let cursorR = 7, cursorC = 4;
+
+    const sqSize = Math.min(Math.floor(W / 10), Math.floor((H - 80) / 10));
+    const boardPx = sqSize * 8;
+    const offsetX = Math.floor((W - boardPx) / 2);
+    const offsetY = Math.floor((H - boardPx) / 2) + 10;
+
+    function loadPuzzle(idx) {
+        if (idx >= puzzles.length) {
+            setScore(score);
+            showResult('Puzzles completos!', score + '/' + puzzles.length, '¡Bien hecho!', () => ajedrezPuzzle(ui, controls, canvas));
+            return;
+        }
+        puzzleIdx = idx;
+        board = puzzles[idx].setup();
+        selected = null;
+        legalMoves = [];
+        feedback = '';
+    }
+
+    function render() {
+        if (!running) return;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#1a1a2e';
+        ctx.fillRect(0, 0, W, H);
+
+        // Title
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold ' + Math.max(11, sqSize * 0.24) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Puzzle ' + (puzzleIdx + 1) + '/' + puzzles.length + ': ' + puzzles[puzzleIdx].name, W / 2, offsetY - 14);
+        ctx.font = Math.max(10, sqSize * 0.2) + 'px sans-serif';
+        ctx.fillStyle = '#aaa';
+        ctx.fillText('Encuentra la mejor jugada', W / 2, offsetY - 2);
+
+        // Board
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const x = offsetX + c * sqSize;
+                const y = offsetY + r * sqSize;
+                const isLight = (r + c) % 2 === 0;
+                ctx.fillStyle = isLight ? '#F0D9B5' : '#B58863';
+                if (selected && selected[0] === r && selected[1] === c) ctx.fillStyle = '#f6f669';
+                ctx.fillRect(x, y, sqSize, sqSize);
+
+                // Cursor
+                if (cursorR === r && cursorC === c) {
+                    ctx.strokeStyle = '#00ffff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(x + 1, y + 1, sqSize - 2, sqSize - 2);
+                }
+
+                // Legal move dots
+                if (legalMoves.some(m => m[0] === r && m[1] === c)) {
+                    ctx.fillStyle = 'rgba(0,200,0,0.5)';
+                    ctx.beginPath();
+                    ctx.arc(x + sqSize / 2, y + sqSize / 2, sqSize * 0.15, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                const piece = board[r][c];
+                if (piece) {
+                    ctx.fillStyle = piece.color === 'w' ? '#fff' : '#222';
+                    ctx.font = Math.floor(sqSize * 0.75) + 'px serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(chessPieceChar(piece), x + sqSize / 2, y + sqSize / 2 + 2);
+                }
+            }
+        }
+
+        // Score
+        ctx.fillStyle = '#ffd700';
+        ctx.font = 'bold ' + Math.max(12, sqSize * 0.28) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Puntuación: ' + score + '/' + puzzles.length, W / 2, offsetY + boardPx + 20);
+
+        // Feedback
+        if (feedback) {
+            ctx.fillStyle = feedback === '¡Correcto!' ? '#4CAF50' : '#ff4444';
+            ctx.font = 'bold ' + Math.max(16, sqSize * 0.4) + 'px sans-serif';
+            ctx.fillText(feedback, W / 2, offsetY + boardPx + 45);
+            feedbackTimer--;
+            if (feedbackTimer <= 0) {
+                if (feedback === '¡Correcto!') {
+                    loadPuzzle(puzzleIdx + 1);
+                }
+                feedback = '';
+            }
+        }
+
+        animId = requestAnimationFrame(render);
+    }
+
+    function trySelect(r, c) {
+        if (feedback) return;
+        const pzl = puzzles[puzzleIdx];
+        if (selected) {
+            const mv = legalMoves.find(m => m[0] === r && m[1] === c);
+            if (mv) {
+                // Check if correct
+                const ans = pzl.answer;
+                if (selected[0] === ans.from[0] && selected[1] === ans.from[1] && r === ans.to[0] && c === ans.to[1]) {
+                    // Correct!
+                    board[r][c] = board[selected[0]][selected[1]];
+                    board[selected[0]][selected[1]] = null;
+                    feedback = '¡Correcto!';
+                    feedbackTimer = 90;
+                    score++;
+                    addScore(10);
+                } else {
+                    feedback = '¡Intenta de nuevo!';
+                    feedbackTimer = 60;
+                }
+                selected = null;
+                legalMoves = [];
+                return;
+            }
+        }
+        if (board[r][c] && board[r][c].color === pzl.color) {
+            selected = [r, c];
+            legalMoves = chessGetLegalMoves(board, r, c);
+        } else {
+            selected = null;
+            legalMoves = [];
+        }
+    }
+
+    // Click / touch
+    function getSquare(ex, ey) {
+        const rect = canvas.getBoundingClientRect();
+        const mx = ex - rect.left;
+        const my = ey - rect.top;
+        const col = Math.floor((mx - offsetX) / sqSize);
+        const row = Math.floor((my - offsetY) / sqSize);
+        if (row >= 0 && row < 8 && col >= 0 && col < 8) return [row, col];
+        return null;
+    }
+
+    const pointerHandler = (e) => {
+        e.preventDefault();
+        const sq = getSquare(e.clientX, e.clientY);
+        if (sq) { cursorR = sq[0]; cursorC = sq[1]; trySelect(sq[0], sq[1]); }
+    };
+    canvas.addEventListener('pointerdown', pointerHandler);
+
+    const kbHandler = (e) => {
+        switch (e.code) {
+            case 'ArrowUp': e.preventDefault(); cursorR = Math.max(0, cursorR - 1); break;
+            case 'ArrowDown': e.preventDefault(); cursorR = Math.min(7, cursorR + 1); break;
+            case 'ArrowLeft': e.preventDefault(); cursorC = Math.max(0, cursorC - 1); break;
+            case 'ArrowRight': e.preventDefault(); cursorC = Math.min(7, cursorC + 1); break;
+            case 'Space': e.preventDefault(); trySelect(cursorR, cursorC); break;
+            case 'KeyR': e.preventDefault(); loadPuzzle(puzzleIdx); break;
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: mover cursor · Espacio: seleccionar · R: reiniciar puzzle</div>';
+
+    loadPuzzle(0);
+    render();
+    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); canvas.removeEventListener('pointerdown', pointerHandler); document.removeEventListener('keydown', kbHandler); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+}

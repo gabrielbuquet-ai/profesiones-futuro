@@ -5,6 +5,9 @@
 let currentScreen = 'home';
 let currentGame = null;
 let score = 0;
+let gameDifficulty = 'normal'; // easy, normal, hard
+
+const HOBBY_SECTIONS = ['deportes', 'conducir', 'musica', 'pintura', 'ajedrez'];
 
 // --- Datos de profesiones y subtipos ---
 const PROFESSIONS = {
@@ -12,9 +15,20 @@ const PROFESSIONS = {
         title: '🏗️ Arquitectura',
         subtypes: [
             { id: 'urbanismo', icon: '🏙️', name: 'Urbanismo', desc: 'Disena ciudades: coloca edificios, parques, escuelas y mas' },
-            { id: 'interiores', icon: '🛋️', name: 'Interiores', desc: 'Decora y organiza espacios interiores de viviendas' },
             { id: 'paisajismo', icon: '🌳', name: 'Paisajismo', desc: 'Disena jardines, parques y espacios verdes' },
             { id: 'sostenible', icon: '♻️', name: 'Sostenible', desc: 'Construye edificios ecologicos y eficientes' }
+        ]
+    },
+    interiorismo: {
+        title: '🛋️ Interiorismo',
+        subtypes: [
+            { id: 'int_habitacion', icon: '🛏️', name: 'Habitacion', desc: 'Disena un dormitorio acogedor' },
+            { id: 'int_salon', icon: '🛋️', name: 'Salon', desc: 'Decora un salon moderno' },
+            { id: 'int_bano', icon: '🚿', name: 'Bano', desc: 'Disena un bano funcional' },
+            { id: 'int_restaurante', icon: '🍽️', name: 'Restaurante', desc: 'Crea un restaurante con estilo' },
+            { id: 'int_cocina', icon: '🍳', name: 'Cocina', desc: 'Disena una cocina equipada' },
+            { id: 'int_colegio', icon: '🏫', name: 'Colegio', desc: 'Organiza un aula escolar' },
+            { id: 'int_iglesia', icon: '⛪', name: 'Iglesia', desc: 'Disena el interior de una iglesia' }
         ]
     },
     medico: {
@@ -80,6 +94,34 @@ const PROFESSIONS = {
             { id: 'guitarra', icon: '🎸', name: 'Guitarra', desc: 'Rasguea acordes y melodias' },
             { id: 'dj', icon: '🎧', name: 'DJ', desc: 'Mezcla musica y crea sets' }
         ]
+    },
+    pintura: {
+        title: '🎨 Pintura',
+        subtypes: [
+            { id: 'acuarela', icon: '💧', name: 'Acuarela', desc: 'Pinta con acuarelas suaves y transparentes' },
+            { id: 'oleo', icon: '🖌️', name: 'Oleo', desc: 'Pinta con oleos gruesos y vibrantes' },
+            { id: 'graffiti', icon: '🎨', name: 'Graffiti', desc: 'Arte urbano con spray' },
+            { id: 'dibujo', icon: '✏️', name: 'Dibujo', desc: 'Dibuja con lapiz y carbon' }
+        ]
+    },
+    ajedrez: {
+        title: '♟️ Ajedrez',
+        subtypes: [
+            { id: 'clasico', icon: '♔', name: 'Clasico', desc: 'Partida completa contra la IA' },
+            { id: 'rapido', icon: '⏱️', name: 'Rapido', desc: 'Partida a 5 minutos por jugador' },
+            { id: 'puzzle', icon: '🧩', name: 'Puzzles', desc: 'Encuentra la mejor jugada' }
+        ]
+    },
+    universidad: {
+        title: '🎓 Camino a la Universidad',
+        subtypes: [
+            { id: 'camarero', icon: '🍽️', name: 'Camarero', desc: 'Sirve pedidos a los clientes del restaurante' },
+            { id: 'socorrista', icon: '🛟', name: 'Socorrista', desc: 'Rescata nadadores en la piscina' },
+            { id: 'repartidor', icon: '🛵', name: 'Repartidor', desc: 'Entrega pedidos en moto por la ciudad' },
+            { id: 'monitor', icon: '🧑‍🏫', name: 'Monitor', desc: 'Organiza actividades para los ninos' },
+            { id: 'dependiente', icon: '🏪', name: 'Dependiente', desc: 'Encuentra productos para los clientes' },
+            { id: 'tutor', icon: '📐', name: 'Tutor', desc: 'Da clases particulares de matematicas' }
+        ]
     }
 };
 
@@ -91,6 +133,26 @@ function navigateTo(professionId) {
     document.getElementById('subtypes-title').textContent = prof.title;
     const list = document.getElementById('subtypes-list');
     list.innerHTML = '';
+
+    // Difficulty selector for hobbies
+    if (HOBBY_SECTIONS.includes(professionId)) {
+        const diffDiv = document.createElement('div');
+        diffDiv.className = 'difficulty-selector';
+        diffDiv.innerHTML = `
+            <span class="diff-label">Dificultad:</span>
+            <button class="diff-btn ${gameDifficulty === 'easy' ? 'active' : ''}" data-diff="easy">Facil</button>
+            <button class="diff-btn ${gameDifficulty === 'normal' ? 'active' : ''}" data-diff="normal">Normal</button>
+            <button class="diff-btn ${gameDifficulty === 'hard' ? 'active' : ''}" data-diff="hard">Dificil</button>
+        `;
+        diffDiv.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.onclick = () => {
+                gameDifficulty = btn.dataset.diff;
+                diffDiv.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            };
+        });
+        list.appendChild(diffDiv);
+    }
 
     prof.subtypes.forEach(sub => {
         const card = document.createElement('div');
@@ -153,6 +215,7 @@ function startGame(professionId, subtypeId, title) {
     // Enrutar al juego correcto
     switch (professionId) {
         case 'arquitectura': startArquitectura(subtypeId); break;
+        case 'interiorismo': startArquitectura(subtypeId); break;
         case 'medico': startMedico(subtypeId); break;
         case 'cocina': startCocina(subtypeId); break;
         case 'bombero': startBombero(subtypeId); break;
@@ -160,6 +223,9 @@ function startGame(professionId, subtypeId, title) {
         case 'deportes': startDeporte(subtypeId); break;
         case 'conducir': startConducir(subtypeId); break;
         case 'musica': startMusica(subtypeId); break;
+        case 'pintura': startPintura(subtypeId); break;
+        case 'ajedrez': startAjedrez(subtypeId); break;
+        case 'universidad': startUniversidad(subtypeId); break;
     }
 }
 

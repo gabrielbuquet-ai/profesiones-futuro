@@ -158,6 +158,60 @@ body {
     background: linear-gradient(135deg, #a18cd133, #fbc2eb33);
     border: 1px solid #a18cd155;
 }
+.card-interiorismo {
+    background: linear-gradient(135deg, #c471f533, #fa71cd33);
+    border: 1px solid #c471f555;
+}
+.card-pintura {
+    background: linear-gradient(135deg, #f7971e33, #ffd20033);
+    border: 1px solid #f7971e55;
+}
+.card-ajedrez {
+    background: linear-gradient(135deg, #bdc3c733, #2c3e5033);
+    border: 1px solid #bdc3c755;
+}
+.card-universidad {
+    background: linear-gradient(135deg, #667eea33, #43e97b33);
+    border: 1px solid #667eea55;
+}
+
+/* --- Difficulty Selector --- */
+.difficulty-selector {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    margin-bottom: 4px;
+}
+.diff-label {
+    font-size: 13px;
+    color: #aaa;
+    margin-right: 4px;
+}
+.diff-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.05);
+    color: #ccc;
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.diff-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+.diff-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border-color: #667eea;
+}
 
 /* 5th card spans full width */
 .cards-grid .card:nth-child(5) {
