@@ -113,6 +113,17 @@ function startInterioresFP(subtype) {
     let placedCount = 0;
     let animFrame;
 
+    // --- View rotation (4 discrete views: 0=Norte, 1=Este, 2=Sur, 3=Oeste) ---
+    let viewAngle = 0;
+    const WALL_NAMES = ['Pared Norte', 'Pared Este', 'Pared Sur', 'Pared Oeste'];
+    const WALL_COLORS = [
+        // Each wall has its own gradient colors: [top, mid, bottom]
+        { top: '#ede8e0', mid: '#e6e0d6', bot: '#ddd6ca' },  // Norte (default back wall)
+        { top: '#e0ebe8', mid: '#d6e4e0', bot: '#caddd6' },  // Este (slight blue-green tint)
+        { top: '#ebe0e8', mid: '#e4d6e0', bot: '#ddcada' },  // Sur (slight pink tint)
+        { top: '#e8ebe0', mid: '#e0e4d6', bot: '#d6ddca' },  // Oeste (slight yellow-green tint)
+    ];
+
     // --- Vanishing-point perspective geometry ---
     const VPx = W / 2;
     const VPy = H * 0.38;
@@ -166,7 +177,7 @@ function startInterioresFP(subtype) {
 
     function getFloorSlotScale(r) {
         // Items near back wall (r=0) are smaller, near viewer (r=FLOOR_ROWS-1) are largest
-        return 1.4 + 1.0 * ((r + 0.5) / FLOOR_ROWS);
+        return 2.2 + 1.3 * ((r + 0.5) / FLOOR_ROWS);
     }
 
     // --- Back wall grid (4 cols x 2 rows) ---
@@ -224,11 +235,18 @@ function startInterioresFP(subtype) {
         return { x: (quad[0].x + quad[1].x + quad[2].x + quad[3].x) / 4, y: (quad[0].y + quad[1].y + quad[2].y + quad[3].y) / 4 };
     }
 
-    // --- Grid data ---
+    // --- Grid data (per-wall for 4 views) ---
     const floorGrid = Array(FLOOR_ROWS).fill(null).map(() => Array(FLOOR_COLS).fill(null));
-    const backWallGrid = Array(BWALL_ROWS).fill(null).map(() => Array(BWALL_COLS).fill(null));
-    const leftWallGrid = Array(SIDE_SLOTS).fill(null);
-    const rightWallGrid = Array(SIDE_SLOTS).fill(null);
+    // wallGrids[v] = { back: 2D array, left: array, right: array } for each view angle v
+    const wallGrids = Array(4).fill(null).map(() => ({
+        back: Array(BWALL_ROWS).fill(null).map(() => Array(BWALL_COLS).fill(null)),
+        left: Array(SIDE_SLOTS).fill(null),
+        right: Array(SIDE_SLOTS).fill(null),
+    }));
+    // Convenience accessors for current view
+    function backWallGrid() { return wallGrids[viewAngle].back; }
+    function leftWallGrid() { return wallGrids[viewAngle].left; }
+    function rightWallGrid() { return wallGrids[viewAngle].right; }
 
     let hoverType = null; // 'floor', 'backwall', 'leftwall', 'rightwall'
     let hoverR = -1, hoverC = -1;
@@ -284,16 +302,16 @@ function startInterioresFP(subtype) {
 
     function getGridAt(type, r, c) {
         if (type === 'floor') return floorGrid[r][c];
-        if (type === 'backwall') return backWallGrid[r][c];
-        if (type === 'leftwall') return leftWallGrid[r];
-        if (type === 'rightwall') return rightWallGrid[r];
+        if (type === 'backwall') return backWallGrid()[r][c];
+        if (type === 'leftwall') return leftWallGrid()[r];
+        if (type === 'rightwall') return rightWallGrid()[r];
         return null;
     }
     function setGridAt(type, r, c, val) {
         if (type === 'floor') floorGrid[r][c] = val;
-        else if (type === 'backwall') backWallGrid[r][c] = val;
-        else if (type === 'leftwall') leftWallGrid[r] = val;
-        else if (type === 'rightwall') rightWallGrid[r] = val;
+        else if (type === 'backwall') backWallGrid()[r][c] = val;
+        else if (type === 'leftwall') leftWallGrid()[r] = val;
+        else if (type === 'rightwall') rightWallGrid()[r] = val;
     }
 
     function canPlaceItem(item, slotType) {
@@ -335,9 +353,12 @@ function startInterioresFP(subtype) {
         }
 
         // -- Left wall trapezoid --
+        // The left wall in current view is the wall at (viewAngle + 3) % 4
+        const leftWallIdx = (viewAngle + 3) % 4;
+        const leftWallC = WALL_COLORS[leftWallIdx];
         const leftWallGrad = ctx.createLinearGradient(RL, 0, BWL, 0);
-        leftWallGrad.addColorStop(0, '#d8d2c8');
-        leftWallGrad.addColorStop(1, '#e4ddd3');
+        leftWallGrad.addColorStop(0, leftWallC.top);
+        leftWallGrad.addColorStop(1, leftWallC.mid);
         ctx.fillStyle = leftWallGrad;
         ctx.beginPath();
         ctx.moveTo(RL, RT); ctx.lineTo(BWL, BWT); ctx.lineTo(BWL, BWB); ctx.lineTo(RL, RB);
@@ -355,9 +376,12 @@ function startInterioresFP(subtype) {
         }
 
         // -- Right wall trapezoid --
+        // The right wall in current view is the wall at (viewAngle + 1) % 4
+        const rightWallIdx = (viewAngle + 1) % 4;
+        const rightWallC = WALL_COLORS[rightWallIdx];
         const rightWallGrad = ctx.createLinearGradient(BWR, 0, RR, 0);
-        rightWallGrad.addColorStop(0, '#e4ddd3');
-        rightWallGrad.addColorStop(1, '#d8d2c8');
+        rightWallGrad.addColorStop(0, rightWallC.mid);
+        rightWallGrad.addColorStop(1, rightWallC.top);
         ctx.fillStyle = rightWallGrad;
         ctx.beginPath();
         ctx.moveTo(BWR, BWT); ctx.lineTo(RR, RT); ctx.lineTo(RR, RB); ctx.lineTo(BWR, BWB);
@@ -374,10 +398,11 @@ function startInterioresFP(subtype) {
         }
 
         // -- Back wall --
+        const backWallC = WALL_COLORS[viewAngle];
         const backGrad = ctx.createLinearGradient(0, BWT, 0, BWB);
-        backGrad.addColorStop(0, '#ede8e0');
-        backGrad.addColorStop(0.5, '#e6e0d6');
-        backGrad.addColorStop(1, '#ddd6ca');
+        backGrad.addColorStop(0, backWallC.top);
+        backGrad.addColorStop(0.5, backWallC.mid);
+        backGrad.addColorStop(1, backWallC.bot);
         ctx.fillStyle = backGrad;
         ctx.fillRect(BWL, BWT, BWR - BWL, BWB - BWT);
         // Back wall subtle panel lines
@@ -390,7 +415,8 @@ function startInterioresFP(subtype) {
         // Horizontal line mid
         ctx.beginPath(); ctx.moveTo(BWL, (BWT + BWB) / 2); ctx.lineTo(BWR, (BWT + BWB) / 2); ctx.stroke();
 
-        // -- Window on back wall --
+        // -- Window on back wall (only on wall 0 - Norte) --
+        if (viewAngle === 0) {
         const winW = (BWR - BWL) * 0.28;
         const winH = (BWB - BWT) * 0.52;
         const winX = VPx - winW / 2;
@@ -450,6 +476,7 @@ function startInterioresFP(subtype) {
         ctx.lineTo(winX + winW + 40, RB);
         ctx.lineTo(winX + winW, BWB);
         ctx.closePath(); ctx.fill();
+        } // end window (viewAngle === 0)
 
         // -- Baseboard (wall-floor junction) --
         // Back wall baseboard
@@ -544,7 +571,7 @@ function startInterioresFP(subtype) {
             for (let c = 0; c < BWALL_COLS; c++) {
                 const rect = getBackWallSlotRect(r, c);
                 const isHover = (hoverType === 'backwall' && hoverR === r && hoverC === c);
-                const occupied = backWallGrid[r][c];
+                const occupied = backWallGrid()[r][c];
 
                 if (!occupied) {
                     if (selectedTool && selectedTool.wall) {
@@ -567,7 +594,7 @@ function startInterioresFP(subtype) {
         for (let i = 0; i < SIDE_SLOTS; i++) {
             const lq = getLeftWallSlotQuad(i);
             const isLHover = (hoverType === 'leftwall' && hoverR === i);
-            if (!leftWallGrid[i] && selectedTool && selectedTool.wall) {
+            if (!leftWallGrid()[i] && selectedTool && selectedTool.wall) {
                 ctx.strokeStyle = isLHover ? 'rgba(255,200,60,0.5)' : 'rgba(180,170,155,0.12)';
                 ctx.lineWidth = isLHover ? 1.5 : 0.5;
                 if (!isLHover) ctx.setLineDash([3, 3]);
@@ -580,7 +607,7 @@ function startInterioresFP(subtype) {
 
             const rq = getRightWallSlotQuad(i);
             const isRHover = (hoverType === 'rightwall' && hoverR === i);
-            if (!rightWallGrid[i] && selectedTool && selectedTool.wall) {
+            if (!rightWallGrid()[i] && selectedTool && selectedTool.wall) {
                 ctx.strokeStyle = isRHover ? 'rgba(255,200,60,0.5)' : 'rgba(180,170,155,0.12)';
                 ctx.lineWidth = isRHover ? 1.5 : 0.5;
                 if (!isRHover) ctx.setLineDash([3, 3]);
@@ -816,7 +843,7 @@ function startInterioresFP(subtype) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(cx, cy);
-        const sc = Math.min(slotW / 40, slotH / 32);
+        const sc = Math.min(slotW / 28, slotH / 22);
         ctx.scale(sc, sc);
         drawWallItemShape(item);
         ctx.restore();
@@ -957,7 +984,7 @@ function startInterioresFP(subtype) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(center.x, center.y);
-        const sc = Math.min(slotW / 45, slotH / 38) * 0.9;
+        const sc = Math.min(slotW / 32, slotH / 26) * 0.9;
         ctx.scale(sc, sc);
         drawWallItemShape(item);
         ctx.restore();
@@ -969,20 +996,20 @@ function startInterioresFP(subtype) {
         // Back wall items (drawn first, behind floor items)
         for (let r = 0; r < BWALL_ROWS; r++) {
             for (let c = 0; c < BWALL_COLS; c++) {
-                if (backWallGrid[r][c]) {
+                if (backWallGrid()[r][c]) {
                     const rect = getBackWallSlotRect(r, c);
-                    drawWallItemAt(rect.cx, rect.cy, rect.w, rect.h, backWallGrid[r][c], 1);
+                    drawWallItemAt(rect.cx, rect.cy, rect.w, rect.h, backWallGrid()[r][c], 1);
                 }
             }
         }
 
         // Side wall items
         for (let i = 0; i < SIDE_SLOTS; i++) {
-            if (leftWallGrid[i]) {
-                drawSideWallItemAt(getLeftWallSlotQuad(i), leftWallGrid[i], 1);
+            if (leftWallGrid()[i]) {
+                drawSideWallItemAt(getLeftWallSlotQuad(i), leftWallGrid()[i], 1);
             }
-            if (rightWallGrid[i]) {
-                drawSideWallItemAt(getRightWallSlotQuad(i), rightWallGrid[i], 1);
+            if (rightWallGrid()[i]) {
+                drawSideWallItemAt(getRightWallSlotQuad(i), rightWallGrid()[i], 1);
             }
         }
 
@@ -1011,15 +1038,15 @@ function startInterioresFP(subtype) {
             }
         } else if (hoverType === 'backwall' && selectedTool.wall) {
             const rect = getBackWallSlotRect(hoverR, hoverC);
-            if (!backWallGrid[hoverR][hoverC]) {
+            if (!backWallGrid()[hoverR][hoverC]) {
                 drawWallItemAt(rect.cx, rect.cy, rect.w, rect.h, selectedTool, 0.4);
             }
         } else if (hoverType === 'leftwall' && selectedTool.wall) {
-            if (!leftWallGrid[hoverR]) {
+            if (!leftWallGrid()[hoverR]) {
                 drawSideWallItemAt(getLeftWallSlotQuad(hoverR), selectedTool, 0.4);
             }
         } else if (hoverType === 'rightwall' && selectedTool.wall) {
-            if (!rightWallGrid[hoverR]) {
+            if (!rightWallGrid()[hoverR]) {
                 drawSideWallItemAt(getRightWallSlotQuad(hoverR), selectedTool, 0.4);
             }
         }
@@ -1052,6 +1079,79 @@ function startInterioresFP(subtype) {
         }
     }
 
+    // ===================== ROTATION UI ON CANVAS =====================
+
+    // Rotation button hit areas (drawn on canvas)
+    const rotBtnSize = 28;
+    const rotBtnY = 10;
+    const rotLeftBtn = { x: 8, y: rotBtnY, w: rotBtnSize * 2.2, h: rotBtnSize };
+    const rotRightBtn = { x: W - 8 - rotBtnSize * 2.2, y: rotBtnY, w: rotBtnSize * 2.2, h: rotBtnSize };
+    let rotLeftHover = false, rotRightHover = false;
+
+    function drawRotationUI() {
+        // Left rotation button
+        ctx.fillStyle = rotLeftHover ? 'rgba(255,220,100,0.35)' : 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        const r = 6;
+        // Rounded rect helper
+        ctx.moveTo(rotLeftBtn.x + r, rotLeftBtn.y);
+        ctx.lineTo(rotLeftBtn.x + rotLeftBtn.w - r, rotLeftBtn.y);
+        ctx.quadraticCurveTo(rotLeftBtn.x + rotLeftBtn.w, rotLeftBtn.y, rotLeftBtn.x + rotLeftBtn.w, rotLeftBtn.y + r);
+        ctx.lineTo(rotLeftBtn.x + rotLeftBtn.w, rotLeftBtn.y + rotLeftBtn.h - r);
+        ctx.quadraticCurveTo(rotLeftBtn.x + rotLeftBtn.w, rotLeftBtn.y + rotLeftBtn.h, rotLeftBtn.x + rotLeftBtn.w - r, rotLeftBtn.y + rotLeftBtn.h);
+        ctx.lineTo(rotLeftBtn.x + r, rotLeftBtn.y + rotLeftBtn.h);
+        ctx.quadraticCurveTo(rotLeftBtn.x, rotLeftBtn.y + rotLeftBtn.h, rotLeftBtn.x, rotLeftBtn.y + rotLeftBtn.h - r);
+        ctx.lineTo(rotLeftBtn.x, rotLeftBtn.y + r);
+        ctx.quadraticCurveTo(rotLeftBtn.x, rotLeftBtn.y, rotLeftBtn.x + r, rotLeftBtn.y);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('\u2190 Girar (Q)', rotLeftBtn.x + rotLeftBtn.w / 2, rotLeftBtn.y + rotLeftBtn.h / 2 + 4);
+
+        // Right rotation button
+        ctx.fillStyle = rotRightHover ? 'rgba(255,220,100,0.35)' : 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(rotRightBtn.x + r, rotRightBtn.y);
+        ctx.lineTo(rotRightBtn.x + rotRightBtn.w - r, rotRightBtn.y);
+        ctx.quadraticCurveTo(rotRightBtn.x + rotRightBtn.w, rotRightBtn.y, rotRightBtn.x + rotRightBtn.w, rotRightBtn.y + r);
+        ctx.lineTo(rotRightBtn.x + rotRightBtn.w, rotRightBtn.y + rotRightBtn.h - r);
+        ctx.quadraticCurveTo(rotRightBtn.x + rotRightBtn.w, rotRightBtn.y + rotRightBtn.h, rotRightBtn.x + rotRightBtn.w - r, rotRightBtn.y + rotRightBtn.h);
+        ctx.lineTo(rotRightBtn.x + r, rotRightBtn.y + rotRightBtn.h);
+        ctx.quadraticCurveTo(rotRightBtn.x, rotRightBtn.y + rotRightBtn.h, rotRightBtn.x, rotRightBtn.y + rotRightBtn.h - r);
+        ctx.lineTo(rotRightBtn.x, rotRightBtn.y + r);
+        ctx.quadraticCurveTo(rotRightBtn.x, rotRightBtn.y, rotRightBtn.x + r, rotRightBtn.y);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Girar (E) \u2192', rotRightBtn.x + rotRightBtn.w / 2, rotRightBtn.y + rotRightBtn.h / 2 + 4);
+
+        // Current wall name indicator (top center)
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.beginPath();
+        const labelW = 120, labelH = 22, labelX = W / 2 - labelW / 2, labelY = 8;
+        ctx.moveTo(labelX + r, labelY);
+        ctx.lineTo(labelX + labelW - r, labelY);
+        ctx.quadraticCurveTo(labelX + labelW, labelY, labelX + labelW, labelY + r);
+        ctx.lineTo(labelX + labelW, labelY + labelH - r);
+        ctx.quadraticCurveTo(labelX + labelW, labelY + labelH, labelX + labelW - r, labelY + labelH);
+        ctx.lineTo(labelX + r, labelY + labelH);
+        ctx.quadraticCurveTo(labelX, labelY + labelH, labelX, labelY + labelH - r);
+        ctx.lineTo(labelX, labelY + r);
+        ctx.quadraticCurveTo(labelX, labelY, labelX + r, labelY);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(WALL_NAMES[viewAngle], W / 2, labelY + labelH / 2 + 4);
+    }
+
+    function rotateView(dir) {
+        viewAngle = (viewAngle + dir + 4) % 4;
+        hoverType = null; hoverR = -1; hoverC = -1;
+    }
+
     // ===================== RENDER LOOP =====================
 
     function render() {
@@ -1063,6 +1163,7 @@ function startInterioresFP(subtype) {
         drawFloorGrid();
         drawGhostPreviews();
         drawEraserHover();
+        drawRotationUI();
         animFrame = requestAnimationFrame(render);
     }
 
@@ -1078,6 +1179,9 @@ function startInterioresFP(subtype) {
 
     canvas.addEventListener('mousemove', (e) => {
         const pos = getMousePos(e);
+        // Check rotation button hover
+        rotLeftHover = pointInRect(pos.x, pos.y, rotLeftBtn);
+        rotRightHover = pointInRect(pos.x, pos.y, rotRightBtn);
         const hit = hitTest(pos.x, pos.y);
         if (hit) {
             hoverType = hit.type;
@@ -1092,6 +1196,9 @@ function startInterioresFP(subtype) {
 
     function handlePlace(e) {
         const pos = getMousePos(e);
+        // Check rotation buttons first
+        if (pointInRect(pos.x, pos.y, rotLeftBtn)) { rotateView(-1); return; }
+        if (pointInRect(pos.x, pos.y, rotRightBtn)) { rotateView(1); return; }
         const hit = hitTest(pos.x, pos.y);
         if (!hit || !selectedTool) return;
 
@@ -1115,6 +1222,13 @@ function startInterioresFP(subtype) {
 
     canvas.addEventListener('click', handlePlace);
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePlace(e); });
+
+    // Keyboard rotation: Q = rotate left, E = rotate right
+    function handleKeyRotation(e) {
+        if (e.key === 'q' || e.key === 'Q') rotateView(-1);
+        if (e.key === 'e' || e.key === 'E') rotateView(1);
+    }
+    document.addEventListener('keydown', handleKeyRotation);
 
     // ===================== TOOLBAR =====================
 
@@ -1154,12 +1268,15 @@ function startInterioresFP(subtype) {
         for (let r = 0; r < FLOOR_ROWS; r++)
             for (let c = 0; c < FLOOR_COLS; c++)
                 if (floorGrid[r][c]) uniqueTypes.add(floorGrid[r][c].name);
-        for (let r = 0; r < BWALL_ROWS; r++)
-            for (let c = 0; c < BWALL_COLS; c++)
-                if (backWallGrid[r][c]) uniqueTypes.add(backWallGrid[r][c].name);
-        for (let i = 0; i < SIDE_SLOTS; i++) {
-            if (leftWallGrid[i]) uniqueTypes.add(leftWallGrid[i].name);
-            if (rightWallGrid[i]) uniqueTypes.add(rightWallGrid[i].name);
+        // Count items from ALL 4 walls
+        for (let v = 0; v < 4; v++) {
+            for (let r = 0; r < BWALL_ROWS; r++)
+                for (let c = 0; c < BWALL_COLS; c++)
+                    if (wallGrids[v].back[r][c]) uniqueTypes.add(wallGrids[v].back[r][c].name);
+            for (let i = 0; i < SIDE_SLOTS; i++) {
+                if (wallGrids[v].left[i]) uniqueTypes.add(wallGrids[v].left[i].name);
+                if (wallGrids[v].right[i]) uniqueTypes.add(wallGrids[v].right[i].name);
+            }
         }
         addScore(uniqueTypes.size * 15);
         let stars = placedCount >= 15 ? 5 : placedCount >= 10 ? 4 : placedCount >= 6 ? 3 : placedCount >= 3 ? 2 : 1;
@@ -1174,7 +1291,7 @@ function startInterioresFP(subtype) {
 
     // Goal
     ui.innerHTML = `<div style="padding: 8px 14px; font-size: 0.7rem; color: rgba(255,255,255,0.8); text-align: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);">
-        ${ARQ_GOALS[subtype]}
+        ${ARQ_GOALS[subtype]}<br><span style="opacity:0.6; font-size:0.6rem;">Q/E: Girar habitacion</span>
     </div>`;
     ui.style.pointerEvents = 'none';
 
@@ -1183,6 +1300,7 @@ function startInterioresFP(subtype) {
     currentGame = {
         cleanup: () => {
             cancelAnimationFrame(animFrame);
+            document.removeEventListener('keydown', handleKeyRotation);
             canvas.style.display = 'none';
             ui.innerHTML = '';
             ui.style.pointerEvents = '';
@@ -1218,7 +1336,7 @@ function startIso3D(subtype) {
     let animFrame;
 
     const originX = W / 2;
-    const originY = 60;
+    const originY = Math.max(40, (H - GRID * TILE_H) / 2);
 
     function toIso(r, c) {
         return { x: originX + (c - r) * (TILE_W / 2), y: originY + (c + r) * (TILE_H / 2) };
