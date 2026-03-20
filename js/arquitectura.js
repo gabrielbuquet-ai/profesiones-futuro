@@ -165,8 +165,8 @@ function startInterioresFP(subtype) {
     }
 
     function getFloorSlotScale(r) {
-        // Items near back wall (r=0) are small, near viewer (r=FLOOR_ROWS-1) are large
-        return 0.55 + 0.45 * ((r + 0.5) / FLOOR_ROWS);
+        // Items near back wall (r=0) are smaller, near viewer (r=FLOOR_ROWS-1) are largest
+        return 1.4 + 1.0 * ((r + 0.5) / FLOOR_ROWS);
     }
 
     // --- Back wall grid (4 cols x 2 rows) ---
@@ -816,7 +816,7 @@ function startInterioresFP(subtype) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(cx, cy);
-        const sc = Math.min(slotW / 60, slotH / 50);
+        const sc = Math.min(slotW / 40, slotH / 32);
         ctx.scale(sc, sc);
         drawWallItemShape(item);
         ctx.restore();
@@ -957,7 +957,7 @@ function startInterioresFP(subtype) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.translate(center.x, center.y);
-        const sc = Math.min(slotW / 70, slotH / 60) * 0.8;
+        const sc = Math.min(slotW / 45, slotH / 38) * 0.9;
         ctx.scale(sc, sc);
         drawWallItemShape(item);
         ctx.restore();
