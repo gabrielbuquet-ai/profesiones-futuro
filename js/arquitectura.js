@@ -20,16 +20,24 @@ const ISO_ITEMS = {
         { name: 'Biblioteca', floors: 3, roofType: 'gable', baseColor: '#d5a97a', roofColor: '#6d4c2e', windows: true, icon: '📚' }
     ],
     interiores: [
-        { name: 'Sofa', floors: 0, roofType: 'sofa', baseColor: '#8e44ad', roofColor: '#6c3483', icon: '🛋️' },
-        { name: 'Silla', floors: 0, roofType: 'chair', baseColor: '#d35400', roofColor: '#a04000', icon: '🪑' },
-        { name: 'Cama', floors: 0, roofType: 'bed', baseColor: '#2980b9', roofColor: '#1a5276', icon: '🛏️' },
-        { name: 'Escritorio', floors: 0, roofType: 'desk', baseColor: '#795548', roofColor: '#5d4037', icon: '🖥️' },
-        { name: 'TV', floors: 0, roofType: 'tv', baseColor: '#2c3e50', roofColor: '#1a252f', icon: '📺' },
-        { name: 'Planta', floors: 0, roofType: 'plant', baseColor: '#27ae60', roofColor: '#1e8449', icon: '🪴' },
-        { name: 'Cuadro', floors: 0, roofType: 'painting', baseColor: '#f39c12', roofColor: '#d68910', icon: '🖼️' },
-        { name: 'Lampara', floors: 0, roofType: 'lamp', baseColor: '#f1c40f', roofColor: '#d4ac0d', icon: '💡' },
-        { name: 'Estante', floors: 0, roofType: 'shelf', baseColor: '#a0522d', roofColor: '#8b4513', icon: '📖' },
-        { name: 'Alfombra', floors: 0, roofType: 'rug', baseColor: '#c0392b', roofColor: '#922b21', icon: '🟥' }
+        // Floor items
+        { name: 'Sofa', floors: 0, roofType: 'modern_sofa', baseColor: '#7c8a9e', roofColor: '#5a6578', icon: '🛋️', wall: false },
+        { name: 'TV Stand', floors: 0, roofType: 'flat_tv', baseColor: '#2c3e50', roofColor: '#1a252f', icon: '📺', wall: false },
+        { name: 'Mesa', floors: 0, roofType: 'coffee_table', baseColor: '#d4a574', roofColor: '#b8895c', icon: '☕', wall: false },
+        { name: 'Lampara', floors: 0, roofType: 'floor_lamp', baseColor: '#f5c542', roofColor: '#d4a832', icon: '💡', wall: false },
+        { name: 'Comedor', floors: 0, roofType: 'dining_table', baseColor: '#ecf0f1', roofColor: '#bdc3c7', icon: '🍽️', wall: false },
+        { name: 'Cama', floors: 0, roofType: 'modern_bed', baseColor: '#5b7fa5', roofColor: '#3d5a7c', icon: '🛏️', wall: false },
+        { name: 'Escritorio', floors: 0, roofType: 'desk_computer', baseColor: '#8e8e8e', roofColor: '#6e6e6e', icon: '🖥️', wall: false },
+        { name: 'Libreria', floors: 0, roofType: 'bookshelf', baseColor: '#d4a574', roofColor: '#b8895c', icon: '📚', wall: false },
+        { name: 'Planta', floors: 0, roofType: 'modern_plant', baseColor: '#4CAF50', roofColor: '#388E3C', icon: '🪴', wall: false },
+        { name: 'Alfombra', floors: 0, roofType: 'modern_rug', baseColor: '#e8c9a0', roofColor: '#c9a87c', icon: '🟫', wall: false },
+        // Wall items
+        { name: 'Cuadro', floors: 0, roofType: 'wall_painting', baseColor: '#e74c3c', roofColor: '#c0392b', icon: '🖼️', wall: true },
+        { name: 'Estante', floors: 0, roofType: 'wall_shelf', baseColor: '#d4a574', roofColor: '#b8895c', icon: '📖', wall: true },
+        { name: 'Reloj', floors: 0, roofType: 'wall_clock', baseColor: '#ecf0f1', roofColor: '#bdc3c7', icon: '🕐', wall: true },
+        { name: 'Espejo', floors: 0, roofType: 'wall_mirror', baseColor: '#d5e8f0', roofColor: '#a8c8d8', icon: '🪞', wall: true },
+        { name: 'TV Mural', floors: 0, roofType: 'wall_tv', baseColor: '#1a1a2e', roofColor: '#0d0d1a', icon: '📺', wall: true },
+        { name: 'Aplique', floors: 0, roofType: 'wall_sconce', baseColor: '#f5c542', roofColor: '#d4a832', icon: '🔆', wall: true }
     ],
     paisajismo: [
         { name: 'Arbol', floors: 0, roofType: 'bigtree', baseColor: '#2e7d32', roofColor: '#1b5e20', icon: '🌳' },
@@ -44,16 +52,16 @@ const ISO_ITEMS = {
         { name: 'Camino', floors: 0, roofType: 'path', baseColor: '#d7ccc8', roofColor: '#bcaaa4', icon: '🟫' }
     ],
     sostenible: [
-        { name: 'Solar', floors: 0, roofType: 'solar', baseColor: '#1565c0', roofColor: '#0d47a1', icon: '☀️' },
-        { name: 'Eolica', floors: 0, roofType: 'windmill', baseColor: '#eceff1', roofColor: '#b0bec5', icon: '💨' },
-        { name: 'Jardin V.', floors: 2, roofType: 'greenroof', baseColor: '#6d4c41', roofColor: '#4caf50', windows: true, icon: '🌱' },
-        { name: 'Agua', floors: 0, roofType: 'watertank', baseColor: '#0097a7', roofColor: '#00838f', icon: '💧' },
-        { name: 'Bateria', floors: 1, roofType: 'flat', baseColor: '#43a047', roofColor: '#2e7d32', icon: '🔋' },
-        { name: 'Bambu', floors: 3, roofType: 'flat', baseColor: '#a5d6a7', roofColor: '#81c784', windows: true, icon: '🏗️' },
-        { name: 'Eco Casa', floors: 2, roofType: 'gable', baseColor: '#c8e6c9', roofColor: '#66bb6a', windows: true, icon: '🏡' },
-        { name: 'Reciclaje', floors: 0, roofType: 'recycle', baseColor: '#4caf50', roofColor: '#388e3c', icon: '♻️' },
-        { name: 'Huerto', floors: 0, roofType: 'garden', baseColor: '#795548', roofColor: '#4caf50', icon: '🌱' },
-        { name: 'Bici Park', floors: 0, roofType: 'bikepark', baseColor: '#78909c', roofColor: '#546e7a', icon: '🚲' }
+        { name: 'Solar', floors: 0, roofType: 'solar_array', baseColor: '#1565c0', roofColor: '#0d47a1', icon: '☀️' },
+        { name: 'Eolica', floors: 0, roofType: 'wind_turbine', baseColor: '#eceff1', roofColor: '#b0bec5', icon: '💨' },
+        { name: 'Techo V.', floors: 0, roofType: 'green_roof', baseColor: '#6d4c41', roofColor: '#4caf50', icon: '🌱' },
+        { name: 'Cargador', floors: 0, roofType: 'ev_charger', baseColor: '#43a047', roofColor: '#2e7d32', icon: '🔌' },
+        { name: 'Agua', floors: 0, roofType: 'rain_tank', baseColor: '#0097a7', roofColor: '#00838f', icon: '💧' },
+        { name: 'Compost', floors: 0, roofType: 'compost', baseColor: '#795548', roofColor: '#5d4037', icon: '🍂' },
+        { name: 'Abejas', floors: 0, roofType: 'bee_hotel', baseColor: '#ffb300', roofColor: '#ff8f00', icon: '🐝' },
+        { name: 'LED', floors: 0, roofType: 'smart_lamp', baseColor: '#90caf9', roofColor: '#42a5f5', icon: '💡' },
+        { name: 'Reciclaje', floors: 0, roofType: 'recycle_station', baseColor: '#4caf50', roofColor: '#388e3c', icon: '♻️' },
+        { name: 'Jardin V.', floors: 0, roofType: 'vertical_garden', baseColor: '#66bb6a', roofColor: '#43a047', icon: '🌿' }
     ]
 };
 
@@ -103,8 +111,19 @@ function startIso3D(subtype) {
     let placedCount = 0;
     let animFrame;
 
+    // For interiores wall items, we use a separate wall grid
+    const WALL_SLOTS = 8; // number of wall placement slots
+    const wallGrid = Array(WALL_SLOTS).fill(null);
+    let hoverWall = -1;
+
     const originX = W / 2;
-    const originY = 60;
+    const originY = subtype === 'interiores' ? 90 : 60;
+
+    // Wall region for interiores (the back wall area)
+    const wallTop = 15;
+    const wallBottom = originY - 12;
+    const wallLeft = 20;
+    const wallRight = W - 20;
 
     function toIso(r, c) {
         return { x: originX + (c - r) * (TILE_W / 2), y: originY + (c + r) * (TILE_H / 2) };
@@ -117,6 +136,23 @@ function startIso3D(subtype) {
         const ri = Math.floor(r), ci = Math.floor(c);
         if (ri >= 0 && ri < GRID && ci >= 0 && ci < GRID) return { r: ri, c: ci };
         return null;
+    }
+
+    // Wall slot positioning for interiores
+    function getWallSlotPos(index) {
+        const slotW = (wallRight - wallLeft) / WALL_SLOTS;
+        const cx = wallLeft + slotW * index + slotW / 2;
+        const cy = (wallTop + wallBottom) / 2;
+        return { x: cx, y: cy };
+    }
+
+    function fromScreenWall(mx, my) {
+        if (my < wallTop || my > wallBottom + 5) return -1;
+        if (mx < wallLeft || mx > wallRight) return -1;
+        const slotW = (wallRight - wallLeft) / WALL_SLOTS;
+        const idx = Math.floor((mx - wallLeft) / slotW);
+        if (idx >= 0 && idx < WALL_SLOTS) return idx;
+        return -1;
     }
 
     // ========== COLOR UTILS ==========
@@ -165,26 +201,146 @@ function startIso3D(subtype) {
     }
 
     function drawBgInteriores() {
-        // Room interior: walls + wooden floor perspective
-        ctx.fillStyle = '#f5e6ca'; ctx.fillRect(0, 0, W, H); // Back wall
-        // Wall details
-        ctx.fillStyle = '#e8d5b0'; ctx.fillRect(0, 0, W, originY - 10);
-        // Wainscoting
-        ctx.fillStyle = '#d4c4a8'; ctx.fillRect(0, originY - 30, W, 20);
-        ctx.strokeStyle = '#c9b896'; ctx.lineWidth = 1;
-        for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, originY-30); ctx.lineTo(x, originY-10); ctx.stroke(); }
-        // Window on wall
-        ctx.fillStyle = '#87CEEB'; ctx.fillRect(W/2-30, 10, 60, 35);
-        ctx.strokeStyle = '#f0e6d3'; ctx.lineWidth = 4; ctx.strokeRect(W/2-30, 10, 60, 35);
-        ctx.strokeStyle = '#f0e6d3'; ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.moveTo(W/2, 10); ctx.lineTo(W/2, 45); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(W/2-30, 27); ctx.lineTo(W/2+30, 27); ctx.stroke();
+        // === IMMERSIVE ROOM VIEW ===
+        // Ceiling
+        ctx.fillStyle = '#f8f8f8';
+        ctx.fillRect(0, 0, W, 12);
+
+        // Back wall - main surface
+        const wallGrad = ctx.createLinearGradient(0, 0, 0, wallBottom);
+        wallGrad.addColorStop(0, '#f0ebe3');
+        wallGrad.addColorStop(0.5, '#e8e0d4');
+        wallGrad.addColorStop(1, '#ddd5c8');
+        ctx.fillStyle = wallGrad;
+        ctx.fillRect(0, 8, W, wallBottom - 8);
+
+        // Subtle wall texture - horizontal lines
+        ctx.strokeStyle = 'rgba(200, 190, 175, 0.15)';
+        ctx.lineWidth = 0.5;
+        for (let yy = 15; yy < wallBottom; yy += 12) {
+            ctx.beginPath();
+            ctx.moveTo(0, yy);
+            ctx.lineTo(W, yy);
+            ctx.stroke();
+        }
+
+        // Subtle vertical panel lines on wall
+        ctx.strokeStyle = 'rgba(190, 180, 165, 0.1)';
+        ctx.lineWidth = 0.5;
+        for (let xx = 0; xx < W; xx += 60) {
+            ctx.beginPath();
+            ctx.moveTo(xx, 10);
+            ctx.lineTo(xx, wallBottom);
+            ctx.stroke();
+        }
+
+        // Window on back wall with light effect
+        const winX = W / 2 - 40;
+        const winY = 18;
+        const winW = 80;
+        const winH = 48;
+
+        // Window light glow behind
+        const glowGrad = ctx.createRadialGradient(winX + winW/2, winY + winH/2, 10, winX + winW/2, winY + winH/2, 80);
+        glowGrad.addColorStop(0, 'rgba(255, 248, 220, 0.25)');
+        glowGrad.addColorStop(1, 'rgba(255, 248, 220, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.fillRect(winX - 40, winY - 20, winW + 80, winH + 60);
+
+        // Window frame outer
+        ctx.fillStyle = '#e0d8cc';
+        ctx.fillRect(winX - 4, winY - 4, winW + 8, winH + 8);
+
+        // Window sky
+        const skyGrad = ctx.createLinearGradient(0, winY, 0, winY + winH);
+        skyGrad.addColorStop(0, '#87CEEB');
+        skyGrad.addColorStop(0.6, '#B0E0E6');
+        skyGrad.addColorStop(1, '#c8e6c9');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(winX, winY, winW, winH);
+
+        // Window frame dividers
+        ctx.fillStyle = '#d8d0c4';
+        ctx.fillRect(winX + winW/2 - 1.5, winY, 3, winH); // vertical
+        ctx.fillRect(winX, winY + winH/2 - 1.5, winW, 3); // horizontal
+
+        // Light rays from window onto floor
+        ctx.fillStyle = 'rgba(255, 248, 220, 0.08)';
+        ctx.beginPath();
+        ctx.moveTo(winX, winY + winH);
+        ctx.lineTo(winX - 30, originY + 60);
+        ctx.lineTo(winX + winW + 30, originY + 60);
+        ctx.lineTo(winX + winW, winY + winH);
+        ctx.closePath();
+        ctx.fill();
+
         // Curtains
-        ctx.fillStyle = '#c0392b44'; ctx.fillRect(W/2-38, 8, 12, 40); ctx.fillRect(W/2+26, 8, 12, 40);
-        // Floor area gradient
-        const floorG = ctx.createLinearGradient(0, originY, 0, H);
-        floorG.addColorStop(0, '#deb887'); floorG.addColorStop(1, '#c49a6c');
-        ctx.fillStyle = floorG; ctx.fillRect(0, originY - 10, W, H);
+        ctx.fillStyle = 'rgba(120, 130, 150, 0.2)';
+        // Left curtain
+        ctx.beginPath();
+        ctx.moveTo(winX - 8, winY - 6);
+        ctx.quadraticCurveTo(winX - 14, winY + winH/2, winX - 6, winY + winH + 4);
+        ctx.lineTo(winX - 2, winY + winH + 4);
+        ctx.quadraticCurveTo(winX - 8, winY + winH/2, winX - 2, winY - 6);
+        ctx.closePath();
+        ctx.fill();
+        // Right curtain
+        ctx.beginPath();
+        ctx.moveTo(winX + winW + 8, winY - 6);
+        ctx.quadraticCurveTo(winX + winW + 14, winY + winH/2, winX + winW + 6, winY + winH + 4);
+        ctx.lineTo(winX + winW + 2, winY + winH + 4);
+        ctx.quadraticCurveTo(winX + winW + 8, winY + winH/2, winX + winW + 2, winY - 6);
+        ctx.closePath();
+        ctx.fill();
+
+        // Curtain rod
+        ctx.fillStyle = '#b0a898';
+        ctx.fillRect(winX - 16, winY - 8, winW + 32, 2.5);
+        // Rod ends
+        ctx.beginPath(); ctx.arc(winX - 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(winX + winW + 16, winY - 7, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        // Baseboard (where wall meets floor)
+        ctx.fillStyle = '#c8bfb0';
+        ctx.fillRect(0, wallBottom - 2, W, 8);
+        // Baseboard shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.05)';
+        ctx.fillRect(0, wallBottom + 6, W, 2);
+
+        // Floor - modern light wood / grey tiles
+        const floorG = ctx.createLinearGradient(0, wallBottom + 6, 0, H);
+        floorG.addColorStop(0, '#d4c4a8');
+        floorG.addColorStop(0.3, '#c9b898');
+        floorG.addColorStop(1, '#b8a585');
+        ctx.fillStyle = floorG;
+        ctx.fillRect(0, wallBottom + 6, W, H - wallBottom - 6);
+
+        // Floor plank lines (perspective effect)
+        ctx.strokeStyle = 'rgba(160, 140, 110, 0.2)';
+        ctx.lineWidth = 0.5;
+        // Horizontal plank lines
+        for (let yy = wallBottom + 16; yy < H; yy += 14) {
+            ctx.beginPath();
+            ctx.moveTo(0, yy);
+            ctx.lineTo(W, yy);
+            ctx.stroke();
+        }
+        // Vertical plank lines with perspective convergence
+        const vanishX = W / 2;
+        const vanishY = wallBottom - 20;
+        ctx.strokeStyle = 'rgba(160, 140, 110, 0.12)';
+        for (let xx = 0; xx < W; xx += 30) {
+            ctx.beginPath();
+            ctx.moveTo(xx, H);
+            // Lines converge slightly toward vanishing point
+            const targetX = xx + (vanishX - xx) * 0.15;
+            ctx.lineTo(targetX, wallBottom + 6);
+            ctx.stroke();
+        }
+
+        // Wall slot indicators (subtle) for wall items
+        ctx.strokeStyle = 'rgba(180, 170, 155, 0.0)'; // invisible unless hovering
+        // We draw hover indicators in the render loop instead
     }
 
     function drawBgPaisajismo() {
@@ -272,7 +428,7 @@ function startIso3D(subtype) {
         if (subtype === 'urbanismo') {
             drawUrbanismoItem(x, y, hw, hh, floorH, totalH, item);
         }
-        // === INTERIORES ITEMS ===
+        // === INTERIORES ITEMS (floor only) ===
         else if (subtype === 'interiores') {
             drawInterioresItem(x, y, hw, hh, item);
         }
@@ -290,6 +446,174 @@ function startIso3D(subtype) {
         ctx.font = 'bold 7px Poppins, sans-serif';
         ctx.textAlign = 'center';
         ctx.fillText(item.name, x, y + TILE_H + 8);
+    }
+
+    // Draw wall item at a wall slot position
+    function drawWallItem(index, item) {
+        const { x, y } = getWallSlotPos(index);
+        const rt = item.roofType;
+
+        if (rt === 'wall_painting') {
+            // Modern art painting with frame
+            const pw = 30, ph = 22;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.1)';
+            ctx.fillRect(x - pw/2 + 2, y - ph/2 + 2, pw, ph);
+            // Frame
+            ctx.fillStyle = '#3e3e3e';
+            ctx.fillRect(x - pw/2 - 2, y - ph/2 - 2, pw + 4, ph + 4);
+            // Canvas
+            ctx.fillStyle = '#f5f0e8';
+            ctx.fillRect(x - pw/2, y - ph/2, pw, ph);
+            // Abstract art - colored blocks
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(x - pw/2 + 2, y - ph/2 + 2, pw/2 - 2, ph/2 - 2);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(x, y - ph/2 + 2, pw/2 - 2, ph/2 - 2);
+            ctx.fillStyle = '#f39c12';
+            ctx.fillRect(x - pw/2 + 2, y, pw/2 - 2, ph/2 - 2);
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(x, y, pw/2 - 2, ph/2 - 2);
+        } else if (rt === 'wall_shelf') {
+            // Floating shelf with items
+            const sw = 36, sh = 3;
+            // Shelf bracket
+            ctx.fillStyle = '#8a7a6a';
+            ctx.fillRect(x - 8, y + 2, 2, 6);
+            ctx.fillRect(x + 6, y + 2, 2, 6);
+            // Shelf
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(x - sw/2, y, sw, sh);
+            ctx.fillStyle = darken(item.baseColor, 20);
+            ctx.fillRect(x - sw/2, y + sh, sw, 1);
+            // Items on shelf: small vase, book, candle
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(x - 12, y - 8, 5, 8); // vase
+            ctx.beginPath(); ctx.arc(x - 9.5, y - 8, 3, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(x - 2, y - 6, 3, 6); // book
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(x + 2, y - 7, 3, 7); // book
+            ctx.fillStyle = '#f5c542';
+            ctx.fillRect(x + 10, y - 5, 2, 5); // candle
+            ctx.fillStyle = '#ff9800';
+            ctx.beginPath(); ctx.arc(x + 11, y - 6, 1.5, 0, Math.PI * 2); ctx.fill(); // flame
+        } else if (rt === 'wall_clock') {
+            // Modern round clock
+            const r = 12;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.beginPath(); ctx.arc(x + 1, y + 1, r + 1, 0, Math.PI * 2); ctx.fill();
+            // Clock body
+            ctx.fillStyle = item.baseColor;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+            // Rim
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke();
+            // Inner face
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(x, y, r - 2, 0, Math.PI * 2); ctx.fill();
+            // Hour markers
+            ctx.fillStyle = '#333';
+            for (let i = 0; i < 12; i++) {
+                const a = i * Math.PI / 6;
+                const mx = x + Math.cos(a) * (r - 4);
+                const my = y + Math.sin(a) * (r - 4);
+                ctx.beginPath(); ctx.arc(mx, my, 0.8, 0, Math.PI * 2); ctx.fill();
+            }
+            // Hands
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 1.2;
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 4, y - 6); ctx.stroke(); // hour
+            ctx.strokeStyle = '#555'; ctx.lineWidth = 0.8;
+            ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 2, y - 8); ctx.stroke(); // minute
+            // Center dot
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath(); ctx.arc(x, y, 1.2, 0, Math.PI * 2); ctx.fill();
+        } else if (rt === 'wall_mirror') {
+            // Modern rectangular mirror
+            const mw = 22, mh = 30;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.fillRect(x - mw/2 + 2, y - mh/2 + 2, mw, mh);
+            // Frame - thin modern
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x - mw/2 - 1.5, y - mh/2 - 1.5, mw + 3, mh + 3);
+            // Mirror surface
+            const mirGrad = ctx.createLinearGradient(x - mw/2, y - mh/2, x + mw/2, y + mh/2);
+            mirGrad.addColorStop(0, '#e8f4f8');
+            mirGrad.addColorStop(0.3, '#d0e8f0');
+            mirGrad.addColorStop(0.5, '#c0dce8');
+            mirGrad.addColorStop(0.7, '#d5eaf2');
+            mirGrad.addColorStop(1, '#e0f0f5');
+            ctx.fillStyle = mirGrad;
+            ctx.fillRect(x - mw/2, y - mh/2, mw, mh);
+            // Shine streak
+            ctx.fillStyle = 'rgba(255,255,255,0.4)';
+            ctx.beginPath();
+            ctx.moveTo(x - mw/2 + 3, y - mh/2);
+            ctx.lineTo(x - mw/2 + 7, y - mh/2);
+            ctx.lineTo(x - mw/2 + 3, y + mh/2);
+            ctx.lineTo(x - mw/2, y + mh/2);
+            ctx.closePath();
+            ctx.fill();
+        } else if (rt === 'wall_tv') {
+            // Large wall-mounted flat screen TV
+            const tw = 44, th = 26;
+            // Shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.12)';
+            ctx.fillRect(x - tw/2 + 2, y - th/2 + 2, tw, th);
+            // TV body
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(x - tw/2, y - th/2, tw, th);
+            // Screen
+            const scrGrad = ctx.createLinearGradient(x - tw/2 + 2, y - th/2 + 2, x + tw/2 - 2, y + th/2 - 2);
+            scrGrad.addColorStop(0, '#1a237e');
+            scrGrad.addColorStop(0.5, '#283593');
+            scrGrad.addColorStop(1, '#1a237e');
+            ctx.fillStyle = scrGrad;
+            ctx.fillRect(x - tw/2 + 2, y - th/2 + 2, tw - 4, th - 4);
+            // Screen content - abstract gradient
+            ctx.fillStyle = 'rgba(100, 180, 255, 0.15)';
+            ctx.fillRect(x - tw/2 + 4, y - th/2 + 4, tw - 8, th/2 - 4);
+            ctx.fillStyle = 'rgba(50, 200, 100, 0.12)';
+            ctx.fillRect(x - tw/2 + 4, y, tw - 8, th/2 - 4);
+            // Wall mount bracket (small)
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x - 3, y + th/2, 6, 3);
+        } else if (rt === 'wall_sconce') {
+            // Wall sconce light
+            // Mounting plate
+            ctx.fillStyle = '#888';
+            ctx.fillRect(x - 3, y - 2, 6, 10);
+            // Arm
+            ctx.fillStyle = '#777';
+            ctx.fillRect(x - 1, y - 6, 2, 6);
+            // Shade
+            ctx.fillStyle = '#f5f0e0';
+            ctx.beginPath();
+            ctx.moveTo(x - 8, y - 6);
+            ctx.lineTo(x + 8, y - 6);
+            ctx.lineTo(x + 5, y - 14);
+            ctx.lineTo(x - 5, y - 14);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            // Glow
+            const glowG = ctx.createRadialGradient(x, y - 10, 2, x, y - 10, 18);
+            glowG.addColorStop(0, 'rgba(255, 241, 118, 0.35)');
+            glowG.addColorStop(1, 'rgba(255, 241, 118, 0)');
+            ctx.fillStyle = glowG;
+            ctx.beginPath(); ctx.arc(x, y - 10, 18, 0, Math.PI * 2); ctx.fill();
+        }
+
+        // Label
+        ctx.fillStyle = 'rgba(80,50,20,0.8)';
+        ctx.font = 'bold 6px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.name, x, y + 20);
     }
 
     // ---------- URBANISMO ----------
@@ -345,98 +669,273 @@ function startIso3D(subtype) {
         }
     }
 
-    // ---------- INTERIORES ----------
+    // ---------- INTERIORES (modern furniture) ----------
     function drawInterioresItem(x, y, hw, hh, item) {
         const rt = item.roofType;
-        if (rt === 'sofa') {
-            // 3D sofa
-            drawBox(x, y, TILE_W, 10, item.baseColor);
-            // Backrest
+
+        if (rt === 'modern_sofa') {
+            // Modern sleek sofa with thin legs
+            // Legs (thin metal)
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x - hw + 4, y + TILE_H - 3, 2, 4);
+            ctx.fillRect(x + hw - 6, y + TILE_H - 3, 2, 4);
+            ctx.fillRect(x - hw + 4, y + hh + 3, 2, 4);
+            ctx.fillRect(x + hw - 6, y + hh - 1, 2, 4);
+            // Seat base
+            drawBox(x, y, TILE_W, 8, item.baseColor);
+            // Back cushion (left side isometric)
             ctx.fillStyle = darken(item.baseColor, 15);
-            ctx.fillRect(x - hw, y + hh - 16, hw * 0.4, 8);
-            // Cushions
-            ctx.fillStyle = lighten(item.baseColor, 30);
-            const top = y - 10;
-            ctx.beginPath(); ctx.moveTo(x, top+TILE_H); ctx.lineTo(x+hw, top+hh); ctx.lineTo(x, top); ctx.lineTo(x-hw, top+hh); ctx.closePath();
-            ctx.fill();
-        } else if (rt === 'chair') {
-            // Legs
-            ctx.fillStyle = '#5D4037';
-            ctx.fillRect(x-8, y+2, 2, 12); ctx.fillRect(x+6, y+2, 2, 12);
-            // Seat
-            drawBox(x, y, TILE_W * 0.6, 6, item.baseColor);
-            // Back
-            ctx.fillStyle = darken(item.baseColor, 20);
-            ctx.fillRect(x - 10, y + hh - 20, 3, 14);
-        } else if (rt === 'bed') {
-            drawBox(x, y, TILE_W, 8, '#ecf0f1'); // Mattress
-            // Pillow
-            ctx.fillStyle = '#fff';
-            ctx.beginPath(); ctx.ellipse(x - 8, y + hh - 10, 8, 4, -0.4, 0, Math.PI * 2); ctx.fill();
-            // Blanket
-            ctx.fillStyle = item.baseColor;
-            const top = y - 8;
-            ctx.beginPath(); ctx.moveTo(x+5, top+TILE_H); ctx.lineTo(x+hw, top+hh+4); ctx.lineTo(x+5, top+6); ctx.lineTo(x-hw+10, top+hh+4); ctx.closePath();
-            ctx.fill();
-        } else if (rt === 'desk') {
-            // Table top
-            drawBox(x, y, TILE_W, 10, item.baseColor);
-            // Monitor
-            ctx.fillStyle = '#2c3e50'; ctx.fillRect(x-6, y+hh-22, 12, 10);
-            ctx.fillStyle = '#3498db'; ctx.fillRect(x-5, y+hh-21, 10, 8);
-            ctx.fillStyle = '#455A64'; ctx.fillRect(x-1, y+hh-12, 2, 4);
-        } else if (rt === 'tv') {
-            // TV stand
-            drawBox(x, y, TILE_W * 0.8, 6, '#5d4037');
-            // TV screen
-            ctx.fillStyle = '#1a1a2e'; ctx.fillRect(x-14, y+hh-24, 28, 16);
-            ctx.fillStyle = '#2196F3'; ctx.fillRect(x-12, y+hh-22, 24, 12);
-            ctx.fillStyle = '#455A64'; ctx.fillRect(x-1, y+hh-8, 2, 3);
-        } else if (rt === 'plant') {
-            // Pot
-            ctx.fillStyle = '#8D6E63';
-            ctx.beginPath(); ctx.moveTo(x-6, y+4); ctx.lineTo(x+6, y+4); ctx.lineTo(x+4, y+14); ctx.lineTo(x-4, y+14); ctx.closePath(); ctx.fill();
-            // Plant
-            ctx.fillStyle = '#4CAF50';
-            ctx.beginPath(); ctx.arc(x, y-4, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#66BB6A';
-            ctx.beginPath(); ctx.arc(x-4, y-1, 7, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(x+5, y-2, 6, 0, Math.PI*2); ctx.fill();
-        } else if (rt === 'painting') {
-            // Frame on wall - show as standing frame
-            ctx.fillStyle = '#8D6E63'; ctx.fillRect(x-12, y+hh-20, 24, 18);
-            ctx.fillStyle = item.baseColor; ctx.fillRect(x-10, y+hh-18, 20, 14);
-            // Little landscape inside
-            ctx.fillStyle = '#81D4FA'; ctx.fillRect(x-9, y+hh-17, 18, 7);
-            ctx.fillStyle = '#66BB6A'; ctx.fillRect(x-9, y+hh-10, 18, 5);
-            ctx.fillStyle = '#FFD54F'; ctx.beginPath(); ctx.arc(x+4, y+hh-14, 2, 0, Math.PI*2); ctx.fill();
-        } else if (rt === 'lamp') {
-            // Pole
-            ctx.fillStyle = '#616161'; ctx.fillRect(x-1, y-8, 2, 22);
-            // Base
-            ctx.fillStyle = '#424242'; ctx.beginPath(); ctx.ellipse(x, y+14, 6, 3, 0, 0, Math.PI*2); ctx.fill();
-            // Shade
-            ctx.fillStyle = item.baseColor;
-            ctx.beginPath(); ctx.moveTo(x-8, y-6); ctx.lineTo(x+8, y-6); ctx.lineTo(x+5, y-14); ctx.lineTo(x-5, y-14); ctx.closePath(); ctx.fill();
-            // Glow
-            ctx.fillStyle = 'rgba(255,241,118,0.3)'; ctx.beginPath(); ctx.arc(x, y-10, 12, 0, Math.PI*2); ctx.fill();
-        } else if (rt === 'shelf') {
-            // Bookshelf
-            drawBox(x, y, TILE_W * 0.8, 28, '#795548');
-            // Books
-            const colors = ['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa'];
-            for (let i = 0; i < 5; i++) {
-                ctx.fillStyle = colors[i]; ctx.fillRect(x - 10 + i*4, y+hh-26, 3, 8);
-                ctx.fillRect(x - 10 + i*4, y+hh-16, 3, 8);
-            }
-        } else if (rt === 'rug') {
-            // Flat rug on floor
-            ctx.globalAlpha = 0.7;
-            drawDiamond(x, y, item.baseColor, darken(item.baseColor, 30), false);
-            // Pattern
-            ctx.fillStyle = lighten(item.baseColor, 40);
             ctx.beginPath();
-            ctx.moveTo(x, y+4); ctx.lineTo(x+hw*0.4, y+hh); ctx.lineTo(x, y+TILE_H-4); ctx.lineTo(x-hw*0.4, y+hh); ctx.closePath();
+            ctx.moveTo(x - hw, y + hh - 8);
+            ctx.lineTo(x - hw, y + hh - 18);
+            ctx.lineTo(x, y - 18);
+            ctx.lineTo(x, y - 8);
+            ctx.closePath();
+            ctx.fill();
+            // Seat cushions on top (two)
+            ctx.fillStyle = lighten(item.baseColor, 15);
+            const top = y - 8;
+            ctx.beginPath();
+            ctx.moveTo(x, top + TILE_H);
+            ctx.lineTo(x + hw, top + hh);
+            ctx.lineTo(x, top);
+            ctx.lineTo(x - hw, top + hh);
+            ctx.closePath();
+            ctx.fill();
+            // Cushion divider line
+            ctx.strokeStyle = darken(item.baseColor, 10);
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(x - hw/2, top + hh/2);
+            ctx.lineTo(x + hw/2, top + hh + hh/2);
+            ctx.stroke();
+            // Throw pillow
+            ctx.fillStyle = '#e8c9a0';
+            ctx.beginPath(); ctx.ellipse(x - hw + 10, top + hh + 2, 4, 3, -0.5, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'flat_tv') {
+            // TV stand (low modern cabinet)
+            drawBox(x, y, TILE_W, 6, '#5a4a3a');
+            // Cabinet detail
+            ctx.fillStyle = darken('#5a4a3a', 10);
+            ctx.fillRect(x - 1, y + TILE_H - 6, 2, 4);
+            // Thin flat screen TV on stand
+            ctx.fillStyle = '#111';
+            ctx.fillRect(x - 16, y + hh - 26, 32, 20);
+            // Screen
+            const scrG = ctx.createLinearGradient(x - 14, y + hh - 24, x + 14, y + hh - 8);
+            scrG.addColorStop(0, '#1a237e');
+            scrG.addColorStop(0.5, '#283593');
+            scrG.addColorStop(1, '#1a237e');
+            ctx.fillStyle = scrG;
+            ctx.fillRect(x - 14, y + hh - 24, 28, 16);
+            // Screen content shimmer
+            ctx.fillStyle = 'rgba(100, 200, 255, 0.1)';
+            ctx.fillRect(x - 12, y + hh - 22, 24, 6);
+            // Stand neck
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x - 1.5, y + hh - 6, 3, 3);
+
+        } else if (rt === 'coffee_table') {
+            // Minimalist coffee table - thin top, angled legs
+            // Angled legs
+            ctx.strokeStyle = '#8a7a6a';
+            ctx.lineWidth = 1.5;
+            // Back legs
+            ctx.beginPath(); ctx.moveTo(x - hw + 6, y + hh + 6); ctx.lineTo(x - hw + 10, y + hh - 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + hw - 6, y + hh - 2); ctx.lineTo(x + hw - 10, y + hh + 6); ctx.stroke();
+            // Front legs
+            ctx.beginPath(); ctx.moveTo(x - 4, y + TILE_H + 4); ctx.lineTo(x - 8, y + TILE_H - 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 4, y + TILE_H + 4); ctx.lineTo(x + 8, y + TILE_H - 2); ctx.stroke();
+            // Thin table top
+            drawBox(x, y, TILE_W * 0.85, 3, item.baseColor);
+            // Magazine/book on table
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillRect(x - 3, y + hh - 5, 6, 4);
+
+        } else if (rt === 'floor_lamp') {
+            // Modern floor lamp - thin pole with geometric shade
+            // Base (circle)
+            ctx.fillStyle = '#444';
+            ctx.beginPath(); ctx.ellipse(x, y + TILE_H - 2, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
+            // Thin pole
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x - 1, y - 28, 2, 30);
+            // Geometric shade (cylinder/drum shape)
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(x - 7, y - 36, 14, 10);
+            ctx.fillStyle = lighten(item.baseColor, 20);
+            ctx.beginPath(); ctx.ellipse(x, y - 36, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = darken(item.baseColor, 10);
+            ctx.beginPath(); ctx.ellipse(x, y - 26, 7, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            // Glow effect
+            const glowG = ctx.createRadialGradient(x, y - 24, 2, x, y - 24, 20);
+            glowG.addColorStop(0, 'rgba(255, 241, 180, 0.3)');
+            glowG.addColorStop(1, 'rgba(255, 241, 180, 0)');
+            ctx.fillStyle = glowG;
+            ctx.beginPath(); ctx.arc(x, y - 24, 20, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'dining_table') {
+            // Contemporary dining table with chairs suggestion
+            // Table legs (thin angled)
+            ctx.strokeStyle = '#999';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x - hw + 4, y + hh + 4); ctx.lineTo(x - hw + 8, y + hh - 4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + hw - 4, y + hh - 4); ctx.lineTo(x + hw - 8, y + hh + 4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x - 2, y + TILE_H + 2); ctx.lineTo(x - 6, y + TILE_H - 4); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 2, y + TILE_H + 2); ctx.lineTo(x + 6, y + TILE_H - 4); ctx.stroke();
+            // Table top (white/light)
+            drawBox(x, y, TILE_W, 3, item.baseColor);
+            // Plate
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(x - 4, y + hh - 4, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(x + 6, y + hh + 2, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'modern_bed') {
+            // Modern bed with headboard
+            // Bed frame
+            drawBox(x, y, TILE_W, 7, '#8a7a6a');
+            // Mattress
+            const mTop = y - 7;
+            ctx.fillStyle = '#f5f0e8';
+            ctx.beginPath();
+            ctx.moveTo(x, mTop + TILE_H);
+            ctx.lineTo(x + hw, mTop + hh);
+            ctx.lineTo(x, mTop);
+            ctx.lineTo(x - hw, mTop + hh);
+            ctx.closePath();
+            ctx.fill();
+            // Headboard (tall rectangle at back)
+            ctx.fillStyle = '#5a4a3a';
+            ctx.beginPath();
+            ctx.moveTo(x - hw, mTop + hh);
+            ctx.lineTo(x - hw, mTop + hh - 18);
+            ctx.lineTo(x, mTop - 18);
+            ctx.lineTo(x, mTop);
+            ctx.closePath();
+            ctx.fill();
+            // Headboard right face
+            ctx.fillStyle = darken('#5a4a3a', 15);
+            ctx.beginPath();
+            ctx.moveTo(x, mTop);
+            ctx.lineTo(x, mTop - 18);
+            ctx.lineTo(x + 3, mTop - 19);
+            ctx.lineTo(x + 3, mTop - 1);
+            ctx.closePath();
+            ctx.fill();
+            // Pillows
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.ellipse(x - hw + 10, mTop + hh - 4, 6, 3, -0.4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#f0f0f0';
+            ctx.beginPath(); ctx.ellipse(x - hw + 20, mTop + hh + 1, 6, 3, -0.4, 0, Math.PI * 2); ctx.fill();
+            // Duvet
+            ctx.fillStyle = item.baseColor;
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(x + 5, mTop + TILE_H);
+            ctx.lineTo(x + hw, mTop + hh + 4);
+            ctx.lineTo(x + 5, mTop + 6);
+            ctx.lineTo(x - hw + 14, mTop + hh + 4);
+            ctx.closePath();
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+        } else if (rt === 'desk_computer') {
+            // Modern desk with computer
+            // Desk legs
+            ctx.fillStyle = '#666';
+            ctx.fillRect(x - hw + 4, y + hh, 2, 10);
+            ctx.fillRect(x + hw - 6, y + hh - 6, 2, 10);
+            ctx.fillRect(x - 4, y + TILE_H - 2, 2, 8);
+            ctx.fillRect(x + 2, y + TILE_H - 6, 2, 8);
+            // Desk surface
+            drawBox(x, y, TILE_W, 3, item.baseColor);
+            // Monitor
+            ctx.fillStyle = '#222';
+            ctx.fillRect(x - 8, y + hh - 20, 16, 12);
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(x - 7, y + hh - 19, 14, 10);
+            // Monitor stand
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x - 1, y + hh - 8, 2, 4);
+            ctx.fillRect(x - 4, y + hh - 4, 8, 1.5);
+            // Keyboard
+            ctx.fillStyle = '#555';
+            ctx.fillRect(x - 6, y + hh + 2, 12, 3);
+            ctx.fillStyle = '#666';
+            ctx.fillRect(x - 5, y + hh + 2.5, 10, 2);
+
+        } else if (rt === 'bookshelf') {
+            // Tall modern bookshelf
+            drawBox(x, y, TILE_W * 0.7, 32, item.baseColor);
+            // Shelves and books
+            const shelfColors = ['#e53935', '#1e88e5', '#43a047', '#fb8c00', '#8e24aa', '#00acc1', '#f4511e'];
+            for (let shelf = 0; shelf < 4; shelf++) {
+                const sy = y + hh - 30 + shelf * 8;
+                // Shelf line
+                ctx.fillStyle = darken(item.baseColor, 10);
+                ctx.fillRect(x - hw * 0.6, sy + 6, hw * 1.2, 1);
+                // Books on shelf
+                for (let b = 0; b < 4; b++) {
+                    const bx = x - hw * 0.5 + b * 7;
+                    const bh = 4 + Math.random() * 2;
+                    ctx.fillStyle = shelfColors[(shelf * 4 + b) % shelfColors.length];
+                    ctx.fillRect(bx, sy + 6 - bh, 5, bh);
+                }
+            }
+
+        } else if (rt === 'modern_plant') {
+            // Modern geometric pot with plant
+            // Pot (geometric/angular)
+            ctx.fillStyle = '#e0e0e0';
+            ctx.beginPath();
+            ctx.moveTo(x - 7, y + 4);
+            ctx.lineTo(x + 7, y + 4);
+            ctx.lineTo(x + 5, y + 14);
+            ctx.lineTo(x - 5, y + 14);
+            ctx.closePath();
+            ctx.fill();
+            // Pot rim
+            ctx.fillStyle = '#ccc';
+            ctx.fillRect(x - 8, y + 2, 16, 3);
+            // Stem
+            ctx.strokeStyle = '#388E3C';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(x, y + 2); ctx.lineTo(x, y - 10); ctx.stroke();
+            // Leaves (modern fiddle-leaf style)
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath(); ctx.ellipse(x - 6, y - 8, 5, 8, -0.3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#66BB6A';
+            ctx.beginPath(); ctx.ellipse(x + 5, y - 12, 4, 7, 0.4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#43A047';
+            ctx.beginPath(); ctx.ellipse(x - 2, y - 16, 4, 6, -0.1, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#81C784';
+            ctx.beginPath(); ctx.ellipse(x + 3, y - 4, 3, 5, 0.6, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'modern_rug') {
+            // Modern flat rug with pattern
+            ctx.globalAlpha = 0.75;
+            drawDiamond(x, y, item.baseColor, darken(item.baseColor, 20), false);
+            // Inner border pattern
+            ctx.strokeStyle = darken(item.baseColor, 30);
+            ctx.lineWidth = 1;
+            const inset = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(x, y + 4);
+            ctx.lineTo(x + hw * inset, y + hh);
+            ctx.lineTo(x, y + TILE_H - 4);
+            ctx.lineTo(x - hw * inset, y + hh);
+            ctx.closePath();
+            ctx.stroke();
+            // Center geometric pattern
+            ctx.fillStyle = darken(item.baseColor, 15);
+            ctx.beginPath();
+            ctx.moveTo(x, y + hh - 4);
+            ctx.lineTo(x + 6, y + hh);
+            ctx.lineTo(x, y + hh + 4);
+            ctx.lineTo(x - 6, y + hh);
+            ctx.closePath();
             ctx.fill();
             ctx.globalAlpha = 1;
         }
@@ -535,112 +1034,288 @@ function startIso3D(subtype) {
         }
     }
 
-    // ---------- SOSTENIBLE ----------
+    // ---------- SOSTENIBLE (modern eco items) ----------
     function drawSostenibleItem(x, y, hw, hh, floorH, totalH, item) {
         const rt = item.roofType;
-        if (rt === 'solar') {
-            // Solar panel angled
+
+        if (rt === 'solar_array') {
+            // Modern solar panel array - multiple panels
+            // Support structure
+            ctx.fillStyle = '#78909C';
+            ctx.fillRect(x - 2, y + 2, 4, 10);
+            ctx.fillRect(x - hw + 6, y + hh, 2, 6);
+            ctx.fillRect(x + hw - 8, y + hh - 4, 2, 6);
+            // Panel surface (angled)
             ctx.fillStyle = '#0D47A1';
-            ctx.beginPath(); ctx.moveTo(x-hw+4,y+hh); ctx.lineTo(x+hw-4,y+hh-4); ctx.lineTo(x+hw-4,y+hh-14); ctx.lineTo(x-hw+4,y+hh-10); ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x - hw + 2, y + hh - 2);
+            ctx.lineTo(x + hw - 2, y + hh - 6);
+            ctx.lineTo(x + hw - 2, y + hh - 16);
+            ctx.lineTo(x - hw + 2, y + hh - 12);
+            ctx.closePath();
+            ctx.fill();
+            // Top face
             ctx.fillStyle = '#1565C0';
-            ctx.beginPath(); ctx.moveTo(x-hw+4,y+hh-10); ctx.lineTo(x+hw-4,y+hh-14); ctx.lineTo(x, y-12); ctx.lineTo(x-hw+8,y+hh-12); ctx.closePath(); ctx.fill();
-            // Grid lines
-            ctx.strokeStyle = '#42A5F5'; ctx.lineWidth = 0.5;
-            for (let i = 1; i < 4; i++) { ctx.beginPath(); ctx.moveTo(x-hw+4+i*6, y+hh-10); ctx.lineTo(x-hw+4+i*8, y-4); ctx.stroke(); }
-            // Shine
-            ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(x-4, y+hh-12, 10, 4);
-        } else if (rt === 'windmill') {
-            // Tower
-            ctx.fillStyle = '#ECEFF1'; ctx.fillRect(x-3, y-30, 6, 34);
-            ctx.fillStyle = '#B0BEC5'; ctx.fillRect(x-5, y+2, 10, 4);
-            // Blades
-            ctx.strokeStyle = '#CFD8DC'; ctx.lineWidth = 2;
-            const cx = x, cy = y - 30;
+            ctx.beginPath();
+            ctx.moveTo(x - hw + 2, y + hh - 12);
+            ctx.lineTo(x + hw - 2, y + hh - 16);
+            ctx.lineTo(x, y - 14);
+            ctx.lineTo(x - hw + 6, y + hh - 14);
+            ctx.closePath();
+            ctx.fill();
+            // Grid lines on panel
+            ctx.strokeStyle = '#42A5F5';
+            ctx.lineWidth = 0.4;
+            for (let i = 1; i < 5; i++) {
+                ctx.beginPath();
+                ctx.moveTo(x - hw + 2 + i * 5, y + hh - 12);
+                ctx.lineTo(x - hw + 2 + i * 7, y - 6);
+                ctx.stroke();
+            }
+            // Shine effect
+            ctx.fillStyle = 'rgba(255,255,255,0.12)';
+            ctx.fillRect(x - 4, y + hh - 14, 10, 4);
+
+        } else if (rt === 'wind_turbine') {
+            // Sleek modern wind turbine
+            // Base
+            ctx.fillStyle = '#B0BEC5';
+            ctx.beginPath(); ctx.ellipse(x, y + TILE_H - 4, 6, 3, 0, 0, Math.PI * 2); ctx.fill();
+            // Tower (tapered)
+            ctx.fillStyle = '#ECEFF1';
+            ctx.beginPath();
+            ctx.moveTo(x - 4, y + TILE_H - 4);
+            ctx.lineTo(x + 4, y + TILE_H - 4);
+            ctx.lineTo(x + 2, y - 34);
+            ctx.lineTo(x - 2, y - 34);
+            ctx.closePath();
+            ctx.fill();
+            // Nacelle
+            ctx.fillStyle = '#CFD8DC';
+            ctx.beginPath(); ctx.ellipse(x, y - 34, 4, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            // Blades (3)
+            ctx.strokeStyle = '#ECEFF1';
+            ctx.lineWidth = 2.5;
+            const cx = x, cy = y - 34;
             for (let a = 0; a < 3; a++) {
                 const angle = a * (Math.PI * 2 / 3) + Date.now() * 0.002;
-                ctx.beginPath(); ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(cx + Math.cos(angle) * 20, cy + Math.sin(angle) * 20);
+                ctx.stroke();
+                // Blade tip (thinner)
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(cx + Math.cos(angle) * 18, cy + Math.sin(angle) * 18);
+                ctx.lineTo(cx + Math.cos(angle) * 24, cy + Math.sin(angle) * 24);
+                ctx.stroke();
+                ctx.lineWidth = 2.5;
             }
-            ctx.fillStyle = '#455A64'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI*2); ctx.fill();
-        } else if (rt === 'greenroof') {
-            drawBox(x, y, TILE_W, totalH, item.baseColor);
-            if (item.windows) {
-                for (let f = 0; f < item.floors; f++) {
-                    ctx.fillStyle = '#BBDEFB';
-                    const fy = y + TILE_H - totalH + f*floorH + 3;
-                    ctx.fillRect(x-hw+6, fy, 5, 5); ctx.fillRect(x+5, fy+4, 5, 5);
-                }
-            }
-            // Green roof top
+            // Hub
+            ctx.fillStyle = '#455A64';
+            ctx.beginPath(); ctx.arc(cx, cy, 2.5, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'green_roof') {
+            // Green roof module
+            drawBox(x, y, TILE_W, 10, '#8D6E63');
+            // Roof top with green
             ctx.fillStyle = '#4CAF50';
-            const top = y - totalH;
-            ctx.beginPath(); ctx.moveTo(x, top+TILE_H); ctx.lineTo(x+hw, top+hh); ctx.lineTo(x, top); ctx.lineTo(x-hw, top+hh); ctx.closePath(); ctx.fill();
-            // Little plants on top
+            const top = y - 10;
+            ctx.beginPath();
+            ctx.moveTo(x, top + TILE_H);
+            ctx.lineTo(x + hw, top + hh);
+            ctx.lineTo(x, top);
+            ctx.lineTo(x - hw, top + hh);
+            ctx.closePath();
+            ctx.fill();
+            // Little plants
             ctx.fillStyle = '#66BB6A';
-            ctx.beginPath(); ctx.arc(x-5, top+hh-2, 3, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(x+4, top+hh-1, 2.5, 0, Math.PI*2); ctx.fill();
-            ctx.beginPath(); ctx.arc(x, top+4, 3, 0, Math.PI*2); ctx.fill();
-        } else if (rt === 'watertank') {
-            // Cylinder tank
-            ctx.fillStyle = '#00838F';
-            ctx.fillRect(x-10, y-8, 20, 18);
-            ctx.fillStyle = '#0097A7';
-            ctx.beginPath(); ctx.ellipse(x, y-8, 10, 5, 0, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#00ACC1';
-            ctx.beginPath(); ctx.ellipse(x, y-8, 8, 4, 0, 0, Math.PI*2); ctx.fill();
-            // Water drops
-            ctx.fillStyle = '#4FC3F7'; ctx.font = '8px serif'; ctx.textAlign = 'center'; ctx.fillText('💧', x, y-2);
-        } else if (rt === 'recycle') {
-            // Recycle bins
-            drawBox(x, y, TILE_W * 0.5, 14, '#4CAF50');
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 8px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('♻', x, y+4);
-            // Second bin
-            ctx.fillStyle = darken('#2196F3', 25);
-            ctx.fillRect(x+8, y+hh-12, 10, 12);
-            ctx.fillStyle = '#2196F3';
-            ctx.fillRect(x+8, y+hh-14, 10, 3);
-        } else if (rt === 'garden') {
-            // Raised garden bed
-            drawBox(x, y, TILE_W * 0.9, 6, '#795548');
-            // Soil
-            ctx.fillStyle = '#5D4037';
-            const top = y - 6;
-            ctx.beginPath(); ctx.moveTo(x, top+TILE_H); ctx.lineTo(x+hw*0.9, top+hh); ctx.lineTo(x, top); ctx.lineTo(x-hw*0.9, top+hh); ctx.closePath(); ctx.fill();
-            // Plants growing
-            ctx.fillStyle = '#66BB6A';
-            for (let i = 0; i < 5; i++) {
-                const px = x - 10 + i*5, py = top + hh - 2;
-                ctx.fillRect(px, py - 6, 1.5, 6);
-                ctx.beginPath(); ctx.arc(px+0.5, py-7, 2.5, 0, Math.PI*2); ctx.fill();
-            }
-        } else if (rt === 'bikepark') {
-            // Bike rack
-            ctx.fillStyle = '#78909C'; ctx.fillRect(x-14, y+4, 28, 2);
+            ctx.beginPath(); ctx.arc(x - 6, top + hh - 1, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + 5, top + hh, 2.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x, top + 5, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#81C784';
+            ctx.beginPath(); ctx.arc(x + 2, top + hh + 3, 2, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'ev_charger') {
+            // Electric vehicle charger station
+            // Post
+            ctx.fillStyle = '#37474F';
+            ctx.fillRect(x - 3, y - 20, 6, 24);
+            // Charger head
+            ctx.fillStyle = '#455A64';
+            ctx.fillRect(x - 6, y - 24, 12, 8);
+            // Screen
+            ctx.fillStyle = '#4CAF50';
+            ctx.fillRect(x - 4, y - 22, 8, 4);
+            // Green indicator
+            ctx.fillStyle = '#76FF03';
+            ctx.beginPath(); ctx.arc(x, y - 16, 1.5, 0, Math.PI * 2); ctx.fill();
+            // Cable
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(x + 4, y - 16);
+            ctx.quadraticCurveTo(x + 12, y - 8, x + 8, y + 4);
+            ctx.stroke();
+            // Plug end
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x + 6, y + 2, 4, 3);
+            // Base
             ctx.fillStyle = '#546E7A';
-            for (let i = 0; i < 4; i++) ctx.fillRect(x-12+i*8, y-2, 2, 8);
-            // Bike
-            ctx.strokeStyle = '#37474F'; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.arc(x-4, y+2, 5, 0, Math.PI*2); ctx.stroke();
-            ctx.beginPath(); ctx.arc(x+6, y+2, 5, 0, Math.PI*2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(x-4, y+2); ctx.lineTo(x+1, y-4); ctx.lineTo(x+6, y+2); ctx.stroke();
-        } else if (rt === 'gable' || rt === 'flat') {
-            // Generic eco building
-            drawBox(x, y, TILE_W, totalH, item.baseColor);
-            if (item.windows) {
-                for (let f = 0; f < item.floors; f++) {
-                    ctx.fillStyle = '#BBDEFB';
-                    const fy = y + TILE_H - totalH + f*floorH + 3;
-                    ctx.fillRect(x-hw+6, fy, 5, 5); ctx.fillRect(x+5, fy+4, 5, 5);
+            ctx.fillRect(x - 5, y + 4, 10, 3);
+
+        } else if (rt === 'rain_tank') {
+            // Modern rainwater collection tank
+            // Cylinder body
+            ctx.fillStyle = '#00838F';
+            ctx.fillRect(x - 10, y - 10, 20, 22);
+            // Top ellipse
+            ctx.fillStyle = '#0097A7';
+            ctx.beginPath(); ctx.ellipse(x, y - 10, 10, 5, 0, 0, Math.PI * 2); ctx.fill();
+            // Inner top
+            ctx.fillStyle = '#00ACC1';
+            ctx.beginPath(); ctx.ellipse(x, y - 10, 8, 4, 0, 0, Math.PI * 2); ctx.fill();
+            // Water level indicator
+            ctx.fillStyle = '#4FC3F7';
+            ctx.fillRect(x + 10, y - 4, 2, 10);
+            ctx.fillStyle = '#00B0FF';
+            ctx.fillRect(x + 10, y + 2, 2, 4);
+            // Pipe in
+            ctx.fillStyle = '#78909C';
+            ctx.fillRect(x - 14, y - 8, 4, 2);
+
+        } else if (rt === 'compost') {
+            // Compost bin
+            drawBox(x, y, TILE_W * 0.7, 14, '#795548');
+            // Lid
+            ctx.fillStyle = '#8D6E63';
+            const top = y - 14;
+            ctx.beginPath();
+            ctx.moveTo(x, top + TILE_H);
+            ctx.lineTo(x + hw * 0.7, top + hh);
+            ctx.lineTo(x, top);
+            ctx.lineTo(x - hw * 0.7, top + hh);
+            ctx.closePath();
+            ctx.fill();
+            // Handle
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(x - 2, top + hh - 2, 4, 2);
+            // Leaf decoration
+            ctx.fillStyle = '#4CAF50';
+            ctx.beginPath(); ctx.ellipse(x + 4, top + hh + 2, 3, 2, 0.3, 0, Math.PI * 2); ctx.fill();
+            // Ventilation holes
+            ctx.fillStyle = darken('#795548', 20);
+            ctx.beginPath(); ctx.arc(x - 4, y + 4, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + 4, y + 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'bee_hotel') {
+            // Bee hotel / insect house
+            // Frame
+            ctx.fillStyle = '#8D6E63';
+            ctx.fillRect(x - 10, y - 14, 20, 24);
+            // Roof (small gable)
+            ctx.fillStyle = '#6D4C41';
+            ctx.beginPath();
+            ctx.moveTo(x - 12, y - 14);
+            ctx.lineTo(x, y - 22);
+            ctx.lineTo(x + 12, y - 14);
+            ctx.closePath();
+            ctx.fill();
+            // Compartments with different fills
+            const fills = ['#D7CCC8', '#BCAAA4', '#A1887F', '#FFE0B2', '#C8E6C9'];
+            for (let row = 0; row < 3; row++) {
+                for (let col = 0; col < 3; col++) {
+                    const cx = x - 7 + col * 7;
+                    const cy = y - 10 + row * 7;
+                    ctx.fillStyle = fills[(row * 3 + col) % fills.length];
+                    ctx.fillRect(cx, cy, 5, 5);
+                    // Holes
+                    ctx.fillStyle = darken('#795548', 30);
+                    ctx.beginPath(); ctx.arc(cx + 2.5, cy + 2.5, 1.5, 0, Math.PI * 2); ctx.fill();
                 }
             }
-            if (item.floors >= 1) { ctx.fillStyle = '#5D4037'; ctx.fillRect(x-5, y+TILE_H-10, 5, 8); }
-            if (rt === 'gable') {
-                const rb = y - totalH, rp = rb - 14;
-                ctx.beginPath(); ctx.moveTo(x-hw-2, rb+hh); ctx.lineTo(x, rp); ctx.lineTo(x, rb+TILE_H); ctx.closePath();
-                ctx.fillStyle = item.roofColor; ctx.fill();
-                ctx.beginPath(); ctx.moveTo(x, rb+TILE_H); ctx.lineTo(x, rp); ctx.lineTo(x+hw+2, rb+hh); ctx.closePath();
-                ctx.fillStyle = darken(item.roofColor, 20); ctx.fill();
+            // Small bee
+            ctx.fillStyle = '#FFD54F';
+            ctx.beginPath(); ctx.ellipse(x + 14, y - 8, 2.5, 1.5, 0.3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#333';
+            ctx.fillRect(x + 13, y - 9, 1, 3);
+            ctx.fillRect(x + 15, y - 9, 1, 3);
+
+        } else if (rt === 'smart_lamp') {
+            // LED smart street lamp
+            // Pole
+            ctx.fillStyle = '#78909C';
+            ctx.fillRect(x - 1.5, y - 28, 3, 32);
+            // Base
+            ctx.fillStyle = '#607D8B';
+            ctx.beginPath(); ctx.ellipse(x, y + 4, 5, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+            // Solar panel on top
+            ctx.fillStyle = '#1565C0';
+            ctx.fillRect(x - 6, y - 32, 12, 3);
+            // LED light head
+            ctx.fillStyle = '#455A64';
+            ctx.fillRect(x - 8, y - 28, 16, 3);
+            // LED glow
+            ctx.fillStyle = item.baseColor;
+            ctx.fillRect(x - 6, y - 25, 12, 2);
+            // Glow effect
+            const glow = ctx.createRadialGradient(x, y - 22, 2, x, y - 22, 16);
+            glow.addColorStop(0, 'rgba(144, 202, 249, 0.35)');
+            glow.addColorStop(1, 'rgba(144, 202, 249, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(x, y - 22, 16, 0, Math.PI * 2); ctx.fill();
+            // Motion sensor
+            ctx.fillStyle = '#B0BEC5';
+            ctx.beginPath(); ctx.arc(x + 3, y - 26, 1.5, 0, Math.PI * 2); ctx.fill();
+
+        } else if (rt === 'recycle_station') {
+            // Modern recycling station with 3 bins
+            const binW = 8;
+            const colors = ['#4CAF50', '#2196F3', '#FFC107'];
+            const labels = ['O', 'P', 'V'];
+            for (let i = 0; i < 3; i++) {
+                const bx = x - 14 + i * 10;
+                const by = y + 2;
+                // Bin body
+                ctx.fillStyle = colors[i];
+                ctx.fillRect(bx, by - 12, binW, 14);
+                // Lid
+                ctx.fillStyle = darken(colors[i], 20);
+                ctx.fillRect(bx - 1, by - 14, binW + 2, 3);
+                // Label
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 5px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(labels[i], bx + binW / 2, by - 4);
             }
+            // Recycling symbol above
+            ctx.fillStyle = '#388E3C';
+            ctx.font = '8px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('♻', x, y - 14);
+
+        } else if (rt === 'vertical_garden') {
+            // Vertical garden module / green wall
+            // Frame structure
+            ctx.fillStyle = '#5D4037';
+            ctx.fillRect(x - 12, y - 18, 24, 28);
+            // Plant grid
+            const plantColors = ['#4CAF50', '#66BB6A', '#81C784', '#388E3C', '#43A047', '#2E7D32'];
+            for (let row = 0; row < 4; row++) {
+                for (let col = 0; col < 4; col++) {
+                    const px = x - 9 + col * 6;
+                    const py = y - 14 + row * 6;
+                    ctx.fillStyle = plantColors[(row * 4 + col) % plantColors.length];
+                    ctx.beginPath(); ctx.arc(px + 2, py + 2, 2.5, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+            // Frame border
+            ctx.strokeStyle = '#8D6E63';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x - 12, y - 18, 24, 28);
+            // Drip system at top
+            ctx.fillStyle = '#0097A7';
+            ctx.fillRect(x - 10, y - 20, 20, 2);
         }
     }
 
@@ -648,6 +1323,39 @@ function startIso3D(subtype) {
     function render() {
         ctx.clearRect(0, 0, W, H);
         bgDrawers[subtype]();
+
+        // Draw wall items for interiores BEFORE floor grid (they're on the back wall)
+        if (subtype === 'interiores') {
+            // Draw wall slot hover indicators
+            for (let i = 0; i < WALL_SLOTS; i++) {
+                const { x, y } = getWallSlotPos(i);
+                if (wallGrid[i]) {
+                    drawWallItem(i, wallGrid[i]);
+                } else if (i === hoverWall && selectedTool && selectedTool.wall) {
+                    // Ghost preview on wall
+                    ctx.globalAlpha = 0.4;
+                    drawWallItem(i, selectedTool);
+                    ctx.globalAlpha = 1;
+                    // Hover indicator
+                    ctx.strokeStyle = 'rgba(180, 170, 155, 0.5)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(x - 22, y - 18, 44, 36);
+                } else if (selectedTool && selectedTool.wall) {
+                    // Show available wall slots subtly
+                    ctx.strokeStyle = 'rgba(180, 170, 155, 0.15)';
+                    ctx.lineWidth = 0.5;
+                    ctx.setLineDash([3, 3]);
+                    ctx.strokeRect(x - 22, y - 18, 44, 36);
+                    ctx.setLineDash([]);
+                }
+                // Eraser on wall items
+                if (i === hoverWall && selectedTool && selectedTool.name === 'eraser' && wallGrid[i]) {
+                    ctx.fillStyle = 'rgba(255,0,0,0.4)';
+                    ctx.font = '18px serif'; ctx.textAlign = 'center';
+                    ctx.fillText('🗑️', x, y + 5);
+                }
+            }
+        }
 
         for (let r = 0; r < GRID; r++) {
             for (let c = 0; c < GRID; c++) {
@@ -660,7 +1368,7 @@ function startIso3D(subtype) {
                 } else {
                     const tc = getTileColors(isHover);
                     drawDiamond(x, y, tc.base, tc.border, isHover);
-                    if (isHover && selectedTool && selectedTool.name !== 'eraser') {
+                    if (isHover && selectedTool && selectedTool.name !== 'eraser' && !selectedTool.wall) {
                         ctx.globalAlpha = 0.4;
                         drawItem3D(r, c, selectedTool);
                         ctx.globalAlpha = 1;
@@ -687,6 +1395,25 @@ function startIso3D(subtype) {
 
     function handlePlace(e) {
         const pos = getMousePos(e);
+
+        // Check wall placement first (interiores only)
+        if (subtype === 'interiores') {
+            const wallIdx = fromScreenWall(pos.x, pos.y);
+            if (wallIdx >= 0) {
+                if (selectedTool && selectedTool.name === 'eraser') {
+                    if (wallGrid[wallIdx]) { wallGrid[wallIdx] = null; placedCount--; addScore(-5); }
+                    return;
+                }
+                if (selectedTool && selectedTool.wall) {
+                    if (wallGrid[wallIdx]) return;
+                    wallGrid[wallIdx] = selectedTool;
+                    placedCount++;
+                    addScore(10);
+                    return;
+                }
+            }
+        }
+
         const cell = fromScreen(pos.x, pos.y);
         if (!cell || !selectedTool) return;
         const { r, c } = cell;
@@ -694,6 +1421,8 @@ function startIso3D(subtype) {
             if (grid[r][c]) { grid[r][c] = null; placedCount--; addScore(-5); }
             return;
         }
+        // Don't place wall items on floor
+        if (selectedTool.wall) return;
         if (grid[r][c]) return;
         grid[r][c] = selectedTool;
         placedCount++;
@@ -702,6 +1431,12 @@ function startIso3D(subtype) {
 
     canvas.addEventListener('mousemove', (e) => {
         const pos = getMousePos(e);
+
+        // Check wall hover (interiores only)
+        if (subtype === 'interiores') {
+            hoverWall = fromScreenWall(pos.x, pos.y);
+        }
+
         const cell = fromScreen(pos.x, pos.y);
         if (cell) { hoverR = cell.r; hoverC = cell.c; } else { hoverR = -1; hoverC = -1; }
     });
@@ -715,7 +1450,8 @@ function startIso3D(subtype) {
     items.forEach(b => {
         const item = document.createElement('div');
         item.className = 'tool-item';
-        item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}</span>`;
+        const wallTag = b.wall ? ' <span style="font-size:0.5rem;opacity:0.6">PARED</span>' : '';
+        item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}${wallTag}</span>`;
         item.onclick = () => {
             document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
             item.classList.add('selected');
@@ -744,6 +1480,9 @@ function startIso3D(subtype) {
         for (let r = 0; r < GRID; r++)
             for (let c = 0; c < GRID; c++)
                 if (grid[r][c]) uniqueTypes.add(grid[r][c].name);
+        // Also count wall items
+        for (let i = 0; i < WALL_SLOTS; i++)
+            if (wallGrid[i]) uniqueTypes.add(wallGrid[i].name);
         addScore(uniqueTypes.size * 15);
         let stars = placedCount >= 15 ? 5 : placedCount >= 10 ? 4 : placedCount >= 6 ? 3 : placedCount >= 3 ? 2 : 1;
         let starsHtml = '';
