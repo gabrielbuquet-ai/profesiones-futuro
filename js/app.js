@@ -142,6 +142,8 @@ function startGame(professionId, subtypeId, title) {
 
     const canvas = document.getElementById('game-canvas');
     const container = document.getElementById('game-container');
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset any previous scale
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
     canvas.style.display = 'none';

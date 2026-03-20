@@ -21,8 +21,12 @@ function startDeporte(subtype) {
 }
 
 function deporteFutbol(ui, controls, canvas) {
+    const container = document.getElementById('game-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const W = canvas.width, H = canvas.height;
 
     let goals = 0;
@@ -145,8 +149,12 @@ function deporteFutbol(ui, controls, canvas) {
 }
 
 function deporteBaloncesto(ui, controls, canvas) {
+    const container = document.getElementById('game-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const W = canvas.width, H = canvas.height;
 
     let baskets = 0;
@@ -289,8 +297,12 @@ function deporteBaloncesto(ui, controls, canvas) {
 }
 
 function deporteTenis(ui, controls, canvas) {
+    const container = document.getElementById('game-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const W = canvas.width, H = canvas.height;
 
     let playerX = W / 2;

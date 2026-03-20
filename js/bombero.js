@@ -193,8 +193,12 @@ function bomberoRescate(ui, controls) {
 function bomberoConduccion(ui, controls) {
     // Simple driving game - avoid obstacles
     const canvas = document.getElementById('game-canvas');
+    const container = document.getElementById('game-container');
+    canvas.width = container.clientWidth;
+    canvas.height = container.clientHeight;
     canvas.style.display = 'block';
     const ctx = canvas.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     const W = canvas.width;
     const H = canvas.height;
 
