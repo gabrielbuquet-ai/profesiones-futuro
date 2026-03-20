@@ -2786,7 +2786,7 @@ function startConducir(subtype) {
         }
 
         // Speed needle (triangular, red)
-        const spdAngle = Math.PI * 0.75 + (Math.min(speed, 200) / 200) * Math.PI * 1.5;
+        const spdAngle = Math.PI * 0.75 + (Math.min(Math.abs(speed), 200) / 200) * Math.PI * 1.5;
         const needleLen = spdR - 8;
         const needleW = Math.max(2, spdR * 0.06);
         ctx.fillStyle = '#ee2222';
@@ -2813,7 +2813,7 @@ function startConducir(subtype) {
         ctx.font = `bold ${Math.max(10, Math.floor(spdR * 0.32))}px Poppins, sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'alphabetic';
-        ctx.fillText(`${Math.floor(speed)}`, spdCX, spdCY + spdR * 0.5);
+        ctx.fillText(`${Math.floor(Math.abs(speed))}`, spdCX, spdCY + spdR * 0.5);
         ctx.font = `${Math.max(6, Math.floor(spdR * 0.16))}px Poppins, sans-serif`;
         ctx.fillStyle = '#777';
         ctx.fillText('km/h', spdCX, spdCY + spdR * 0.68);
@@ -3010,7 +3010,7 @@ function startConducir(subtype) {
         ctx.fillText(speedLimit, slX, slY);
         ctx.textBaseline = 'alphabetic';
         // Speeding flash on the sign
-        if (speed > speedLimit + 10) {
+        if (Math.abs(speed) > speedLimit + 10) {
             ctx.strokeStyle = `rgba(255,0,0,${0.3 + Math.sin(Date.now() * 0.008) * 0.2})`;
             ctx.lineWidth = Math.max(3, slR * 0.25);
             ctx.beginPath();
@@ -3041,7 +3041,7 @@ function startConducir(subtype) {
         }
 
         // --- Speeding warning ---
-        if (speed > speedLimit + 10) {
+        if (Math.abs(speed) > speedLimit + 10) {
             ctx.fillStyle = 'rgba(255,0,0,0.7)';
             ctx.font = `bold ${Math.max(8, Math.floor(innerH * 0.1))}px Poppins, sans-serif`;
             ctx.textAlign = 'right';
@@ -3132,10 +3132,12 @@ function startConducir(subtype) {
         // Steering
         const steerSpeed = 0.04;
         const steerReturn = 0.03;
-        if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+        const steerLeft = keys['ArrowLeft'] || (isManual && (keys['a'] || keys['A']));
+        const steerRight = keys['ArrowRight'] || (isManual && (keys['d'] || keys['D']));
+        if (steerLeft) {
             steerX = Math.max(-1, steerX - steerSpeed);
             playerLane = steerX < -0.3 ? -1 : (steerX > 0.3 ? 1 : 0);
-        } else if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+        } else if (steerRight) {
             steerX = Math.min(1, steerX + steerSpeed);
             playerLane = steerX < -0.3 ? -1 : (steerX > 0.3 ? 1 : 0);
         } else {
@@ -3170,7 +3172,12 @@ function startConducir(subtype) {
                 const gearIdx = Math.abs(gear);
                 if (gearIdx > 0 && gearIdx <= maxGear) {
                     const targetSpeed = (rpm / 8000) * gearMaxSpeed[gearIdx];
-                    speed += (targetSpeed - speed) * 0.08 * (gear < 0 ? -1 : 1);
+                    if (gear < 0) {
+                        // Reverse: speed goes negative
+                        speed += (-targetSpeed * 0.3 - speed) * 0.08;
+                    } else {
+                        speed += (targetSpeed - speed) * 0.08;
+                    }
                 }
             } else if (gasPressed && clutchPressed) {
                 rpm = Math.min(8000, rpm + 250);
@@ -3178,6 +3185,7 @@ function startConducir(subtype) {
             } else {
                 rpm = Math.max(800, rpm - 100);
                 speed *= 0.995;
+                if (Math.abs(speed) < 0.3) speed = 0;
             }
 
             if (brakePressed) {
@@ -3185,8 +3193,8 @@ function startConducir(subtype) {
                 if (Math.abs(speed) < 0.5) speed = 0;
             }
 
-            // Engine stall
-            if (!clutchPressed && gear > 0 && rpm < 600 && speed < 5) {
+            // Engine stall (only forward gears)
+            if (!clutchPressed && gear > 0 && rpm < 600 && Math.abs(speed) < 5) {
                 rpm = 0;
                 speed = 0;
                 gear = 0;
@@ -3198,7 +3206,7 @@ function startConducir(subtype) {
             // RPM from speed when not clutched
             if (!clutchPressed && gear > 0) {
                 const gearIdx = Math.abs(gear);
-                const derivedRPM = (speed / Math.max(1, gearMaxSpeed[gearIdx])) * 7000;
+                const derivedRPM = (Math.abs(speed) / Math.max(1, gearMaxSpeed[gearIdx])) * 7000;
                 rpm = Math.max(800, rpm * 0.7 + derivedRPM * 0.3);
             }
 
@@ -3211,9 +3219,11 @@ function startConducir(subtype) {
             if (gasPressed && gear > 0) {
                 speed = Math.min(160, speed + 1.2);
             } else if (gasPressed && gear < 0) {
-                speed = Math.min(30, speed + 0.5);
+                // Reverse in automatic
+                speed = Math.max(-25, speed - 0.6);
             } else {
-                speed *= 0.995;
+                if (Math.abs(speed) < 0.3) speed = 0;
+                else speed *= 0.995;
             }
             if (brakePressed) {
                 speed *= 0.93;
@@ -3221,17 +3231,21 @@ function startConducir(subtype) {
             }
             // Auto gear calculation for RPM display
             if (gear > 0) {
-                if (speed < 25) { rpm = 1000 + speed * 80; gear = 1; }
-                else if (speed < 50) { rpm = 1200 + (speed - 25) * 60; gear = 2; }
-                else if (speed < 90) { rpm = 1500 + (speed - 50) * 50; gear = 3; }
-                else { rpm = 2000 + (speed - 90) * 40; gear = Math.min(5, 4 + Math.floor((speed - 90) / 30)); }
+                const s = Math.abs(speed);
+                if (s < 25) { rpm = 1000 + s * 80; gear = 1; }
+                else if (s < 50) { rpm = 1200 + (s - 25) * 60; gear = 2; }
+                else if (s < 90) { rpm = 1500 + (s - 50) * 50; gear = 3; }
+                else { rpm = 2000 + (s - 90) * 40; gear = Math.min(5, 4 + Math.floor((s - 90) / 30)); }
+            } else if (gear < 0) {
+                rpm = 1000 + Math.abs(speed) * 60;
             } else {
                 rpm = 800;
             }
         }
 
-        speed = Math.max(0, speed);
-        distance += speed * 0.05;
+        // Allow negative speed (reverse) but clamp forward max
+        speed = Math.max(-30, Math.min(200, speed));
+        distance += Math.abs(speed) * 0.05;
         roadOffset += speed * 0.3;
 
         // Scroll traffic relative to player
