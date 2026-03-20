@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Profesiones del Futuro</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Pantalla de inicio -->
+        <div id="screen-home" class="screen active">
+            <div class="home-header">
+                <h1 class="app-title">PROFESIONES<br><span>DEL FUTURO</span></h1>
+                <p class="app-subtitle">Entrena para tu profesion</p>
+            </div>
+            <div class="menu-sections">
+                <h2 class="section-label">PROFESIONES</h2>
+                <div class="cards-grid">
+                    <div class="card card-arquitectura" onclick="navigateTo('arquitectura')">
+                        <div class="card-icon">🏗️</div>
+                        <div class="card-name">Arquitectura</div>
+                    </div>
+                    <div class="card card-medico" onclick="navigateTo('medico')">
+                        <div class="card-icon">🩺</div>
+                        <div class="card-name">Medico</div>
+                    </div>
+                    <div class="card card-cocina" onclick="navigateTo('cocina')">
+                        <div class="card-icon">👨‍🍳</div>
+                        <div class="card-name">Cocina</div>
+                    </div>
+                    <div class="card card-bombero" onclick="navigateTo('bombero')">
+                        <div class="card-icon">🚒</div>
+                        <div class="card-name">Bomberos</div>
+                    </div>
+                    <div class="card card-viajes" onclick="navigateTo('viajes')">
+                        <div class="card-icon">✈️</div>
+                        <div class="card-name">Agente de Viajes</div>
+                    </div>
+                </div>
+                <h2 class="section-label">HOBBIES</h2>
+                <div class="cards-grid">
+                    <div class="card card-deporte" onclick="navigateTo('deportes')">
+                        <div class="card-icon">⚽</div>
+                        <div class="card-name">Deportes</div>
+                    </div>
+                    <div class="card card-conducir" onclick="navigateTo('conducir')">
+                        <div class="card-icon">🚗</div>
+                        <div class="card-name">Conducir</div>
+                    </div>
+                    <div class="card card-musica" onclick="navigateTo('musica')">
+                        <div class="card-icon">🎵</div>
+                        <div class="card-name">Musica</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pantalla de subtipos (generica) -->
+        <div id="screen-subtypes" class="screen">
+            <div class="screen-header">
+                <button class="btn-back" onclick="goHome()">← Volver</button>
+                <h2 id="subtypes-title"></h2>
+            </div>
+            <div id="subtypes-list" class="subtypes-grid"></div>
+        </div>
+
+        <!-- Canvas de juego -->
+        <div id="screen-game" class="screen">
+            <div class="game-header">
+                <button class="btn-back" onclick="exitGame()">← Salir</button>
+                <h2 id="game-title"></h2>
+                <div id="game-score" class="game-score">0 pts</div>
+            </div>
+            <div id="game-container">
+                <canvas id="game-canvas"></canvas>
+                <div id="game-ui"></div>
+            </div>
+            <div id="game-controls"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/arquitectura.js"></script>
+    <script src="js/medico.js"></script>
+    <script src="js/cocina.js"></script>
+    <script src="js/bombero.js"></script>
+    <script src="js/viajes.js"></script>
+    <script src="js/hobbies.js"></script>
+</body>
+</html>

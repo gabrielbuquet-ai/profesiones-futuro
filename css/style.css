@@ -1,0 +1,776 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #0a0a1a;
+    color: #fff;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+#app {
+    width: 100%;
+    height: 100vh;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+/* --- Screens --- */
+.screen {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.screen.active {
+    display: flex;
+}
+
+/* --- Home Screen --- */
+#screen-home {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+    padding: 20px;
+    padding-bottom: 40px;
+}
+
+.home-header {
+    text-align: center;
+    padding: 30px 0 10px;
+}
+
+.app-title {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, #00d2ff, #7b2ff7, #ff6b6b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.app-title span {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.app-subtitle {
+    color: #888;
+    font-size: 0.9rem;
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.section-label {
+    font-size: 0.75rem;
+    letter-spacing: 3px;
+    color: #666;
+    margin: 24px 0 12px;
+    padding-left: 4px;
+}
+
+/* --- Cards --- */
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.card {
+    border-radius: 20px;
+    padding: 24px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    position: relative;
+    overflow: hidden;
+}
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: inherit;
+    opacity: 0.15;
+    border-radius: 20px;
+}
+.card:active {
+    transform: scale(0.95);
+}
+
+.card-icon {
+    font-size: 2.8rem;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.card-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    position: relative;
+    z-index: 1;
+    letter-spacing: 0.5px;
+}
+
+.card-arquitectura {
+    background: linear-gradient(135deg, #667eea33, #764ba233);
+    border: 1px solid #667eea55;
+}
+.card-medico {
+    background: linear-gradient(135deg, #f093fb33, #f5576c33);
+    border: 1px solid #f093fb55;
+}
+.card-cocina {
+    background: linear-gradient(135deg, #ffecd233, #fcb69f33);
+    border: 1px solid #fcb69f55;
+}
+.card-bombero {
+    background: linear-gradient(135deg, #ff512f33, #f0932233);
+    border: 1px solid #ff512f55;
+}
+.card-viajes {
+    background: linear-gradient(135deg, #43e97b33, #38f9d733);
+    border: 1px solid #43e97b55;
+}
+.card-deporte {
+    background: linear-gradient(135deg, #00d2ff33, #3a7bd533);
+    border: 1px solid #00d2ff55;
+}
+.card-conducir {
+    background: linear-gradient(135deg, #fa709a33, #fee14033);
+    border: 1px solid #fa709a55;
+}
+.card-musica {
+    background: linear-gradient(135deg, #a18cd133, #fbc2eb33);
+    border: 1px solid #a18cd155;
+}
+
+/* 5th card spans full width */
+.cards-grid .card:nth-child(5) {
+    grid-column: 1 / -1;
+}
+
+/* --- Subtypes Screen --- */
+#screen-subtypes {
+    background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+    padding: 20px;
+}
+
+.screen-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+}
+.screen-header h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.btn-back {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+}
+.btn-back:active {
+    background: rgba(255,255,255,0.2);
+}
+
+.subtypes-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.subtype-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+.subtype-card:active {
+    transform: scale(0.98);
+    background: rgba(255,255,255,0.1);
+}
+.subtype-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+.subtype-card p {
+    color: #999;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+.subtype-card .subtype-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+}
+
+/* --- Game Screen --- */
+#screen-game {
+    background: #0d0d20;
+}
+
+.game-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.4);
+    flex-shrink: 0;
+    z-index: 10;
+}
+.game-header h2 {
+    flex: 1;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.game-score {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#game-container {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+#game-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+#game-ui {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+#game-ui > * {
+    pointer-events: auto;
+}
+
+#game-controls {
+    flex-shrink: 0;
+    padding: 12px;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    min-height: 60px;
+}
+
+.control-btn {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+}
+.control-btn:active {
+    background: rgba(255,255,255,0.25);
+    transform: scale(0.95);
+}
+.control-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+}
+.control-btn.danger {
+    background: linear-gradient(135deg, #ff512f88, #f0932288);
+    border-color: #ff512f;
+}
+
+/* --- Game UI elements --- */
+.game-grid {
+    display: grid;
+    gap: 4px;
+    padding: 10px;
+    width: 100%;
+    height: 100%;
+}
+
+.grid-cell {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.grid-cell:hover {
+    background: rgba(255,255,255,0.1);
+}
+.grid-cell.occupied {
+    background: rgba(102, 126, 234, 0.2);
+    border-color: rgba(102, 126, 234, 0.4);
+}
+
+/* Toolbar for building games */
+.toolbar {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 8px 12px;
+    -webkit-overflow-scrolling: touch;
+}
+.toolbar::-webkit-scrollbar { display: none; }
+
+.tool-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    min-width: 70px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+}
+.tool-item.selected {
+    background: linear-gradient(135deg, #667eea44, #764ba244);
+    border-color: #667eea;
+}
+.tool-item .tool-icon { font-size: 1.5rem; }
+.tool-item .tool-label {
+    font-size: 0.6rem;
+    color: #aaa;
+    white-space: nowrap;
+}
+
+/* Info panel */
+.info-panel {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10,10,30,0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px 20px 0 0;
+    padding: 20px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+    z-index: 20;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.info-panel.show {
+    transform: translateY(0);
+}
+.info-panel h3 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+.info-panel p {
+    color: #aaa;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+/* Stars rating */
+.stars {
+    display: flex;
+    gap: 4px;
+    font-size: 1.5rem;
+}
+.star.filled { color: #ffd700; }
+.star.empty { color: #333; }
+
+/* Results overlay */
+.result-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(10,10,26,0.92);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    z-index: 30;
+    padding: 30px;
+    text-align: center;
+}
+.result-overlay h2 {
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.result-overlay .result-score {
+    font-size: 3rem;
+    font-weight: 900;
+}
+.result-overlay .result-msg {
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #fff;
+    border: none;
+    padding: 14px 40px;
+    border-radius: 16px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    margin-top: 10px;
+}
+.btn-primary:active {
+    transform: scale(0.95);
+}
+
+/* Country cards for travel agent */
+.country-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 10px;
+    overflow-y: auto;
+    height: 100%;
+}
+.country-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.country-card:active { transform: scale(0.98); }
+.country-card .country-flag { font-size: 2.5rem; }
+.country-card h3 { margin: 6px 0 2px; font-size: 1rem; }
+.country-card p { color: #888; font-size: 0.75rem; }
+
+/* Notes / evaluation */
+.eval-section {
+    padding: 16px;
+    overflow-y: auto;
+    height: 100%;
+}
+.eval-item {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 10px;
+}
+.eval-item .label {
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+}
+.eval-item .value {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+.eval-good { border-left: 3px solid #43e97b; }
+.eval-bad { border-left: 3px solid #ff512f; }
+.eval-neutral { border-left: 3px solid #667eea; }
+
+/* Sport selector */
+.sport-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    height: 100%;
+}
+.sport-item {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 16px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.sport-item:active { transform: scale(0.95); }
+.sport-item .sport-icon { font-size: 2rem; margin-bottom: 4px; }
+.sport-item .sport-name { font-size: 0.7rem; font-weight: 600; }
+
+/* Drum pads */
+.drum-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    padding: 16px;
+    height: 100%;
+    align-content: center;
+}
+.drum-pad {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.1s;
+    user-select: none;
+    border: 3px solid rgba(255,255,255,0.2);
+}
+.drum-pad:active {
+    transform: scale(0.9);
+    filter: brightness(1.5);
+}
+.drum-pad .pad-label { font-size: 0.65rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
+
+/* Gear shift */
+.gear-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    padding: 20px;
+}
+.speedometer {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 4px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: radial-gradient(circle, rgba(102,126,234,0.1) 0%, transparent 70%);
+}
+.speed-value {
+    font-size: 3rem;
+    font-weight: 900;
+}
+.speed-unit {
+    font-size: 0.8rem;
+    color: #888;
+}
+.gear-indicator {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #667eea;
+}
+.gear-shifter {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    max-width: 250px;
+}
+.gear-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.15);
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.gear-btn:active { transform: scale(0.9); }
+.gear-btn.active-gear {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-color: #667eea;
+}
+.pedals {
+    display: flex;
+    gap: 16px;
+}
+.pedal {
+    width: 100px;
+    height: 80px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.1s;
+}
+.pedal:active { transform: scale(0.95); }
+.pedal-gas {
+    background: linear-gradient(135deg, #43e97b44, #38f9d744);
+    border: 2px solid #43e97b;
+    color: #43e97b;
+}
+.pedal-brake {
+    background: linear-gradient(135deg, #ff512f44, #f0932244);
+    border: 2px solid #ff512f;
+    color: #ff512f;
+}
+.pedal-clutch {
+    background: linear-gradient(135deg, #667eea44, #764ba244);
+    border: 2px solid #667eea;
+    color: #667eea;
+}
+
+/* Recipe steps */
+.recipe-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 12px;
+    gap: 10px;
+    overflow-y: auto;
+}
+.recipe-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px;
+    padding: 14px;
+    transition: all 0.3s;
+}
+.recipe-step.done {
+    background: rgba(67, 233, 123, 0.1);
+    border-color: rgba(67, 233, 123, 0.3);
+}
+.recipe-step .step-num {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+.recipe-step.done .step-num {
+    background: #43e97b;
+    color: #000;
+}
+.recipe-step .step-text { font-size: 0.85rem; }
+
+/* Ingredient shelf */
+.ingredients-shelf {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 8px 12px;
+    -webkit-overflow-scrolling: touch;
+}
+.ingredients-shelf::-webkit-scrollbar { display: none; }
+.ingredient-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    cursor: pointer;
+    min-width: 65px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+.ingredient-item:active { transform: scale(0.9); }
+.ingredient-item .ing-icon { font-size: 1.6rem; }
+.ingredient-item .ing-name { font-size: 0.55rem; color: #aaa; white-space: nowrap; }
+
+/* Fire game */
+.fire-scene {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* Animations */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fireFlicker {
+    0%, 100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+    25% { transform: scaleY(1.1) scaleX(0.9); opacity: 0.9; }
+    50% { transform: scaleY(0.9) scaleX(1.1); opacity: 1; }
+    75% { transform: scaleY(1.05) scaleX(0.95); opacity: 0.85; }
+}
+
+.fire-emoji {
+    animation: fireFlicker 0.5s ease-in-out infinite;
+    display: inline-block;
+}
+
+/* Sport game canvas area */
+.sport-game-area {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 10px;
+}
