@@ -144,8 +144,16 @@ function deporteFutbol(ui, controls, canvas) {
     document.getElementById('shoot-center').onclick = () => shoot(0);
     document.getElementById('shoot-right').onclick = () => shoot(1);
 
+    const kbHandler = (e) => {
+        if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') shoot(-1);
+        else if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') shoot(0);
+        else if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') shoot(1);
+    };
+    document.addEventListener('keydown', kbHandler);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ A/← Izq · W/↑ Centro · D/→ Der</div>');
+
     loop();
-    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); document.removeEventListener('keydown', kbHandler); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function deporteBaloncesto(ui, controls, canvas) {
@@ -292,8 +300,14 @@ function deporteBaloncesto(ui, controls, canvas) {
     btn.addEventListener('touchstart', startCharge);
     btn.addEventListener('touchend', release);
 
+    const kbDown = (e) => { if (e.code === 'Space') { e.preventDefault(); startCharge(); } };
+    const kbUp = (e) => { if (e.code === 'Space') { e.preventDefault(); release(); } };
+    document.addEventListener('keydown', kbDown);
+    document.addEventListener('keyup', kbUp);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Espacio: mantener y soltar para lanzar</div>');
+
     loop();
-    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); clearInterval(powerInterval); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); clearInterval(powerInterval); document.removeEventListener('keydown', kbDown); document.removeEventListener('keyup', kbUp); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function deporteTenis(ui, controls, canvas) {
@@ -403,8 +417,21 @@ function deporteTenis(ui, controls, canvas) {
     rBtn.addEventListener('touchstart', (e) => { e.preventDefault(); mr(); rInt = setInterval(mr, 30); });
     rBtn.addEventListener('touchend', () => clearInterval(rInt));
 
+    let kbLInt, kbRInt;
+    const kbDown = (e) => {
+        if ((e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') && !kbLInt) { ml(); kbLInt = setInterval(ml, 30); }
+        if ((e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') && !kbRInt) { mr(); kbRInt = setInterval(mr, 30); }
+    };
+    const kbUp = (e) => {
+        if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') { clearInterval(kbLInt); kbLInt = null; }
+        if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') { clearInterval(kbRInt); kbRInt = null; }
+    };
+    document.addEventListener('keydown', kbDown);
+    document.addEventListener('keyup', kbUp);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ A/← Izq · D/→ Der</div>');
+
     loop();
-    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); clearInterval(lInt); clearInterval(rInt); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { running = false; cancelAnimationFrame(animId); clearInterval(lInt); clearInterval(rInt); clearInterval(kbLInt); clearInterval(kbRInt); document.removeEventListener('keydown', kbDown); document.removeEventListener('keyup', kbUp); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function deporteNatacion(ui, controls) {
@@ -444,18 +471,16 @@ function deporteNatacion(ui, controls) {
     }, 100);
 
     controls.innerHTML = `<button class="control-btn" style="flex:1; font-size: 1.5rem; padding: 25px;" id="swim-btn">🏊 NADAR</button>`;
-    document.getElementById('swim-btn').addEventListener('mousedown', () => {
-        taps++;
-        speed = Math.min(15, speed + 1.5);
-    });
-    document.getElementById('swim-btn').addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        taps++;
-        speed = Math.min(15, speed + 1.5);
-    });
+    const swim = () => { taps++; speed = Math.min(15, speed + 1.5); };
+    document.getElementById('swim-btn').addEventListener('mousedown', swim);
+    document.getElementById('swim-btn').addEventListener('touchstart', (e) => { e.preventDefault(); swim(); });
+
+    const kbHandler = (e) => { if (e.code === 'Space') { e.preventDefault(); swim(); } };
+    document.addEventListener('keydown', kbHandler);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Espacio para nadar</div>');
 
     render();
-    currentGame = { cleanup: () => { clearInterval(timer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { clearInterval(timer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function deporteAtletismo(ui, controls) {
@@ -535,13 +560,22 @@ function deporteAtletismo(ui, controls) {
         <button class="control-btn" style="flex:1; font-size: 1.2rem; padding: 20px;" id="jump-btn">🦘 SALTAR</button>
     `;
 
-    document.getElementById('run-btn').addEventListener('mousedown', () => { speed = Math.min(12, speed + 1.5); });
-    document.getElementById('run-btn').addEventListener('touchstart', (e) => { e.preventDefault(); speed = Math.min(12, speed + 1.5); });
-    document.getElementById('jump-btn').addEventListener('mousedown', () => { if (!jumping) { jumping = true; jumpY = 40; } });
-    document.getElementById('jump-btn').addEventListener('touchstart', (e) => { e.preventDefault(); if (!jumping) { jumping = true; jumpY = 40; } });
+    const run = () => { speed = Math.min(12, speed + 1.5); };
+    const jump = () => { if (!jumping) { jumping = true; jumpY = 40; } };
+    document.getElementById('run-btn').addEventListener('mousedown', run);
+    document.getElementById('run-btn').addEventListener('touchstart', (e) => { e.preventDefault(); run(); });
+    document.getElementById('jump-btn').addEventListener('mousedown', jump);
+    document.getElementById('jump-btn').addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
+
+    const kbHandler = (e) => {
+        if (e.code === 'Space') { e.preventDefault(); run(); }
+        if (e.key === 'w' || e.key === 'W' || e.key === 'ArrowUp') { e.preventDefault(); jump(); }
+    };
+    document.addEventListener('keydown', kbHandler);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Espacio: correr · W/↑: saltar</div>');
 
     render();
-    currentGame = { cleanup: () => { running = false; clearInterval(timer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { running = false; clearInterval(timer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function deporteBoxeo(ui, controls) {
@@ -634,8 +668,17 @@ function deporteBoxeo(ui, controls) {
     document.getElementById('box-gancho').onclick = () => hitSaco('gancho');
     document.getElementById('box-esquiva').onclick = () => hitSaco('esquiva');
 
+    const kbHandler = (e) => {
+        if (e.key === 'a' || e.key === 'A') hitSaco('jab');
+        else if (e.key === 's' || e.key === 'S') hitSaco('cross');
+        else if (e.key === 'd' || e.key === 'D') hitSaco('gancho');
+        else if (e.key === 'w' || e.key === 'W') hitSaco('esquiva');
+    };
+    document.addEventListener('keydown', kbHandler);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ A: Jab · S: Cross · D: Gancho · W: Esquiva</div>');
+
     render();
-    currentGame = { cleanup: () => { clearInterval(timer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { clearInterval(timer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 // ===================== CONDUCIR =====================
@@ -780,6 +823,8 @@ function startConducir(subtype) {
         setupPedal('pedal-clutch', () => { clutchPressed = true; }, () => { clutchPressed = false; });
         setupPedal('pedal-brake', () => { brakePressed = true; }, () => { brakePressed = false; });
         setupPedal('pedal-gas', () => { gasPressed = true; }, () => { gasPressed = false; });
+
+        controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ 1-' + maxGear + '/R/N: marchas · Z: embrague · Shift: freno · Espacio: gas</div>');
     } else {
         controls.innerHTML = `
             <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
@@ -815,10 +860,47 @@ function startConducir(subtype) {
 
         setupPedal('pedal-brake-auto', () => { brakePressed = true; }, () => { brakePressed = false; });
         setupPedal('pedal-gas-auto', () => { gasPressed = true; }, () => { gasPressed = false; });
+
+        controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ P/R/D: marchas · Shift: freno · Espacio: gas</div>');
     }
 
+    // Keyboard controls for driving
+    const kbDown = (e) => {
+        if (e.code === 'Space') { e.preventDefault(); gasPressed = true; }
+        if (e.key === 'Shift') { brakePressed = true; }
+        if (isManual) {
+            if (e.key === 'z' || e.key === 'Z') clutchPressed = true;
+            const gearNum = parseInt(e.key);
+            if (gearNum >= 1 && gearNum <= maxGear) {
+                if (clutchPressed || speed <= 5) {
+                    gear = gearNum;
+                    controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear'));
+                    const active = controls.querySelector(`.gear-btn[data-gear="${gearNum}"]`);
+                    if (active) active.classList.add('active-gear');
+                }
+            }
+            if (e.key === 'r' || e.key === 'R') {
+                if (clutchPressed || speed <= 5) { gear = -1; controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear')); const a = controls.querySelector('.gear-btn[data-gear="-1"]'); if (a) a.classList.add('active-gear'); }
+            }
+            if (e.key === 'n' || e.key === 'N') {
+                gear = 0; controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear')); const a = controls.querySelector('.gear-btn[data-gear="0"]'); if (a) a.classList.add('active-gear');
+            }
+        } else {
+            if (e.key === 'p' || e.key === 'P') { gear = 0; controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear')); const a = controls.querySelector('.gear-btn[data-gear="0"]'); if (a) a.classList.add('active-gear'); }
+            if (e.key === 'r' || e.key === 'R') { gear = -1; controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear')); const a = controls.querySelector('.gear-btn[data-gear="-1"]'); if (a) a.classList.add('active-gear'); }
+            if (e.key === 'd' || e.key === 'D') { gear = 1; controls.querySelectorAll('.gear-btn').forEach(b => b.classList.remove('active-gear')); const a = controls.querySelector('.gear-btn[data-gear="1"]'); if (a) a.classList.add('active-gear'); }
+        }
+    };
+    const kbUp = (e) => {
+        if (e.code === 'Space') { e.preventDefault(); gasPressed = false; }
+        if (e.key === 'Shift') brakePressed = false;
+        if (isManual && (e.key === 'z' || e.key === 'Z')) clutchPressed = false;
+    };
+    document.addEventListener('keydown', kbDown);
+    document.addEventListener('keyup', kbUp);
+
     render();
-    currentGame = { cleanup: () => { running = false; clearInterval(timer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { running = false; clearInterval(timer); document.removeEventListener('keydown', kbDown); document.removeEventListener('keyup', kbUp); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 // ===================== MUSICA =====================
@@ -934,8 +1016,22 @@ function musicaBateria(ui, controls) {
         padsEl.appendChild(pad);
     });
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los pads para crear ritmos 🥁</div>`;
-    currentGame = { cleanup: () => { audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    const drumKeys = ['q', 'w', 'e', 'a', 's', 'd'];
+    const kbHandler = (e) => {
+        const idx = drumKeys.indexOf(e.key.toLowerCase());
+        if (idx >= 0 && idx < drums.length) {
+            playDrumSound(drums[idx]);
+            const pad = padsEl.children[idx];
+            pad.style.transform = 'scale(0.9)';
+            pad.style.filter = 'brightness(1.5)';
+            addScore(1);
+            setTimeout(() => { pad.style.transform = ''; pad.style.filter = ''; }, 100);
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los pads para crear ritmos 🥁</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Q/W/E (fila arriba) · A/S/D (fila abajo)</div>`;
+    currentGame = { cleanup: () => { document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function musicaPiano(ui, controls) {
@@ -1025,8 +1121,33 @@ function musicaPiano(ui, controls) {
         keysEl.appendChild(key);
     });
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca las teclas para crear melodias 🎹</div>`;
-    currentGame = { cleanup: () => { audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    // Piano keyboard mapping: white keys = A S D F G H J K, black keys = W E T Y U
+    const whiteKeyMap = ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k'];
+    const blackKeyMap = ['w', 'e', 't', 'y', 'u'];
+    const kbHandler = (e) => {
+        const k = e.key.toLowerCase();
+        let wIdx = whiteKeyMap.indexOf(k);
+        if (wIdx >= 0 && wIdx < whiteKeys.length) {
+            playNote(whiteKeys[wIdx].freq);
+            const keyEl = keysEl.children[wIdx];
+            keyEl.style.background = 'linear-gradient(180deg, #ddd 0%, #ccc 100%)';
+            addScore(1);
+            setTimeout(() => { keyEl.style.background = 'linear-gradient(180deg, #eee 0%, #fff 100%)'; }, 150);
+            return;
+        }
+        let bIdx = blackKeyMap.indexOf(k);
+        if (bIdx >= 0 && bIdx < blackNotes.length) {
+            playNote(blackNotes[bIdx].freq);
+            const keyEl = keysEl.children[whiteKeys.length + bIdx];
+            keyEl.style.background = 'linear-gradient(180deg, #555 0%, #333 100%)';
+            addScore(1);
+            setTimeout(() => { keyEl.style.background = 'linear-gradient(180deg, #333 0%, #111 100%)'; }, 150);
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca las teclas para crear melodias 🎹</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Blancas: A S D F G H J K · Negras: W E T Y U</div>`;
+    currentGame = { cleanup: () => { document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function musicaGuitarra(ui, controls) {
@@ -1089,8 +1210,21 @@ function musicaGuitarra(ui, controls) {
         btnsEl.appendChild(btn);
     });
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Pulsa los acordes para rasguear 🎸</div>`;
-    currentGame = { cleanup: () => { audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    const kbHandler = (e) => {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= 8 && num <= chords.length) {
+            const idx = num - 1;
+            playChord(chords[idx]);
+            const btn = btnsEl.children[idx];
+            btn.style.background = colors[idx] + '55';
+            addScore(2);
+            setTimeout(() => { btn.style.background = colors[idx] + '22'; }, 300);
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Pulsa los acordes para rasguear 🎸</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Teclas 1-8 para acordes</div>`;
+    currentGame = { cleanup: () => { document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function musicaDJ(ui, controls) {
@@ -1223,6 +1357,28 @@ function musicaDJ(ui, controls) {
         if (playing) { clearInterval(beatInterval); startBeat(); }
     };
 
+    const kbHandler = (e) => {
+        if (e.code === 'Space') {
+            e.preventDefault();
+            if (!playing) { playing = true; startBeat(); }
+            else { playing = false; clearInterval(beatInterval); beat = 0; render(); }
+        }
+        if (e.key === '-' || e.key === '_') {
+            bpm = Math.max(60, bpm - 10);
+            const label = document.getElementById('dj-bpm-label');
+            if (label) label.textContent = bpm;
+            if (playing) { clearInterval(beatInterval); startBeat(); }
+        }
+        if (e.key === '+' || e.key === '=') {
+            bpm = Math.min(200, bpm + 10);
+            const label = document.getElementById('dj-bpm-label');
+            if (label) label.textContent = bpm;
+            if (playing) { clearInterval(beatInterval); startBeat(); }
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Espacio: play/stop · -/+: BPM</div>');
+
     render();
-    currentGame = { cleanup: () => { playing = false; clearInterval(beatInterval); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { playing = false; clearInterval(beatInterval); document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }

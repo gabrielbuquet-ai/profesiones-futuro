@@ -90,14 +90,32 @@ function bomberoExtincion(ui, controls) {
         render();
     }
 
+    let cursorR = 0, cursorC = 0;
+    const kbHandler = (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { cursorR = Math.max(0, cursorR - 1); highlightCursor(); }
+        else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { cursorR = Math.min(GRID - 1, cursorR + 1); highlightCursor(); }
+        else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { cursorC = Math.max(0, cursorC - 1); highlightCursor(); }
+        else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { cursorC = Math.min(GRID - 1, cursorC + 1); highlightCursor(); }
+        else if (e.key === 'Enter' || e.code === 'Space') { e.preventDefault(); extinguish(cursorR, cursorC); }
+    };
+    function highlightCursor() {
+        const gridEl = document.getElementById('fire-grid');
+        if (!gridEl) return;
+        gridEl.querySelectorAll('.grid-cell').forEach((c, i) => c.style.outline = '');
+        const idx = cursorR * GRID + cursorC;
+        if (gridEl.children[idx]) gridEl.children[idx].style.outline = '3px solid #00d2ff';
+    }
+    document.addEventListener('keydown', kbHandler);
+
     controls.innerHTML = `
         <div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">
             Toca los fuegos para apagarlos 💧
         </div>
+        <div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ WASD/Flechas: mover · Enter/Espacio: apagar</div>
     `;
 
     render();
-    currentGame = { cleanup: () => { ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function bomberoRescate(ui, controls) {
@@ -184,10 +202,36 @@ function bomberoRescate(ui, controls) {
         render();
     }, 1000);
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Explora cada piso y rescata a las personas</div>`;
+    let cursorFloor = 0;
+    const kbHandler = (e) => {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= FLOORS) {
+            const idx = num - 1;
+            const p = people[idx];
+            if (!p.rescued) {
+                if (!p.checked) { p.checked = true; addScore(5); }
+                else if (p.hasPerson && !p.rescued) { p.rescued = true; rescued++; addScore(20); }
+                render(); checkWin();
+            }
+        }
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') cursorFloor = Math.min(FLOORS - 1, cursorFloor + 1);
+        if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') cursorFloor = Math.max(0, cursorFloor - 1);
+        if (e.key === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            const p = people[cursorFloor];
+            if (!p.rescued) {
+                if (!p.checked) { p.checked = true; addScore(5); }
+                else if (p.hasPerson && !p.rescued) { p.rescued = true; rescued++; addScore(20); }
+                render(); checkWin();
+            }
+        }
+    };
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Explora cada piso y rescata a las personas</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ 1-${FLOORS}: piso directo · ↑/↓: mover · Enter: explorar/rescatar</div>`;
     render();
 
-    currentGame = { cleanup: () => { clearInterval(timer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { clearInterval(timer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 
 function bomberoConduccion(ui, controls) {
@@ -318,6 +362,19 @@ function bomberoConduccion(ui, controls) {
     rBtn.addEventListener('mousedown', startRight); rBtn.addEventListener('mouseup', stopRight); rBtn.addEventListener('mouseleave', stopRight);
     rBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRight(); }); rBtn.addEventListener('touchend', stopRight);
 
+    let kbLInt, kbRInt;
+    const kbDown = (e) => {
+        if ((e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') && !kbLInt) { truckX = Math.max(W * 0.15, truckX - 50); kbLInt = setInterval(() => { truckX = Math.max(W * 0.15, truckX - moveAmount); }, 50); }
+        if ((e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') && !kbRInt) { truckX = Math.min(W * 0.85, truckX + 50); kbRInt = setInterval(() => { truckX = Math.min(W * 0.85, truckX + moveAmount); }, 50); }
+    };
+    const kbUp = (e) => {
+        if (e.key === 'a' || e.key === 'A' || e.key === 'ArrowLeft') { clearInterval(kbLInt); kbLInt = null; }
+        if (e.key === 'd' || e.key === 'D' || e.key === 'ArrowRight') { clearInterval(kbRInt); kbRInt = null; }
+    };
+    document.addEventListener('keydown', kbDown);
+    document.addEventListener('keyup', kbUp);
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ A/← Izq · D/→ Der</div>');
+
     loop();
 
     currentGame = {
@@ -326,6 +383,10 @@ function bomberoConduccion(ui, controls) {
             cancelAnimationFrame(animId);
             clearInterval(leftInterval);
             clearInterval(rightInterval);
+            clearInterval(kbLInt);
+            clearInterval(kbRInt);
+            document.removeEventListener('keydown', kbDown);
+            document.removeEventListener('keyup', kbUp);
             canvas.style.display = 'none';
             ui.innerHTML = '';
             ui.style.pointerEvents = '';
@@ -437,8 +498,41 @@ function bomberoForestal(ui, controls) {
 
     spreadTimer = setInterval(spreadFire, 2500);
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los fuegos rapidamente antes de que se propaguen!</div>`;
+    let cursorR = 0, cursorC = 0;
+    const kbHandler = (e) => {
+        if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') { cursorR = Math.max(0, cursorR - 1); highlightCursor(); }
+        else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') { cursorR = Math.min(GRID - 1, cursorR + 1); highlightCursor(); }
+        else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { cursorC = Math.max(0, cursorC - 1); highlightCursor(); }
+        else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') { cursorC = Math.min(GRID - 1, cursorC + 1); highlightCursor(); }
+        else if (e.key === 'Enter' || e.code === 'Space') {
+            e.preventDefault();
+            if (grid[cursorR][cursorC].type === 'fire' && waterDrops > 0) {
+                waterDrops--;
+                grid[cursorR][cursorC].type = 'saved';
+                grid[cursorR][cursorC].extinguished = true;
+                fires--;
+                addScore(10);
+                render();
+                highlightCursor();
+                if (fires === 0) {
+                    clearInterval(spreadTimer);
+                    addScore(waterDrops * 3 + countTrees() * 5);
+                    showResult('Bosque salvado!', score + ' pts', `Has salvado ${countTrees()} arboles.`, () => bomberoForestal(ui, controls));
+                }
+            }
+        }
+    };
+    function highlightCursor() {
+        const gridEl = document.getElementById('forest-grid');
+        if (!gridEl) return;
+        gridEl.querySelectorAll('.grid-cell').forEach(c => c.style.outline = '');
+        const idx = cursorR * GRID + cursorC;
+        if (gridEl.children[idx]) gridEl.children[idx].style.outline = '3px solid #00d2ff';
+    }
+    document.addEventListener('keydown', kbHandler);
+
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los fuegos rapidamente antes de que se propaguen!</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ WASD/Flechas: mover · Enter/Espacio: apagar</div>`;
     render();
 
-    currentGame = { cleanup: () => { clearInterval(spreadTimer); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
+    currentGame = { cleanup: () => { clearInterval(spreadTimer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
