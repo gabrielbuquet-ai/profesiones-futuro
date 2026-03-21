@@ -350,6 +350,7 @@ function startProgramador(subtypeId) {
         case 'prompt_master': startPromptMaster(ui, controls, canvas, container); break;
         case 'director_agentes': startDirectorAgentes(ui, controls, canvas, container); break;
         case 'evolucion': showEvolucion(ui, controls, canvas, container); break;
+        case 'diseno_niveles': startDisenoNiveles(ui, controls, canvas, container); break;
     }
 }
 
@@ -2112,6 +2113,1017 @@ function showEvolucion(ui, controls, canvas, container) {
 
     currentGame = {
         cleanup: () => {
+            ui.innerHTML = '';
+            controls.innerHTML = '';
+            ui.style.pointerEvents = '';
+        }
+    };
+}
+
+// ==============================================================
+// MINIGAME 6: LEVEL DESIGNER (Diseñador de Niveles)
+// ==============================================================
+
+function startDisenoNiveles(ui, controls, canvas, container) {
+    canvas.style.display = 'block';
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    canvas.width = cw * 2;
+    canvas.height = ch * 2;
+    canvas.style.width = cw + 'px';
+    canvas.style.height = ch + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
+
+    // --- Constants ---
+    const COLS = 20;
+    const ROWS = 12;
+    const TOOLBAR_H = 48;
+    const GRID_H = ch - TOOLBAR_H;
+    const TILE_W = cw / COLS;
+    const TILE_H = GRID_H / ROWS;
+
+    // Tile types
+    const T = { EMPTY: 0, GROUND: 1, PLATFORM: 2, SPIKE: 3, COIN: 4, START: 5, EXIT: 6, ENEMY: 7, SPRING: 8 };
+    const TILE_NAMES = ['Vacío', 'Suelo', 'Plataforma', 'Pinchos', 'Moneda', 'Inicio', 'Salida', 'Enemigo', 'Muelle'];
+    const TILE_KEYS = [null, '1', '2', '3', '4', '5', '6', '7', '8'];
+
+    // Colors
+    const COLORS = {
+        bg: '#1a1a2e',
+        grid: 'rgba(255,255,255,0.08)',
+        ground: '#8B5E3C',
+        groundLight: '#A0724E',
+        platform: '#4CAF50',
+        platformLight: '#66BB6A',
+        spike: '#F44336',
+        coin: '#FFD700',
+        coinGlow: '#FFF176',
+        start: '#4CAF50',
+        exit: '#9C27B0',
+        exitGlow: '#CE93D8',
+        enemy: '#FF9800',
+        enemyEye: '#FFF',
+        spring: '#2196F3',
+        springLight: '#64B5F6',
+        player: '#42A5F5',
+        playerEye: '#FFF',
+        playerPupil: '#1A1A2E',
+        toolbar: '#16213e',
+        toolbarBorder: '#0f3460',
+        selected: '#e94560',
+        text: '#FFF',
+        textDim: 'rgba(255,255,255,0.5)',
+        cursor: 'rgba(233,69,96,0.5)'
+    };
+
+    // --- State ---
+    let grid = [];
+    let phase = 'design'; // 'design' | 'play'
+    let selectedTile = T.GROUND;
+    let animFrame = null;
+    let cursorCol = -1;
+    let cursorRow = -1;
+    let kbCursorCol = 0;
+    let kbCursorRow = 0;
+    let useKbCursor = false;
+
+    // Play mode state
+    let player = null;
+    let enemies = [];
+    let coins = [];
+    let springs = [];
+    let playTime = 0;
+    let playStart = 0;
+    let coinsCollected = 0;
+    let totalCoins = 0;
+    let levelComplete = false;
+    let deathFlash = 0;
+
+    // Physics constants
+    const GRAVITY = 0.55;
+    const JUMP_VEL = -9.5;
+    const MOVE_SPEED = 3.8;
+    const SPRING_VEL = -14;
+    const ENEMY_SPEED = 1.2;
+
+    // --- Pre-made levels ---
+    const PREMADE_LEVELS = [
+        {
+            name: 'Tutorial',
+            desc: 'Nivel sencillo para aprender los controles',
+            data: (function() {
+                const g = Array.from({length: ROWS}, () => Array(COLS).fill(T.EMPTY));
+                // Ground floor
+                for (let c = 0; c < COLS; c++) g[ROWS-1][c] = T.GROUND;
+                // Start and exit
+                g[ROWS-2][1] = T.START;
+                g[ROWS-2][COLS-2] = T.EXIT;
+                // A few platforms
+                for (let c = 5; c < 9; c++) g[8][c] = T.PLATFORM;
+                for (let c = 12; c < 16; c++) g[6][c] = T.PLATFORM;
+                // Coins
+                g[7][6] = T.COIN; g[7][7] = T.COIN;
+                g[5][13] = T.COIN; g[5][14] = T.COIN;
+                g[ROWS-2][10] = T.COIN;
+                return g;
+            })()
+        },
+        {
+            name: 'El Salto',
+            desc: 'Huecos y plataformas a diferentes alturas',
+            data: (function() {
+                const g = Array.from({length: ROWS}, () => Array(COLS).fill(T.EMPTY));
+                // Ground with gaps
+                for (let c = 0; c < 5; c++) g[ROWS-1][c] = T.GROUND;
+                for (let c = 7; c < 11; c++) g[ROWS-1][c] = T.GROUND;
+                for (let c = 13; c < 17; c++) g[ROWS-1][c] = T.GROUND;
+                for (let c = 19; c < COLS; c++) g[ROWS-1][c] = T.GROUND;
+                // Spikes in gaps
+                g[ROWS-1][5] = T.SPIKE; g[ROWS-1][6] = T.SPIKE;
+                g[ROWS-1][11] = T.SPIKE; g[ROWS-1][12] = T.SPIKE;
+                g[ROWS-1][17] = T.SPIKE; g[ROWS-1][18] = T.SPIKE;
+                // Platforms at varying heights
+                for (let c = 4; c < 7; c++) g[8][c] = T.PLATFORM;
+                for (let c = 10; c < 13; c++) g[6][c] = T.PLATFORM;
+                for (let c = 15; c < 18; c++) g[4][c] = T.PLATFORM;
+                // Coins above platforms
+                g[7][5] = T.COIN; g[5][11] = T.COIN; g[3][16] = T.COIN;
+                g[ROWS-2][2] = T.COIN; g[ROWS-2][9] = T.COIN;
+                // Start and exit
+                g[ROWS-2][1] = T.START;
+                g[3][15] = T.EXIT;
+                return g;
+            })()
+        },
+        {
+            name: 'Aventura',
+            desc: 'Enemigos, pinchos, muelles y más',
+            data: (function() {
+                const g = Array.from({length: ROWS}, () => Array(COLS).fill(T.EMPTY));
+                // Ground
+                for (let c = 0; c < COLS; c++) g[ROWS-1][c] = T.GROUND;
+                // Remove some ground for gaps
+                g[ROWS-1][8] = T.SPIKE; g[ROWS-1][9] = T.SPIKE;
+                // Platforms
+                for (let c = 3; c < 6; c++) g[8][c] = T.PLATFORM;
+                for (let c = 7; c < 10; c++) g[6][c] = T.PLATFORM;
+                for (let c = 11; c < 14; c++) g[8][c] = T.PLATFORM;
+                for (let c = 15; c < 18; c++) g[5][c] = T.PLATFORM;
+                // Walls
+                g[ROWS-2][6] = T.GROUND; g[ROWS-3][6] = T.GROUND;
+                // Springs
+                g[ROWS-2][4] = T.SPRING;
+                g[7][12] = T.SPRING;
+                // Enemies
+                g[ROWS-2][13] = T.ENEMY;
+                g[7][8] = T.ENEMY;
+                // Spikes
+                g[ROWS-2][10] = T.SPIKE;
+                g[4][16] = T.SPIKE;
+                // Coins
+                g[5][8] = T.COIN; g[7][4] = T.COIN; g[4][12] = T.COIN;
+                g[ROWS-2][2] = T.COIN; g[ROWS-2][16] = T.COIN;
+                g[4][17] = T.COIN; g[7][15] = T.COIN;
+                // Start and exit
+                g[ROWS-2][1] = T.START;
+                g[4][18] = T.EXIT;
+                return g;
+            })()
+        }
+    ];
+
+    // --- Helpers ---
+    function clearGrid() {
+        grid = Array.from({length: ROWS}, () => Array(COLS).fill(T.EMPTY));
+    }
+
+    function loadLevel(levelData) {
+        grid = levelData.map(r => [...r]);
+    }
+
+    function findTile(type) {
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (grid[r][c] === type) return {r, c};
+        return null;
+    }
+
+    function countTile(type) {
+        let n = 0;
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (grid[r][c] === type) n++;
+        return n;
+    }
+
+    function isSolid(col, row) {
+        if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return row >= ROWS;
+        const t = grid[row][col];
+        return t === T.GROUND || t === T.PLATFORM;
+    }
+
+    // --- Drawing: Design Mode ---
+    function drawDesign() {
+        ctx.fillStyle = COLORS.bg;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Draw grid
+        ctx.strokeStyle = COLORS.grid;
+        ctx.lineWidth = 0.5;
+        for (let c = 0; c <= COLS; c++) {
+            ctx.beginPath();
+            ctx.moveTo(c * TILE_W, 0);
+            ctx.lineTo(c * TILE_W, GRID_H);
+            ctx.stroke();
+        }
+        for (let r = 0; r <= ROWS; r++) {
+            ctx.beginPath();
+            ctx.moveTo(0, r * TILE_H);
+            ctx.lineTo(cw, r * TILE_H);
+            ctx.stroke();
+        }
+
+        // Draw tiles
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                drawTile(c * TILE_W, r * TILE_H, TILE_W, TILE_H, grid[r][c], false);
+            }
+        }
+
+        // Draw cursor highlight
+        if (useKbCursor) {
+            ctx.strokeStyle = COLORS.cursor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(kbCursorCol * TILE_W + 1, kbCursorRow * TILE_H + 1, TILE_W - 2, TILE_H - 2);
+        } else if (cursorCol >= 0 && cursorCol < COLS && cursorRow >= 0 && cursorRow < ROWS) {
+            ctx.strokeStyle = COLORS.cursor;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(cursorCol * TILE_W + 1, cursorRow * TILE_H + 1, TILE_W - 2, TILE_H - 2);
+        }
+
+        // Draw toolbar
+        drawToolbar();
+
+        // Title
+        ctx.fillStyle = COLORS.text;
+        ctx.font = 'bold ' + Math.max(10, TILE_H * 0.4) + 'px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('🎮 Diseñador de Niveles - Modo Edición', cw / 2, TILE_H * 0.45);
+    }
+
+    function drawTile(x, y, w, h, type, small) {
+        const p = small ? 1 : 2;
+        switch (type) {
+            case T.GROUND:
+                ctx.fillStyle = COLORS.ground;
+                ctx.fillRect(x + p, y + p, w - p*2, h - p*2);
+                ctx.fillStyle = COLORS.groundLight;
+                ctx.fillRect(x + p, y + p, w - p*2, h * 0.15);
+                // brick lines
+                ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x + w*0.5, y + p); ctx.lineTo(x + w*0.5, y + h*0.5);
+                ctx.moveTo(x + p, y + h*0.5); ctx.lineTo(x + w - p, y + h*0.5);
+                ctx.moveTo(x + w*0.25, y + h*0.5); ctx.lineTo(x + w*0.25, y + h - p);
+                ctx.moveTo(x + w*0.75, y + h*0.5); ctx.lineTo(x + w*0.75, y + h - p);
+                ctx.stroke();
+                break;
+            case T.PLATFORM:
+                ctx.fillStyle = COLORS.platform;
+                ctx.fillRect(x + p, y + p, w - p*2, h - p*2);
+                ctx.fillStyle = COLORS.platformLight;
+                ctx.fillRect(x + p, y + p, w - p*2, h * 0.25);
+                break;
+            case T.SPIKE:
+                ctx.fillStyle = COLORS.spike;
+                ctx.beginPath();
+                ctx.moveTo(x + w * 0.5, y + p);
+                ctx.lineTo(x + w - p, y + h - p);
+                ctx.lineTo(x + p, y + h - p);
+                ctx.closePath();
+                ctx.fill();
+                // highlight
+                ctx.fillStyle = 'rgba(255,255,255,0.3)';
+                ctx.beginPath();
+                ctx.moveTo(x + w*0.5, y + h*0.15);
+                ctx.lineTo(x + w*0.6, y + h*0.6);
+                ctx.lineTo(x + w*0.4, y + h*0.6);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case T.COIN:
+                const cx1 = x + w/2, cy1 = y + h/2, rad = Math.min(w, h) * 0.3;
+                ctx.fillStyle = COLORS.coinGlow;
+                ctx.beginPath(); ctx.arc(cx1, cy1, rad * 1.2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = COLORS.coin;
+                ctx.beginPath(); ctx.arc(cx1, cy1, rad, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#DAA520';
+                ctx.font = 'bold ' + (rad * 1.2) + 'px sans-serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('★', cx1, cy1 + 1);
+                break;
+            case T.START:
+                ctx.fillStyle = COLORS.start;
+                // flag pole
+                ctx.fillRect(x + w*0.25, y + p, w*0.06, h - p*2);
+                // flag
+                ctx.fillStyle = '#66BB6A';
+                ctx.beginPath();
+                ctx.moveTo(x + w*0.31, y + p);
+                ctx.lineTo(x + w*0.75, y + h*0.25);
+                ctx.lineTo(x + w*0.31, y + h*0.45);
+                ctx.closePath();
+                ctx.fill();
+                break;
+            case T.EXIT:
+                ctx.fillStyle = COLORS.exit;
+                ctx.fillRect(x + w*0.15, y + p, w*0.7, h - p*2);
+                // door arch
+                ctx.fillStyle = COLORS.exitGlow;
+                ctx.beginPath();
+                ctx.arc(x + w*0.5, y + h*0.35, w*0.25, Math.PI, 0);
+                ctx.fillRect(x + w*0.25, y + h*0.35, w*0.5, h*0.5);
+                ctx.fill();
+                // handle
+                ctx.fillStyle = COLORS.coin;
+                ctx.beginPath(); ctx.arc(x + w*0.62, y + h*0.55, w*0.05, 0, Math.PI*2); ctx.fill();
+                break;
+            case T.ENEMY:
+                ctx.fillStyle = COLORS.enemy;
+                const em = Math.min(w, h) * 0.35;
+                const ecx = x + w/2, ecy = y + h/2;
+                // body
+                ctx.beginPath(); ctx.arc(ecx, ecy, em, 0, Math.PI*2); ctx.fill();
+                // eyes
+                ctx.fillStyle = COLORS.enemyEye;
+                ctx.beginPath(); ctx.arc(ecx - em*0.3, ecy - em*0.15, em*0.2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(ecx + em*0.3, ecy - em*0.15, em*0.2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#333';
+                ctx.beginPath(); ctx.arc(ecx - em*0.25, ecy - em*0.1, em*0.1, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(ecx + em*0.35, ecy - em*0.1, em*0.1, 0, Math.PI*2); ctx.fill();
+                break;
+            case T.SPRING:
+                ctx.fillStyle = COLORS.spring;
+                ctx.fillRect(x + w*0.15, y + h*0.6, w*0.7, h*0.35);
+                ctx.fillStyle = COLORS.springLight;
+                // coil
+                ctx.fillRect(x + w*0.2, y + h*0.3, w*0.6, h*0.12);
+                ctx.fillRect(x + w*0.25, y + h*0.45, w*0.5, h*0.12);
+                // top
+                ctx.fillStyle = '#BBDEFB';
+                ctx.fillRect(x + w*0.15, y + h*0.2, w*0.7, h*0.12);
+                break;
+        }
+    }
+
+    function drawToolbar() {
+        const ty = GRID_H;
+        ctx.fillStyle = COLORS.toolbar;
+        ctx.fillRect(0, ty, cw, TOOLBAR_H);
+        ctx.strokeStyle = COLORS.toolbarBorder;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, ty); ctx.lineTo(cw, ty); ctx.stroke();
+
+        const btnW = cw / 10;
+        const btnH = TOOLBAR_H - 8;
+        const by = ty + 4;
+
+        for (let i = 1; i <= 8; i++) {
+            const bx = (i - 1) * btnW + 4;
+            // highlight selected
+            if (selectedTile === i) {
+                ctx.fillStyle = COLORS.selected;
+                ctx.fillRect(bx, by, btnW - 8, btnH);
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(bx, by, btnW - 8, btnH);
+            } else {
+                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+                ctx.fillRect(bx, by, btnW - 8, btnH);
+            }
+            // draw mini tile
+            drawTile(bx + 4, by + 2, btnW - 16, btnH - 10, i, true);
+            // key number
+            ctx.fillStyle = COLORS.textDim;
+            ctx.font = '9px monospace';
+            ctx.textAlign = 'center';
+            ctx.fillText(i.toString(), bx + (btnW - 8)/2, by + btnH - 2);
+        }
+
+        // Eraser (0)
+        const erX = 8 * btnW + 4;
+        if (selectedTile === 0) {
+            ctx.fillStyle = COLORS.selected;
+            ctx.fillRect(erX, by, btnW - 8, btnH);
+        }
+        ctx.fillStyle = COLORS.textDim;
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🧹', erX + (btnW - 8)/2, by + btnH/2 + 5);
+        ctx.font = '8px monospace';
+        ctx.fillText('0', erX + (btnW - 8)/2, by + btnH - 2);
+    }
+
+    // --- Drawing: Play Mode ---
+    function drawPlay() {
+        ctx.fillStyle = COLORS.bg;
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Draw all tiles
+        for (let r = 0; r < ROWS; r++) {
+            for (let c = 0; c < COLS; c++) {
+                const t = grid[r][c];
+                if (t === T.GROUND || t === T.PLATFORM || t === T.SPIKE || t === T.EXIT || t === T.SPRING) {
+                    drawTile(c * TILE_W, r * TILE_H, TILE_W, TILE_H, t, false);
+                }
+            }
+        }
+
+        // Draw coins (animated)
+        const coinBob = Math.sin(Date.now() * 0.005) * 2;
+        for (const coin of coins) {
+            if (!coin.collected) {
+                drawTile(coin.c * TILE_W, coin.r * TILE_H + coinBob, TILE_W, TILE_H, T.COIN, false);
+            }
+        }
+
+        // Draw enemies
+        for (const en of enemies) {
+            const ex = en.x, ey = en.y;
+            const em = Math.min(TILE_W, TILE_H) * 0.35;
+            ctx.fillStyle = COLORS.enemy;
+            ctx.beginPath(); ctx.arc(ex + TILE_W/2, ey + TILE_H/2, em, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = COLORS.enemyEye;
+            const dir = en.vx > 0 ? 1 : -1;
+            ctx.beginPath(); ctx.arc(ex + TILE_W/2 - em*0.3*dir, ey + TILE_H/2 - em*0.15, em*0.2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ex + TILE_W/2 + em*0.3*dir, ey + TILE_H/2 - em*0.15, em*0.2, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#333';
+            ctx.beginPath(); ctx.arc(ex + TILE_W/2 - em*0.25*dir, ey + TILE_H/2 - em*0.1, em*0.1, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ex + TILE_W/2 + em*0.35*dir, ey + TILE_H/2 - em*0.1, em*0.1, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Draw start flag (faded)
+        const st = findTile(T.START);
+        if (st) {
+            ctx.globalAlpha = 0.3;
+            drawTile(st.c * TILE_W, st.r * TILE_H, TILE_W, TILE_H, T.START, false);
+            ctx.globalAlpha = 1;
+        }
+
+        // Draw player
+        if (player && !levelComplete) {
+            const px = player.x, py = player.y;
+            const pw = TILE_W * 0.7, ph = TILE_H * 0.85;
+            const pcx = px + TILE_W/2, pcy = py + TILE_H/2;
+
+            // Body
+            ctx.fillStyle = COLORS.player;
+            const cornerR = Math.min(pw, ph) * 0.2;
+            ctx.beginPath();
+            ctx.moveTo(pcx - pw/2 + cornerR, pcy - ph/2);
+            ctx.lineTo(pcx + pw/2 - cornerR, pcy - ph/2);
+            ctx.quadraticCurveTo(pcx + pw/2, pcy - ph/2, pcx + pw/2, pcy - ph/2 + cornerR);
+            ctx.lineTo(pcx + pw/2, pcy + ph/2 - cornerR);
+            ctx.quadraticCurveTo(pcx + pw/2, pcy + ph/2, pcx + pw/2 - cornerR, pcy + ph/2);
+            ctx.lineTo(pcx - pw/2 + cornerR, pcy + ph/2);
+            ctx.quadraticCurveTo(pcx - pw/2, pcy + ph/2, pcx - pw/2, pcy + ph/2 - cornerR);
+            ctx.lineTo(pcx - pw/2, pcy - ph/2 + cornerR);
+            ctx.quadraticCurveTo(pcx - pw/2, pcy - ph/2, pcx - pw/2 + cornerR, pcy - ph/2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Eyes
+            const eyeR = pw * 0.12;
+            const eyeOff = pw * 0.18;
+            const eyeY = pcy - ph * 0.1;
+            ctx.fillStyle = COLORS.playerEye;
+            ctx.beginPath(); ctx.arc(pcx - eyeOff, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(pcx + eyeOff, eyeY, eyeR, 0, Math.PI*2); ctx.fill();
+            // Pupils
+            const pDir = player.vx > 0.5 ? 1 : player.vx < -0.5 ? -1 : 0;
+            ctx.fillStyle = COLORS.playerPupil;
+            ctx.beginPath(); ctx.arc(pcx - eyeOff + pDir * eyeR * 0.3, eyeY, eyeR * 0.55, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(pcx + eyeOff + pDir * eyeR * 0.3, eyeY, eyeR * 0.55, 0, Math.PI*2); ctx.fill();
+        }
+
+        // Death flash
+        if (deathFlash > 0) {
+            ctx.fillStyle = 'rgba(244,67,54,' + (deathFlash * 0.3) + ')';
+            ctx.fillRect(0, 0, cw, ch);
+            deathFlash -= 0.05;
+        }
+
+        // Level complete overlay
+        if (levelComplete) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.fillStyle = COLORS.coin;
+            ctx.font = 'bold ' + Math.max(18, cw * 0.05) + 'px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('🎉 ¡Nivel Completado!', cw/2, ch * 0.35);
+            ctx.fillStyle = COLORS.text;
+            ctx.font = Math.max(12, cw * 0.03) + 'px sans-serif';
+            const elapsed = ((playTime) / 1000).toFixed(1);
+            ctx.fillText('Tiempo: ' + elapsed + 's  |  Monedas: ' + coinsCollected + '/' + totalCoins, cw/2, ch * 0.45);
+        }
+
+        // HUD
+        if (!levelComplete) {
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, cw, 28);
+            ctx.fillStyle = COLORS.text;
+            ctx.font = 'bold 12px monospace';
+            ctx.textAlign = 'left';
+            const elapsed = ((Date.now() - playStart) / 1000).toFixed(1);
+            ctx.fillText('⏱ ' + elapsed + 's', 8, 18);
+            ctx.textAlign = 'center';
+            ctx.fillText('⭐ ' + coinsCollected + '/' + totalCoins, cw/2, 18);
+            ctx.textAlign = 'right';
+            ctx.fillText('Flechas/WASD = mover  |  Espacio = saltar', cw - 8, 18);
+        }
+    }
+
+    // --- Play Mode Logic ---
+    let keys = {};
+
+    function initPlayMode() {
+        phase = 'play';
+        playStart = Date.now();
+        playTime = 0;
+        coinsCollected = 0;
+        levelComplete = false;
+        deathFlash = 0;
+        keys = {};
+
+        // Find start
+        const st = findTile(T.START);
+        const startC = st ? st.c : 1;
+        const startR = st ? st.r : ROWS - 2;
+
+        player = {
+            x: startC * TILE_W,
+            y: startR * TILE_H,
+            vx: 0,
+            vy: 0,
+            onGround: false
+        };
+
+        // Setup coins
+        coins = [];
+        totalCoins = 0;
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (grid[r][c] === T.COIN) {
+                    coins.push({r, c, collected: false});
+                    totalCoins++;
+                }
+
+        // Setup enemies
+        enemies = [];
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (grid[r][c] === T.ENEMY) {
+                    enemies.push({
+                        x: c * TILE_W,
+                        y: r * TILE_H,
+                        vx: ENEMY_SPEED,
+                        startC: c,
+                        r: r
+                    });
+                }
+
+        // Setup springs
+        springs = [];
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (grid[r][c] === T.SPRING) springs.push({r, c, bounceAnim: 0});
+
+        updateButtons();
+    }
+
+    function respawnPlayer() {
+        const st = findTile(T.START);
+        const startC = st ? st.c : 1;
+        const startR = st ? st.r : ROWS - 2;
+        player.x = startC * TILE_W;
+        player.y = startR * TILE_H;
+        player.vx = 0;
+        player.vy = 0;
+        player.onGround = false;
+        deathFlash = 1;
+        // Reset coins
+        for (const coin of coins) coin.collected = false;
+        coinsCollected = 0;
+        playStart = Date.now();
+    }
+
+    function updatePlay() {
+        if (levelComplete || !player) return;
+
+        // Input
+        let moveX = 0;
+        if (keys['ArrowLeft'] || keys['KeyA']) moveX = -1;
+        if (keys['ArrowRight'] || keys['KeyD']) moveX = 1;
+        const wantJump = keys['Space'] || keys['ArrowUp'] || keys['KeyW'];
+
+        player.vx = moveX * MOVE_SPEED;
+
+        // Jump
+        if (wantJump && player.onGround) {
+            player.vy = JUMP_VEL;
+            player.onGround = false;
+        }
+
+        // Gravity
+        player.vy += GRAVITY;
+        if (player.vy > 12) player.vy = 12;
+
+        // Move X
+        player.x += player.vx;
+        // Clamp to bounds
+        if (player.x < 0) player.x = 0;
+        if (player.x > (COLS - 1) * TILE_W) player.x = (COLS - 1) * TILE_W;
+
+        // X collisions
+        resolveCollisionX();
+
+        // Move Y
+        player.y += player.vy;
+        player.onGround = false;
+
+        // Y collisions
+        resolveCollisionY();
+
+        // Fall off screen
+        if (player.y > ROWS * TILE_H + 50) {
+            respawnPlayer();
+            return;
+        }
+
+        // Check tile overlaps
+        const pcol = Math.floor((player.x + TILE_W * 0.35) / TILE_W);
+        const prow = Math.floor((player.y + TILE_H * 0.5) / TILE_H);
+
+        // Check a small area around player
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                const cr = prow + dr;
+                const cc = pcol + dc;
+                if (cr < 0 || cr >= ROWS || cc < 0 || cc >= COLS) continue;
+
+                const pBox = { x: player.x + TILE_W * 0.15, y: player.y + TILE_H * 0.1, w: TILE_W * 0.7, h: TILE_H * 0.85 };
+                const tBox = { x: cc * TILE_W, y: cr * TILE_H, w: TILE_W, h: TILE_H };
+
+                if (!boxOverlap(pBox, tBox)) continue;
+
+                const t = grid[cr][cc];
+
+                // Spikes
+                if (t === T.SPIKE) {
+                    respawnPlayer();
+                    return;
+                }
+
+                // Coins
+                for (const coin of coins) {
+                    if (!coin.collected && coin.r === cr && coin.c === cc) {
+                        coin.collected = true;
+                        coinsCollected++;
+                        addScore(10);
+                    }
+                }
+
+                // Exit
+                if (t === T.EXIT) {
+                    levelComplete = true;
+                    playTime = Date.now() - playStart;
+                    const timeBonus = Math.max(0, 200 - Math.floor(playTime / 1000) * 2);
+                    const coinBonus = coinsCollected * 25;
+                    addScore(timeBonus + coinBonus + 100);
+                    showResult(
+                        '🎮 Nivel Completado',
+                        score + ' pts',
+                        'Monedas: ' + coinsCollected + '/' + totalCoins + ' | Tiempo: ' + (playTime/1000).toFixed(1) + 's'
+                    );
+                    return;
+                }
+
+                // Springs
+                for (const sp of springs) {
+                    if (sp.r === cr && sp.c === cc && player.vy > 0) {
+                        player.vy = SPRING_VEL;
+                        player.onGround = false;
+                        sp.bounceAnim = 1;
+                    }
+                }
+            }
+        }
+
+        // Enemies
+        for (const en of enemies) {
+            en.x += en.vx;
+            // Patrol: reverse on walls or edges
+            const eCol = Math.floor((en.x + TILE_W/2) / TILE_W);
+            const eRow = en.r;
+            // Check wall ahead
+            const nextCol = en.vx > 0 ? eCol + 1 : eCol - 1;
+            if (nextCol < 0 || nextCol >= COLS || isSolid(nextCol, eRow)) {
+                en.vx *= -1;
+            }
+            // Check floor ahead (don't walk off edges)
+            if (!isSolid(nextCol, eRow + 1) && isSolid(eCol, eRow + 1)) {
+                en.vx *= -1;
+            }
+            // Clamp
+            if (en.x < 0) { en.x = 0; en.vx *= -1; }
+            if (en.x > (COLS - 1) * TILE_W) { en.x = (COLS - 1) * TILE_W; en.vx *= -1; }
+
+            // Check collision with player
+            const pBox = { x: player.x + TILE_W * 0.15, y: player.y + TILE_H * 0.1, w: TILE_W * 0.7, h: TILE_H * 0.85 };
+            const eBox = { x: en.x + TILE_W * 0.15, y: en.y + TILE_H * 0.15, w: TILE_W * 0.7, h: TILE_H * 0.7 };
+            if (boxOverlap(pBox, eBox)) {
+                respawnPlayer();
+                return;
+            }
+        }
+
+        playTime = Date.now() - playStart;
+    }
+
+    function boxOverlap(a, b) {
+        return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function resolveCollisionX() {
+        const pw = TILE_W * 0.7;
+        const ph = TILE_H * 0.85;
+        const px = player.x + (TILE_W - pw) / 2;
+        const py = player.y + (TILE_H - ph) / 2;
+
+        const left = Math.floor(px / TILE_W);
+        const right = Math.floor((px + pw - 1) / TILE_W);
+        const top = Math.floor(py / TILE_H);
+        const bottom = Math.floor((py + ph - 1) / TILE_H);
+
+        for (let r = top; r <= bottom; r++) {
+            for (let c = left; c <= right; c++) {
+                if (!isSolid(c, r)) continue;
+                const tileLeft = c * TILE_W;
+                const tileRight = tileLeft + TILE_W;
+                if (player.vx > 0) {
+                    player.x = tileLeft - TILE_W + (TILE_W - pw)/2 - 0.1;
+                } else if (player.vx < 0) {
+                    player.x = tileRight - (TILE_W - pw)/2 + 0.1;
+                }
+                player.vx = 0;
+                return;
+            }
+        }
+    }
+
+    function resolveCollisionY() {
+        const pw = TILE_W * 0.7;
+        const ph = TILE_H * 0.85;
+        const px = player.x + (TILE_W - pw) / 2;
+        const py = player.y + (TILE_H - ph) / 2;
+
+        const left = Math.floor(px / TILE_W);
+        const right = Math.floor((px + pw - 1) / TILE_W);
+        const top = Math.floor(py / TILE_H);
+        const bottom = Math.floor((py + ph - 1) / TILE_H);
+
+        for (let r = top; r <= bottom; r++) {
+            for (let c = left; c <= right; c++) {
+                if (!isSolid(c, r)) continue;
+                const tileTop = r * TILE_H;
+                const tileBottom = tileTop + TILE_H;
+                if (player.vy > 0) {
+                    player.y = tileTop - TILE_H + (TILE_H - ph)/2 - 0.1;
+                    player.vy = 0;
+                    player.onGround = true;
+                } else if (player.vy < 0) {
+                    player.y = tileBottom - (TILE_H - ph)/2 + 0.1;
+                    player.vy = 0;
+                }
+                return;
+            }
+        }
+    }
+
+    // --- Main loop ---
+    function loop() {
+        if (phase === 'design') {
+            drawDesign();
+        } else {
+            updatePlay();
+            drawPlay();
+        }
+        animFrame = requestAnimationFrame(loop);
+    }
+
+    // --- Input: Mouse/Touch ---
+    function getGridPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = cw / rect.width;
+        const scaleY = ch / rect.height;
+        let clientX, clientY;
+        if (e.touches && e.touches.length > 0) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = e.clientX;
+            clientY = e.clientY;
+        }
+        const mx = (clientX - rect.left) * scaleX;
+        const my = (clientY - rect.top) * scaleY;
+        return {mx, my, col: Math.floor(mx / TILE_W), row: Math.floor(my / TILE_H)};
+    }
+
+    function handleCanvasClick(e) {
+        if (phase !== 'design') return;
+        e.preventDefault();
+        const {mx, my, col, row} = getGridPos(e);
+
+        // Check toolbar click
+        if (my >= GRID_H) {
+            const btnW = cw / 10;
+            const idx = Math.floor(mx / btnW);
+            if (idx >= 0 && idx < 8) {
+                selectedTile = idx + 1;
+            } else if (idx === 8) {
+                selectedTile = T.EMPTY; // eraser
+            }
+            return;
+        }
+
+        if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+        placeTile(col, row);
+    }
+
+    function handleCanvasMove(e) {
+        if (phase !== 'design') return;
+        const {col, row} = getGridPos(e);
+        cursorCol = col;
+        cursorRow = row;
+        useKbCursor = false;
+    }
+
+    function placeTile(col, row) {
+        // Enforce uniqueness for start/exit
+        if (selectedTile === T.START || selectedTile === T.EXIT) {
+            for (let r = 0; r < ROWS; r++)
+                for (let c = 0; c < COLS; c++)
+                    if (grid[r][c] === selectedTile) grid[r][c] = T.EMPTY;
+        }
+
+        if (grid[row][col] === selectedTile) {
+            grid[row][col] = T.EMPTY;
+        } else {
+            grid[row][col] = selectedTile;
+        }
+    }
+
+    function handleKeyDown(e) {
+        const key = e.code;
+
+        if (phase === 'play') {
+            keys[key] = true;
+            if (key === 'Space' || key === 'ArrowUp' || key === 'ArrowDown') e.preventDefault();
+            return;
+        }
+
+        // Design mode keyboard
+        if (key === 'ArrowUp' || key === 'ArrowDown' || key === 'ArrowLeft' || key === 'ArrowRight') {
+            e.preventDefault();
+            useKbCursor = true;
+            if (key === 'ArrowUp') kbCursorRow = Math.max(0, kbCursorRow - 1);
+            if (key === 'ArrowDown') kbCursorRow = Math.min(ROWS - 1, kbCursorRow + 1);
+            if (key === 'ArrowLeft') kbCursorCol = Math.max(0, kbCursorCol - 1);
+            if (key === 'ArrowRight') kbCursorCol = Math.min(COLS - 1, kbCursorCol + 1);
+        }
+        if (key === 'Enter') {
+            if (useKbCursor) placeTile(kbCursorCol, kbCursorRow);
+        }
+        if (key === 'Delete' || key === 'Backspace') {
+            if (useKbCursor) grid[kbCursorRow][kbCursorCol] = T.EMPTY;
+        }
+        // Number keys to select tile
+        const num = parseInt(e.key);
+        if (num >= 0 && num <= 8) {
+            selectedTile = num;
+        }
+    }
+
+    function handleKeyUp(e) {
+        keys[e.code] = false;
+    }
+
+    // --- Controls / Buttons ---
+    function updateButtons() {
+        controls.innerHTML = '';
+
+        if (phase === 'design') {
+            // Pre-made level buttons
+            const levelRow = document.createElement('div');
+            levelRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:6px;';
+
+            PREMADE_LEVELS.forEach((lv, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm';
+                btn.textContent = '📋 ' + lv.name;
+                btn.title = lv.desc;
+                btn.onclick = () => { loadLevel(lv.data); };
+                levelRow.appendChild(btn);
+            });
+
+            controls.appendChild(levelRow);
+
+            const actionRow = document.createElement('div');
+            actionRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center;';
+
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'btn btn-sm';
+            clearBtn.textContent = '🗑️ Limpiar Todo';
+            clearBtn.onclick = () => { clearGrid(); };
+            actionRow.appendChild(clearBtn);
+
+            const playBtn = document.createElement('button');
+            playBtn.className = 'btn btn-sm';
+            playBtn.style.background = '#4CAF50';
+            playBtn.textContent = '▶️ Jugar Nivel';
+            playBtn.onclick = () => {
+                if (!findTile(T.START)) { alert('¡Coloca un punto de Inicio (5)!'); return; }
+                if (!findTile(T.EXIT)) { alert('¡Coloca una Salida (6)!'); return; }
+                setScore(0);
+                initPlayMode();
+            };
+            actionRow.appendChild(playBtn);
+
+            controls.appendChild(actionRow);
+        } else {
+            const actionRow = document.createElement('div');
+            actionRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;justify-content:center;';
+
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-sm';
+            editBtn.textContent = '✏️ Editar Nivel';
+            editBtn.onclick = () => {
+                phase = 'design';
+                keys = {};
+                updateButtons();
+            };
+            actionRow.appendChild(editBtn);
+
+            const newBtn = document.createElement('button');
+            newBtn.className = 'btn btn-sm';
+            newBtn.textContent = '🆕 Nuevo Nivel';
+            newBtn.onclick = () => {
+                phase = 'design';
+                keys = {};
+                clearGrid();
+                setScore(0);
+                updateButtons();
+            };
+            actionRow.appendChild(newBtn);
+
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'btn btn-sm';
+            retryBtn.style.background = '#FF9800';
+            retryBtn.textContent = '🔄 Reintentar';
+            retryBtn.onclick = () => {
+                setScore(0);
+                initPlayMode();
+            };
+            actionRow.appendChild(retryBtn);
+
+            controls.appendChild(actionRow);
+        }
+    }
+
+    // --- Init ---
+    clearGrid();
+    // Load first tutorial level by default
+    loadLevel(PREMADE_LEVELS[0].data);
+
+    canvas.addEventListener('click', handleCanvasClick);
+    canvas.addEventListener('mousemove', handleCanvasMove);
+    canvas.addEventListener('touchstart', handleCanvasClick, {passive: false});
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
+
+    updateButtons();
+    loop();
+
+    currentGame = {
+        cleanup: () => {
+            cancelAnimationFrame(animFrame);
+            canvas.removeEventListener('click', handleCanvasClick);
+            canvas.removeEventListener('mousemove', handleCanvasMove);
+            canvas.removeEventListener('touchstart', handleCanvasClick);
+            document.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('keyup', handleKeyUp);
+            canvas.style.display = 'none';
             ui.innerHTML = '';
             controls.innerHTML = '';
             ui.style.pointerEvents = '';

@@ -491,6 +491,12 @@ function startInterioresFP(roomType) {
     let hoverType = null; // 'floor', 'backwall', 'leftwall', 'rightwall'
     let hoverR = -1, hoverC = -1;
 
+    // --- Selection state for interactive editing ---
+    let selectedItem = null; // { type, r, c } or null
+    const COLOR_SWATCHES = ['#ffffff', '#f5e6ca', '#8B4513', '#222222', '#e74c3c', '#3498db', '#27ae60', '#f1c40f', '#95a5a6', '#e91e63'];
+    const SWATCH_SIZE = 14;
+    const POPUP_PAD = 6;
+
     // --- Point-in-quad test ---
     function pointInQuad(px, py, quad) {
         // Use cross product winding
@@ -1064,12 +1070,20 @@ function startInterioresFP(roomType) {
         ctx.globalAlpha = alpha;
         ctx.translate(cx, cy);
         ctx.scale(scale, scale);
-        // Draw item centered at 0,0
+        // Apply rotation if present
+        if (item.rotation) {
+            ctx.rotate(item.rotation * Math.PI / 180);
+        }
+        // Draw item centered at 0,0 (uses item.color override if present)
         drawFloorItemShape(item);
         ctx.restore();
     }
 
     function drawFloorItemShape(item) {
+        // If item has a custom color, create a modified item with overridden colors
+        if (item.color) {
+            item = Object.assign({}, item, { baseColor: item.color, roofColor: darken(item.color, 30) });
+        }
         const rt = item.roofType;
 
         if (rt === 'modern_sofa') {
@@ -1731,11 +1745,17 @@ function startInterioresFP(roomType) {
         ctx.translate(cx, cy);
         const sc = Math.min(slotW / 28, slotH / 22);
         ctx.scale(sc, sc);
+        if (item.rotation) {
+            ctx.rotate(item.rotation * Math.PI / 180);
+        }
         drawWallItemShape(item);
         ctx.restore();
     }
 
     function drawWallItemShape(item) {
+        if (item.color) {
+            item = Object.assign({}, item, { baseColor: item.color, roofColor: darken(item.color, 30) });
+        }
         const rt = item.roofType;
 
         if (rt === 'wall_painting') {
@@ -2047,6 +2067,9 @@ function startInterioresFP(roomType) {
         ctx.translate(center.x, center.y);
         const sc = Math.min(slotW / 32, slotH / 26) * 0.9;
         ctx.scale(sc, sc);
+        if (item.rotation) {
+            ctx.rotate(item.rotation * Math.PI / 180);
+        }
         drawWallItemShape(item);
         ctx.restore();
     }
@@ -2211,6 +2234,7 @@ function startInterioresFP(roomType) {
     function rotateView(dir) {
         viewAngle = (viewAngle + dir + 4) % 4;
         hoverType = null; hoverR = -1; hoverC = -1;
+        selectedItem = null;
     }
 
     // ===================== RENDER LOOP =====================
@@ -2225,6 +2249,7 @@ function startInterioresFP(roomType) {
         drawGhostPreviews();
         drawEraserHover();
         drawRotationUI();
+        drawSelectionPopup();
         animFrame = requestAnimationFrame(render);
     }
 
@@ -2255,12 +2280,184 @@ function startInterioresFP(roomType) {
         }
     });
 
+    // --- Get center position of any slot for popup positioning ---
+    function getSlotCenter(type, r, c) {
+        if (type === 'floor') return getFloorSlotCenter(r, c);
+        if (type === 'backwall') { const rect = getBackWallSlotRect(r, c); return { x: rect.cx, y: rect.cy }; }
+        if (type === 'leftwall') return getSideWallSlotCenter(getLeftWallSlotQuad(r));
+        if (type === 'rightwall') return getSideWallSlotCenter(getRightWallSlotQuad(r));
+        return { x: W / 2, y: H / 2 };
+    }
+
+    // --- Popup geometry (computed per frame based on selectedItem) ---
+    function getPopupRect() {
+        if (!selectedItem) return null;
+        const center = getSlotCenter(selectedItem.type, selectedItem.r, selectedItem.c);
+        const cols = 5;
+        const rows = Math.ceil(COLOR_SWATCHES.length / cols);
+        const popW = cols * (SWATCH_SIZE + 3) + POPUP_PAD * 2 + 3;
+        const popH = rows * (SWATCH_SIZE + 3) + POPUP_PAD * 2 + 3 + 24; // extra row for rotate btn
+        let px = center.x - popW / 2;
+        let py = center.y - popH - 20;
+        // Clamp within canvas
+        if (px < 4) px = 4;
+        if (px + popW > W - 4) px = W - 4 - popW;
+        if (py < 4) py = center.y + 20; // flip below if no room above
+        return { x: px, y: py, w: popW, h: popH, cols, rows };
+    }
+
+    function hitTestPopup(mx, my) {
+        const popup = getPopupRect();
+        if (!popup) return null;
+        // Color swatches
+        for (let i = 0; i < COLOR_SWATCHES.length; i++) {
+            const col = i % popup.cols;
+            const row = Math.floor(i / popup.cols);
+            const sx = popup.x + POPUP_PAD + col * (SWATCH_SIZE + 3);
+            const sy = popup.y + POPUP_PAD + row * (SWATCH_SIZE + 3);
+            if (mx >= sx && mx <= sx + SWATCH_SIZE && my >= sy && my <= sy + SWATCH_SIZE) {
+                return { action: 'color', colorIndex: i };
+            }
+        }
+        // Rotate button (bottom of popup)
+        const btnY = popup.y + popup.h - 22;
+        const btnX = popup.x + POPUP_PAD;
+        const btnW = popup.w - POPUP_PAD * 2;
+        if (mx >= btnX && mx <= btnX + btnW && my >= btnY && my <= btnY + 18) {
+            return { action: 'rotate' };
+        }
+        // Inside popup but not on a control = absorb click
+        if (mx >= popup.x && mx <= popup.x + popup.w && my >= popup.y && my <= popup.y + popup.h) {
+            return { action: 'none' };
+        }
+        return null;
+    }
+
+    function drawSelectionPopup() {
+        if (!selectedItem) return;
+        const existing = getGridAt(selectedItem.type, selectedItem.r, selectedItem.c);
+        if (!existing) { selectedItem = null; return; }
+
+        // Highlight selected slot
+        const center = getSlotCenter(selectedItem.type, selectedItem.r, selectedItem.c);
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.arc(center.x, center.y, 18, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw popup
+        const popup = getPopupRect();
+        if (!popup) return;
+
+        // Background
+        ctx.fillStyle = 'rgba(30,30,40,0.92)';
+        ctx.beginPath();
+        const rr = 6;
+        ctx.moveTo(popup.x + rr, popup.y);
+        ctx.lineTo(popup.x + popup.w - rr, popup.y);
+        ctx.quadraticCurveTo(popup.x + popup.w, popup.y, popup.x + popup.w, popup.y + rr);
+        ctx.lineTo(popup.x + popup.w, popup.y + popup.h - rr);
+        ctx.quadraticCurveTo(popup.x + popup.w, popup.y + popup.h, popup.x + popup.w - rr, popup.y + popup.h);
+        ctx.lineTo(popup.x + rr, popup.y + popup.h);
+        ctx.quadraticCurveTo(popup.x, popup.y + popup.h, popup.x, popup.y + popup.h - rr);
+        ctx.lineTo(popup.x, popup.y + rr);
+        ctx.quadraticCurveTo(popup.x, popup.y, popup.x + rr, popup.y);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Color swatches
+        for (let i = 0; i < COLOR_SWATCHES.length; i++) {
+            const col = i % popup.cols;
+            const row = Math.floor(i / popup.cols);
+            const sx = popup.x + POPUP_PAD + col * (SWATCH_SIZE + 3);
+            const sy = popup.y + POPUP_PAD + row * (SWATCH_SIZE + 3);
+            ctx.fillStyle = COLOR_SWATCHES[i];
+            ctx.fillRect(sx, sy, SWATCH_SIZE, SWATCH_SIZE);
+            // Border - highlight if this is the current color
+            const isSelected = existing.color && existing.color === COLOR_SWATCHES[i];
+            ctx.strokeStyle = isSelected ? '#ffd700' : 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = isSelected ? 2 : 0.5;
+            ctx.strokeRect(sx, sy, SWATCH_SIZE, SWATCH_SIZE);
+        }
+
+        // Rotate button
+        const btnY = popup.y + popup.h - 22;
+        const btnX = popup.x + POPUP_PAD;
+        const btnW = popup.w - POPUP_PAD * 2;
+        ctx.fillStyle = 'rgba(255,215,0,0.2)';
+        ctx.fillRect(btnX, btnY, btnW, 18);
+        ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(btnX, btnY, btnW, 18);
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 10px Poppins, sans-serif';
+        ctx.textAlign = 'center';
+        const rot = existing.rotation || 0;
+        ctx.fillText('\u21BB Girar (' + rot + '\u00B0)', btnX + btnW / 2, btnY + 13);
+    }
+
     function handlePlace(e) {
         const pos = getMousePos(e);
+
+        // Check if clicking inside popup
+        if (selectedItem) {
+            const popHit = hitTestPopup(pos.x, pos.y);
+            if (popHit) {
+                if (popHit.action === 'color') {
+                    const existing = getGridAt(selectedItem.type, selectedItem.r, selectedItem.c);
+                    if (existing) {
+                        const newItem = Object.assign({}, existing, { color: COLOR_SWATCHES[popHit.colorIndex] });
+                        setGridAt(selectedItem.type, selectedItem.r, selectedItem.c, newItem);
+                    }
+                } else if (popHit.action === 'rotate') {
+                    const existing = getGridAt(selectedItem.type, selectedItem.r, selectedItem.c);
+                    if (existing) {
+                        const curRot = existing.rotation || 0;
+                        const newItem = Object.assign({}, existing, { rotation: (curRot + 90) % 360 });
+                        setGridAt(selectedItem.type, selectedItem.r, selectedItem.c, newItem);
+                    }
+                }
+                return; // absorb click
+            }
+        }
+
         // Check rotation buttons first
-        if (pointInRect(pos.x, pos.y, rotLeftBtn)) { rotateView(-1); return; }
-        if (pointInRect(pos.x, pos.y, rotRightBtn)) { rotateView(1); return; }
+        if (pointInRect(pos.x, pos.y, rotLeftBtn)) { rotateView(-1); selectedItem = null; return; }
+        if (pointInRect(pos.x, pos.y, rotRightBtn)) { rotateView(1); selectedItem = null; return; }
+
         const hit = hitTest(pos.x, pos.y);
+
+        // If no tool is selected (or tool is null) and clicked on existing item, select it
+        if (hit) {
+            const existing = getGridAt(hit.type, hit.r, hit.c);
+            if (existing && (!selectedTool || selectedTool.name === 'eraser')) {
+                // If eraser is active, erase instead of select
+                if (selectedTool && selectedTool.name === 'eraser') {
+                    setGridAt(hit.type, hit.r, hit.c, null);
+                    placedCount--;
+                    addScore(-5);
+                    selectedItem = null;
+                    return;
+                }
+                // Toggle selection
+                if (selectedItem && selectedItem.type === hit.type && selectedItem.r === hit.r && selectedItem.c === hit.c) {
+                    selectedItem = null;
+                } else {
+                    selectedItem = { type: hit.type, r: hit.r, c: hit.c };
+                }
+                return;
+            }
+        }
+
+        // Deselect if clicking elsewhere
+        selectedItem = null;
+
         if (!hit || !selectedTool) return;
 
         if (selectedTool.name === 'eraser') {
@@ -2276,7 +2473,9 @@ function startInterioresFP(roomType) {
         if (!canPlaceItem(selectedTool, hit.type)) return;
         if (getGridAt(hit.type, hit.r, hit.c)) return;
 
-        setGridAt(hit.type, hit.r, hit.c, selectedTool);
+        // Store a copy with color/rotation properties
+        const newItem = Object.assign({}, selectedTool, { color: null, rotation: 0 });
+        setGridAt(hit.type, hit.r, hit.c, newItem);
         placedCount++;
         addScore(10);
     }
@@ -2284,10 +2483,20 @@ function startInterioresFP(roomType) {
     canvas.addEventListener('click', handlePlace);
     canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handlePlace(e); });
 
-    // Keyboard rotation: Q = rotate left, E = rotate right
+    // Keyboard: Q/E = rotate view, Delete/Backspace = remove selected item
     function handleKeyRotation(e) {
         if (e.key === 'q' || e.key === 'Q') rotateView(-1);
         if (e.key === 'e' || e.key === 'E') rotateView(1);
+        if ((e.key === 'Delete' || e.key === 'Backspace') && selectedItem) {
+            e.preventDefault();
+            const existing = getGridAt(selectedItem.type, selectedItem.r, selectedItem.c);
+            if (existing) {
+                setGridAt(selectedItem.type, selectedItem.r, selectedItem.c, null);
+                placedCount--;
+                addScore(-5);
+            }
+            selectedItem = null;
+        }
     }
     document.addEventListener('keydown', handleKeyRotation);
 
@@ -2302,9 +2511,17 @@ function startInterioresFP(roomType) {
         const wallTag = b.wall ? ' <span style="font-size:0.5rem;opacity:0.6">PARED</span>' : '';
         item.innerHTML = `<span class="tool-icon">${b.icon}</span><span class="tool-label">${b.name}${wallTag}</span>`;
         item.onclick = () => {
+            if (selectedTool === b) {
+                // Deselect tool (enter selection mode)
+                item.classList.remove('selected');
+                selectedTool = null;
+                selectedItem = null;
+                return;
+            }
             document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
             item.classList.add('selected');
             selectedTool = b;
+            selectedItem = null;
         };
         toolbar.appendChild(item);
     });
@@ -2316,6 +2533,7 @@ function startInterioresFP(roomType) {
         document.querySelectorAll('.tool-item').forEach(t => t.classList.remove('selected'));
         eraser.classList.add('selected');
         selectedTool = { name: 'eraser' };
+        selectedItem = null;
     };
     toolbar.appendChild(eraser);
 
@@ -2355,7 +2573,7 @@ function startInterioresFP(roomType) {
     const goalText = ROOM_GOALS[roomType] || ARQ_GOALS.interiores;
     const roomLabel = roomCfg.label || roomType;
     ui.innerHTML = `<div style="padding: 8px 14px; font-size: 0.7rem; color: rgba(255,255,255,0.8); text-align: center; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);">
-        ${goalText}<br><span style="opacity:0.6; font-size:0.6rem;">Q/E: Girar ${roomLabel.toLowerCase()}</span>
+        ${goalText}<br><span style="opacity:0.6; font-size:0.6rem;">Q/E: Girar ${roomLabel.toLowerCase()} · Clic en objeto: color/rotar · Supr: borrar seleccion</span>
     </div>`;
     ui.style.pointerEvents = 'none';
 

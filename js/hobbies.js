@@ -3979,7 +3979,7 @@ function startAjedrez(subtypeId) {
     const ui = document.getElementById('game-ui');
     const controls = document.getElementById('game-controls');
     const canvas = document.getElementById('game-canvas');
-    ui.style.pointerEvents = 'auto';
+    ui.style.pointerEvents = 'none';
 
     switch (subtypeId) {
         case 'clasico': ajedrezClasico(ui, controls, canvas, false); break;

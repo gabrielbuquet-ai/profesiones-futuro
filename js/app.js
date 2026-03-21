@@ -11,7 +11,7 @@ let _lastSubtypeId = null;
 
 const STORAGE_KEY = 'profesiones_futuro_data';
 
-const HOBBY_SECTIONS = ['deportes', 'conducir', 'musica', 'pintura', 'ajedrez'];
+const HOBBY_SECTIONS = ['deportes', 'conducir', 'musica', 'pintura', 'ajedrez', 'ocio'];
 
 // --- Game to Skills mapping ---
 const GAME_SKILLS_MAP = {
@@ -25,12 +25,14 @@ const GAME_SKILLS_MAP = {
     'algoritmo': { logica: 0.35, pensamiento_sistemico: 0.25, precision: 0.20, iteracion: 0.20 },
     'prompt_master': { comunicacion: 0.30, iteracion: 0.25, juicio_critico: 0.25, creatividad: 0.20 },
     'director_agentes': { pensamiento_sistemico: 0.25, comunicacion: 0.20, liderazgo: 0.20, juicio_critico: 0.15, adaptabilidad: 0.10, creatividad: 0.10 },
+    'diseno_niveles': { creatividad: 0.30, logica: 0.25, pensamiento_sistemico: 0.20, precision: 0.15, iteracion: 0.10 },
     'deportes': { velocidad: 0.30, liderazgo: 0.25, adaptabilidad: 0.25, empatia: 0.20 },
     'conducir': { precision: 0.30, velocidad: 0.25, logica: 0.25, adaptabilidad: 0.20 },
     'musica': { creatividad: 0.30, memoria: 0.25, precision: 0.20, iteracion: 0.15, empatia: 0.10 },
     'pintura': { creatividad: 0.40, juicio_critico: 0.25, iteracion: 0.20, empatia: 0.15 },
     'ajedrez': { logica: 0.35, pensamiento_sistemico: 0.25, memoria: 0.20, precision: 0.20 },
-    'universidad': { comunicacion: 0.25, adaptabilidad: 0.25, velocidad: 0.20, empatia: 0.15, liderazgo: 0.15 }
+    'universidad': { comunicacion: 0.25, adaptabilidad: 0.25, velocidad: 0.20, empatia: 0.15, liderazgo: 0.15 },
+    'ocio': { logica: 0.25, memoria: 0.25, velocidad: 0.20, adaptabilidad: 0.15, creatividad: 0.15 }
 };
 
 // --- Profession profiles for cosine similarity ---
@@ -204,9 +206,22 @@ const PROFESSIONS = {
             { id: 'algoritmo', icon: '🧩', name: 'Construye el Algoritmo', desc: 'Ordena las instrucciones' },
             { id: 'prompt_master', icon: '✨', name: 'Prompt Master', desc: 'Aprende a dar instrucciones a la IA' },
             { id: 'director_agentes', icon: '🎬', name: 'Director de Agentes', desc: 'Dirige un equipo de agentes IA' },
-            { id: 'evolucion', icon: '🔄', name: 'Evoluci\u00f3n', desc: 'Del programador al orquestador' }
+            { id: 'evolucion', icon: '🔄', name: 'Evoluci\u00f3n', desc: 'Del programador al orquestador' },
+            { id: 'diseno_niveles', icon: '🎮', name: 'Dise\u00f1ador de Niveles', desc: 'Dise\u00f1a y juega tus propios niveles de plataformas' }
         ],
         perfil: { creatividad:6, logica:9, empatia:4, precision:9, liderazgo:6, velocidad:6, memoria:7, comunicacion:7, pensamiento_sistemico:8, iteracion:8, juicio_critico:8, adaptabilidad:8 }
+    },
+    ocio: {
+        title: '🎲 Ocio',
+        subtypes: [
+            { id: 'serpientes', icon: '🐍', name: 'Serpientes y Escaleras', desc: 'El cl\u00e1sico juego de mesa contra la IA' },
+            { id: 'oca', icon: '🪿', name: 'La Oca', desc: 'De oca a oca y tiro porque me toca' },
+            { id: 'tres_en_raya', icon: '❌', name: 'Tres en Raya', desc: 'Pon tres en l\u00ednea antes que la IA' },
+            { id: 'conecta4', icon: '🔴', name: 'Conecta 4', desc: 'Conecta cuatro fichas en l\u00ednea' },
+            { id: 'memory', icon: '🃏', name: 'Memory', desc: 'Encuentra todas las parejas de cartas' },
+            { id: 'plataformas', icon: '🏃', name: 'Plataformas', desc: 'Corre, salta y recoge monedas' }
+        ],
+        perfil: { creatividad:5, logica:7, empatia:3, precision:6, liderazgo:3, velocidad:7, memoria:8, comunicacion:3, pensamiento_sistemico:5, iteracion:6, juicio_critico:5, adaptabilidad:7 }
     }
 };
 
@@ -459,6 +474,7 @@ function startGame(professionId, subtypeId, title) {
         case 'ajedrez': startAjedrez(subtypeId); break;
         case 'universidad': startUniversidad(subtypeId); break;
         case 'programador': startProgramador(subtypeId); break;
+        case 'ocio': startOcio(subtypeId); break;
     }
 }
 
