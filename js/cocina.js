@@ -19,10 +19,10 @@ function startCocina(subtypeId) {
     // ---- Recipes ----
     const RECIPES = {
         espanola: {
-            name: 'Tortilla Espanola',
+            name: 'Tortilla Española',
             emoji: '🥘',
             steps: [
-                { type: 'CrackEgg', label: 'Cascar huevos', desc: 'Pulsa ESPACIO rapidamente para cascar el huevo' },
+                { type: 'CrackEgg', label: 'Cascar huevos', desc: 'Pulsa ESPACIO rápidamente para cascar el huevo' },
                 { type: 'CutVegetable', label: 'Cortar patatas', desc: 'Pulsa ESPACIO con ritmo para cortar', vegName: 'patata', vegColor: '#F5DEB3', innerColor: '#FFFDE7' },
                 { type: 'MixBowl', label: 'Batir huevos con patata', desc: 'Alterna A y D para remover' },
                 { type: 'CookStove', label: 'Cuajar la tortilla', desc: 'Usa flechas ARRIBA/ABAJO para controlar el fuego' },
@@ -35,8 +35,8 @@ function startCocina(subtypeId) {
             emoji: '🍕',
             steps: [
                 { type: 'KneadDough', label: 'Amasar la masa', desc: 'Alterna A y D para amasar' },
-                { type: 'PourLiquid', label: 'Echar salsa de tomate', desc: 'Manten ESPACIO para verter, suelta en la zona verde', liquidName: 'salsa', liquidColor: '#D32F2F' },
-                { type: 'SeasonFood', label: 'Poner mozzarella', desc: 'Pulsa ESPACIO para anadir queso, para en la zona verde', seasonName: 'queso', seasonColor: '#FFFDE7' },
+                { type: 'PourLiquid', label: 'Echar salsa de tomate', desc: 'Mantén ESPACIO para verter, suelta en la zona verde', liquidName: 'salsa', liquidColor: '#D32F2F' },
+                { type: 'SeasonFood', label: 'Poner mozzarella', desc: 'Pulsa ESPACIO para añadir queso, para en la zona verde', seasonName: 'queso', seasonColor: '#FFFDE7' },
                 { type: 'CookStove', label: 'Hornear la pizza', desc: 'Usa flechas ARRIBA/ABAJO para controlar el horno', ovenMode: true },
                 { type: 'ServePlate', label: 'Servir caliente', desc: 'Pulsa ESPACIO para emplatar' }
             ]
@@ -47,7 +47,7 @@ function startCocina(subtypeId) {
             steps: [
                 { type: 'CookStove', label: 'Cocer el arroz', desc: 'Usa flechas ARRIBA/ABAJO para controlar el fuego' },
                 { type: 'CutVegetable', label: 'Cortar el pescado', desc: 'Pulsa ESPACIO con ritmo para cortar', vegName: 'salmon', vegColor: '#FF8A65', innerColor: '#FFAB91' },
-                { type: 'SeasonFood', label: 'Anadir salsa de soja', desc: 'Pulsa ESPACIO para anadir, para en la zona verde', seasonName: 'soja', seasonColor: '#4E342E' },
+                { type: 'SeasonFood', label: 'Anadir salsa de soja', desc: 'Pulsa ESPACIO para añadir, para en la zona verde', seasonName: 'soja', seasonColor: '#4E342E' },
                 { type: 'MixBowl', label: 'Enrollar el maki', desc: 'Alterna A y D para enrollar' },
                 { type: 'ServePlate', label: 'Emplatar el sushi', desc: 'Pulsa ESPACIO para emplatar' }
             ]
@@ -56,8 +56,8 @@ function startCocina(subtypeId) {
             name: 'Tarta de Chocolate',
             emoji: '🎂',
             steps: [
-                { type: 'CrackEgg', label: 'Cascar huevos', desc: 'Pulsa ESPACIO rapidamente para cascar el huevo' },
-                { type: 'PourLiquid', label: 'Echar leche', desc: 'Manten ESPACIO para verter, suelta en la zona verde', liquidName: 'leche', liquidColor: '#FAFAFA' },
+                { type: 'CrackEgg', label: 'Cascar huevos', desc: 'Pulsa ESPACIO rápidamente para cascar el huevo' },
+                { type: 'PourLiquid', label: 'Echar leche', desc: 'Mantén ESPACIO para verter, suelta en la zona verde', liquidName: 'leche', liquidColor: '#FAFAFA' },
                 { type: 'MixBowl', label: 'Mezclar ingredientes', desc: 'Alterna A y D para remover' },
                 { type: 'KneadDough', label: 'Trabajar la masa', desc: 'Alterna A y D para amasar' },
                 { type: 'CookStove', label: 'Hornear la tarta', desc: 'Usa flechas ARRIBA/ABAJO para controlar el horno', ovenMode: true },
@@ -1298,7 +1298,7 @@ function startCocina(subtypeId) {
         showResult(
             recipe.name + ' lista!',
             `<div class="stars">${starsHtml}</div>`,
-            `Has cocinado ${recipe.name}. Puntuacion: ${totalScore}`,
+            `Has cocinado ${recipe.name}. Puntuación: ${totalScore}`,
             () => startCocina(subtypeId)
         );
     }

@@ -281,19 +281,19 @@ const ROOM_ITEMS = {
 };
 
 const ROOM_GOALS = {
-    habitacion: 'Decora tu dormitorio ideal. Coloca la cama, muebles y decoracion.',
-    salon: 'Decora el salon perfecto. Coloca muebles para crear un hogar acogedor.',
-    bano: 'Disena un bano completo. Necesitas banera, lavabo e inodoro.',
-    restaurante: 'Crea un restaurante acogedor. Pon mesas, sillas y decoracion.',
-    cocina_int: 'Disena tu cocina ideal. Coloca electrodomesticos y muebles.',
-    colegio: 'Prepara un aula para aprender. Necesitas pupitres, pizarra y mas.',
-    iglesia: 'Decora el interior de una iglesia. Coloca bancos, altar y decoracion.',
+    habitacion: 'Decora tu dormitorio ideal. Coloca la cama, muebles y decoración.',
+    salon: 'Decora el salón perfecto. Coloca muebles para crear un hogar acogedor.',
+    bano: 'Diseña un baño completo. Necesitas bañera, lavabo e inodoro.',
+    restaurante: 'Crea un restaurante acogedor. Pon mesas, sillas y decoración.',
+    cocina_int: 'Diseña tu cocina ideal. Coloca electrodomésticos y muebles.',
+    colegio: 'Prepara un aula para aprender. Necesitas pupitres, pizarra y más.',
+    iglesia: 'Decora el interior de una iglesia. Coloca bancos, altar y decoración.',
 };
 
 const ROOM_FINISH_MSG = {
     habitacion: 'Dormitorio decorado!',
-    salon: 'Salon decorado!',
-    bano: 'Bano completado!',
+    salon: 'Salón decorado!',
+    bano: 'Baño completado!',
     restaurante: 'Restaurante listo!',
     cocina_int: 'Cocina terminada!',
     colegio: 'Aula preparada!',
@@ -301,17 +301,17 @@ const ROOM_FINISH_MSG = {
 };
 
 const ARQ_GOALS = {
-    urbanismo: 'Disena una ciudad completa. Necesitas: casas, una escuela, un hospital, un parque y un supermercado minimo.',
-    interiores: 'Decora el salon perfecto. Coloca muebles para crear un hogar acogedor.',
-    paisajismo: 'Disena un jardin bonito. Usa arboles, flores, fuentes y bancos.',
-    sostenible: 'Crea una comunidad 100% ecologica con energia renovable y espacios verdes.'
+    urbanismo: 'Diseña una ciudad completa. Necesitas: casas, una escuela, un hospital, un parque y un supermercado mínimo.',
+    interiores: 'Decora el salón perfecto. Coloca muebles para crear un hogar acogedor.',
+    paisajismo: 'Diseña un jardín bonito. Usa árboles, flores, fuentes y bancos.',
+    sostenible: 'Crea una comunidad 100% ecológica con energía renovable y espacios verdes.'
 };
 
 const ARQ_FINISH_MSG = {
     urbanismo: 'Ciudad completada!',
-    interiores: 'Habitacion decorada!',
-    paisajismo: 'Jardin completado!',
-    sostenible: 'Comunidad ecologica lista!'
+    interiores: 'Habitación decorada!',
+    paisajismo: 'Jardín completado!',
+    sostenible: 'Comunidad ecológica lista!'
 };
 
 // ============ LANZADOR ============

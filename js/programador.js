@@ -5,40 +5,40 @@
 // --- Skill data ---
 const PROGRAMADOR_SKILLS = {
     tecnicas: {
-        title: 'Habilidades Tecnicas',
+        title: 'Habilidades Técnicas',
         emoji: '💻',
         skills: [
-            { emoji: '🐍', name: 'Lenguajes de programacion', desc: 'Python, JavaScript, C++... el idioma de las maquinas', detail: 'Un programador domina varios lenguajes para decirle al ordenador exactamente que hacer.' },
-            { emoji: '🗄️', name: 'Bases de datos', desc: 'Guardar y buscar datos rapidamente', detail: 'Como una biblioteca gigante donde el ordenador encuentra cualquier dato en milisegundos.' },
-            { emoji: '🌐', name: 'Desarrollo web', desc: 'Crear paginas y aplicaciones online', detail: 'HTML, CSS y JavaScript: los tres pilares para construir todo lo que ves en internet.' },
-            { emoji: '📱', name: 'Apps moviles', desc: 'Programar para telefonos y tablets', detail: 'Crear apps que millones de personas llevan en su bolsillo cada dia.' },
-            { emoji: '🔧', name: 'Herramientas (Git)', desc: 'Controlar versiones del codigo', detail: 'Git es como una maquina del tiempo para tu codigo: puedes volver atras si algo sale mal.' },
-            { emoji: '🧪', name: 'Testing', desc: 'Comprobar que todo funciona', detail: 'Escribir pruebas automaticas para que los bugs no se escondan en el codigo.' },
+            { emoji: '🐍', name: 'Lenguajes de programación', desc: 'Python, JavaScript, C++... el idioma de las máquinas', detail: 'Un programador domina varios lenguajes para decirle al ordenador exactamente qué hacer.' },
+            { emoji: '🗄️', name: 'Bases de datos', desc: 'Guardar y buscar datos rápidamente', detail: 'Como una biblioteca gigante donde el ordenador encuentra cualquier dato en milisegundos.' },
+            { emoji: '🌐', name: 'Desarrollo web', desc: 'Crear páginas y aplicaciones online', detail: 'HTML, CSS y JavaScript: los tres pilares para construir todo lo que ves en internet.' },
+            { emoji: '📱', name: 'Apps móviles', desc: 'Programar para teléfonos y tablets', detail: 'Crear apps que millones de personas llevan en su bolsillo cada día.' },
+            { emoji: '🔧', name: 'Herramientas (Git)', desc: 'Controlar versiones del código', detail: 'Git es como una máquina del tiempo para tu código: puedes volver atrás si algo sale mal.' },
+            { emoji: '🧪', name: 'Testing', desc: 'Comprobar que todo funciona', detail: 'Escribir pruebas automáticas para que los bugs no se escondan en el código.' },
             { emoji: '☁️', name: 'Cloud / Nube', desc: 'Servidores en la nube', detail: 'Usar ordenadores gigantes en centros de datos para que tu app funcione para millones.' },
-            { emoji: '🔒', name: 'Seguridad', desc: 'Proteger datos y sistemas', detail: 'Como un guardia digital que impide que los hackers entren en tu aplicacion.' }
+            { emoji: '🔒', name: 'Seguridad', desc: 'Proteger datos y sistemas', detail: 'Como un guardia digital que impide que los hackers entren en tu aplicación.' }
         ]
     },
     pensamiento: {
         title: 'Pensamiento',
         emoji: '🧠',
         skills: [
-            { emoji: '🧩', name: 'Logica', desc: 'Pensar paso a paso de forma ordenada', detail: 'Si pasa X, entonces haz Y. La base de todo programa.' },
+            { emoji: '🧩', name: 'Lógica', desc: 'Pensar paso a paso de forma ordenada', detail: 'Si pasa X, entonces haz Y. La base de todo programa.' },
             { emoji: '🔍', name: 'Resolver problemas', desc: 'Encontrar soluciones creativas a errores', detail: 'Un bug es un misterio: hay que investigar pistas y encontrar la causa.' },
             { emoji: '📐', name: 'Algoritmos', desc: 'Recetas paso a paso para el ordenador', detail: 'Como una receta de cocina, pero para que el ordenador resuelva problemas.' },
-            { emoji: '🏗️', name: 'Arquitectura', desc: 'Disenar la estructura del programa', detail: 'Antes de construir una casa, necesitas los planos. Con el software es igual.' },
-            { emoji: '🎯', name: 'Atencion al detalle', desc: 'Un punto y coma puede romperlo todo', detail: 'En programacion, hasta el mas pequeno error puede hacer que nada funcione.' },
-            { emoji: '♻️', name: 'Optimizacion', desc: 'Hacer que todo sea mas rapido', detail: 'Encontrar formas de que el programa use menos memoria y sea mas veloz.' }
+            { emoji: '🏗️', name: 'Arquitectura', desc: 'Diseñar la estructura del programa', detail: 'Antes de construir una casa, necesitas los planos. Con el software es igual.' },
+            { emoji: '🎯', name: 'Atención al detalle', desc: 'Un punto y coma puede romperlo todo', detail: 'En programación, hasta el más pequeño error puede hacer que nada funcione.' },
+            { emoji: '♻️', name: 'Optimización', desc: 'Hacer que todo sea más rápido', detail: 'Encontrar formas de que el programa use menos memoria y sea más veloz.' }
         ]
     },
     proceso: {
         title: 'Proceso',
         emoji: '⚙️',
         skills: [
-            { emoji: '📋', name: 'Planificacion', desc: 'Organizar el trabajo en tareas', detail: 'Dividir un proyecto grande en pedazos pequenos y manejables.' },
-            { emoji: '🔄', name: 'Metodologia agil', desc: 'Trabajar en ciclos cortos y mejorar', detail: 'Hacer un poco, ensenar, recibir feedback, mejorar. Repetir.' },
-            { emoji: '📖', name: 'Documentacion', desc: 'Explicar tu codigo para otros', detail: 'Escribir comentarios y guias para que otros (o tu del futuro) entiendan el codigo.' },
-            { emoji: '🐛', name: 'Debugging', desc: 'Encontrar y arreglar errores', detail: 'Ser detective digital: poner pistas en el codigo para encontrar donde falla.' },
-            { emoji: '🚀', name: 'Despliegue', desc: 'Publicar tu app para el mundo', detail: 'El momento magico en que tu creacion esta disponible para todos.' }
+            { emoji: '📋', name: 'Planificación', desc: 'Organizar el trabajo en tareas', detail: 'Dividir un proyecto grande en pedazos pequeños y manejables.' },
+            { emoji: '🔄', name: 'Metodología ágil', desc: 'Trabajar en ciclos cortos y mejorar', detail: 'Hacer un poco, enseñar, recibir feedback, mejorar. Repetir.' },
+            { emoji: '📖', name: 'Documentación', desc: 'Explicar tu código para otros', detail: 'Escribir comentarios y guías para que otros (o tú del futuro) entiendan el código.' },
+            { emoji: '🐛', name: 'Debugging', desc: 'Encontrar y arreglar errores', detail: 'Ser detective digital: poner pistas en el código para encontrar dónde falla.' },
+            { emoji: '🚀', name: 'Despliegue', desc: 'Publicar tu app para el mundo', detail: 'El momento mágico en que tu creación está disponible para todos.' }
         ]
     },
     humanas: {
@@ -46,10 +46,10 @@ const PROGRAMADOR_SKILLS = {
         emoji: '🤝',
         skills: [
             { emoji: '👥', name: 'Trabajo en equipo', desc: 'Programar con otras personas', detail: 'Los mejores programas los hacen equipos, no personas solas.' },
-            { emoji: '💬', name: 'Comunicacion', desc: 'Explicar ideas tecnicas de forma simple', detail: 'De nada sirve una solucion genial si no puedes explicarsela a tu equipo.' },
-            { emoji: '📚', name: 'Aprender siempre', desc: 'La tecnologia cambia cada dia', detail: 'Nuevos lenguajes, herramientas y formas de programar aparecen constantemente.' },
-            { emoji: '⏰', name: 'Gestion del tiempo', desc: 'Cumplir plazos sin estresarse', detail: 'Saber cuanto tiempo lleva cada tarea y organizarse para llegar a tiempo.' },
-            { emoji: '💡', name: 'Creatividad', desc: 'Inventar soluciones nuevas', detail: 'Programar es crear: cada linea de codigo es una decision creativa.' }
+            { emoji: '💬', name: 'Comunicación', desc: 'Explicar ideas técnicas de forma simple', detail: 'De nada sirve una solución genial si no puedes explicársela a tu equipo.' },
+            { emoji: '📚', name: 'Aprender siempre', desc: 'La tecnología cambia cada día', detail: 'Nuevos lenguajes, herramientas y formas de programar aparecen constantemente.' },
+            { emoji: '⏰', name: 'Gestión del tiempo', desc: 'Cumplir plazos sin estresarse', detail: 'Saber cuánto tiempo lleva cada tarea y organizarse para llegar a tiempo.' },
+            { emoji: '💡', name: 'Creatividad', desc: 'Inventar soluciones nuevas', detail: 'Programar es crear: cada línea de código es una decisión creativa.' }
         ]
     }
 };
@@ -59,33 +59,33 @@ const ORQUESTADOR_SKILLS = {
         title: 'Estrategia de Agentes',
         emoji: '🎯',
         skills: [
-            { emoji: '🧭', name: 'Diseno de sistemas multi-agente', desc: 'Decidir cuantos agentes y que hace cada uno', badge: 'NUEVA', detail: 'Como un director de orquesta que elige que instrumento toca cada parte.' },
-            { emoji: '🔀', name: 'Orquestacion de flujos', desc: 'Conectar tareas entre agentes en orden', badge: 'NUEVA', detail: 'Crear el camino que sigue la informacion de un agente a otro.' },
-            { emoji: '🏗️', name: 'Arquitectura de prompts', desc: 'Disenar instrucciones perfectas para la IA', badge: 'EVOLUCIONA DE Arquitectura de software', detail: 'En vez de escribir codigo, escribes instrucciones claras y precisas.' },
-            { emoji: '⚡', name: 'Evaluacion de modelos', desc: 'Elegir la mejor IA para cada tarea', badge: 'NUEVA', detail: 'Cada modelo de IA tiene fortalezas diferentes: hay que saber elegir.' },
-            { emoji: '🔄', name: 'Iteracion de resultados', desc: 'Mejorar las respuestas de los agentes', badge: 'EVOLUCIONA DE Debugging', detail: 'Revisar lo que produce la IA y pedir mejoras hasta que sea perfecto.' },
-            { emoji: '🛡️', name: 'Guardrails y seguridad', desc: 'Poner limites a lo que puede hacer la IA', badge: 'NUEVA', detail: 'Asegurarse de que los agentes no hagan cosas peligrosas o incorrectas.' }
+            { emoji: '🧭', name: 'Diseño de sistemas multi-agente', desc: 'Decidir cuántos agentes y qué hace cada uno', badge: 'NUEVA', detail: 'Como un director de orquesta que elige qué instrumento toca cada parte.' },
+            { emoji: '🔀', name: 'Orquestación de flujos', desc: 'Conectar tareas entre agentes en orden', badge: 'NUEVA', detail: 'Crear el camino que sigue la información de un agente a otro.' },
+            { emoji: '🏗️', name: 'Arquitectura de prompts', desc: 'Diseñar instrucciones perfectas para la IA', badge: 'EVOLUCIONA DE Arquitectura de software', detail: 'En vez de escribir código, escribes instrucciones claras y precisas.' },
+            { emoji: '⚡', name: 'Evaluación de modelos', desc: 'Elegir la mejor IA para cada tarea', badge: 'NUEVA', detail: 'Cada modelo de IA tiene fortalezas diferentes: hay que saber elegir.' },
+            { emoji: '🔄', name: 'Iteración de resultados', desc: 'Mejorar las respuestas de los agentes', badge: 'EVOLUCIONA DE Debugging', detail: 'Revisar lo que produce la IA y pedir mejoras hasta que sea perfecto.' },
+            { emoji: '🛡️', name: 'Guardrails y seguridad', desc: 'Poner límites a lo que puede hacer la IA', badge: 'NUEVA', detail: 'Asegurarse de que los agentes no hagan cosas peligrosas o incorrectas.' }
         ]
     },
     comunicacion: {
-        title: 'Comunicacion con IA',
+        title: 'Comunicación con IA',
         emoji: '💬',
         skills: [
             { emoji: '✍️', name: 'Prompt engineering', desc: 'Escribir instrucciones perfectas', badge: 'NUEVA', detail: 'El arte de hablar con la IA: cuanto mejor preguntes, mejor responde.' },
-            { emoji: '🎭', name: 'Asignacion de roles', desc: 'Dar personalidad y reglas a cada agente', badge: 'NUEVA', detail: 'Decirle a cada agente: eres un experto en X, responde siempre asi.' },
-            { emoji: '📊', name: 'Definicion de criterios', desc: 'Explicar que significa bueno y malo', badge: 'EVOLUCIONA DE Testing', detail: 'Crear reglas claras para evaluar si el resultado de la IA es bueno.' },
-            { emoji: '🔍', name: 'Verificacion de hechos', desc: 'Comprobar que la IA no inventa', badge: 'NUEVA', detail: 'Las IAs a veces inventan datos. Hay que saber detectar cuando mienten.' },
-            { emoji: '🌐', name: 'Contexto y memoria', desc: 'Gestionar lo que recuerda cada agente', badge: 'NUEVA', detail: 'Decidir que informacion necesita cada agente y como la comparten.' }
+            { emoji: '🎭', name: 'Asignación de roles', desc: 'Dar personalidad y reglas a cada agente', badge: 'NUEVA', detail: 'Decirle a cada agente: eres un experto en X, responde siempre así.' },
+            { emoji: '📊', name: 'Definición de criterios', desc: 'Explicar qué significa bueno y malo', badge: 'EVOLUCIONA DE Testing', detail: 'Crear reglas claras para evaluar si el resultado de la IA es bueno.' },
+            { emoji: '🔍', name: 'Verificación de hechos', desc: 'Comprobar que la IA no inventa', badge: 'NUEVA', detail: 'Las IAs a veces inventan datos. Hay que saber detectar cuándo mienten.' },
+            { emoji: '🌐', name: 'Contexto y memoria', desc: 'Gestionar lo que recuerda cada agente', badge: 'NUEVA', detail: 'Decidir qué información necesita cada agente y cómo la comparten.' }
         ]
     },
     gestion: {
-        title: 'Gestion de Proyectos IA',
+        title: 'Gestión de Proyectos IA',
         emoji: '📋',
         skills: [
-            { emoji: '💰', name: 'Gestion de costes IA', desc: 'Controlar cuanto gasta cada agente', badge: 'NUEVA', detail: 'Cada llamada a la IA cuesta dinero. Hay que optimizar para no gastar de mas.' },
-            { emoji: '⏱️', name: 'Planificacion de sprints', desc: 'Organizar ciclos de trabajo con agentes', badge: 'SE MANTIENE', detail: 'Igual que antes, pero ahora planificas trabajo para humanos Y para agentes.' },
-            { emoji: '📈', name: 'Metricas de calidad', desc: 'Medir si los agentes lo hacen bien', badge: 'EVOLUCIONA DE Testing', detail: 'Crear dashboards y metricas para saber si tus agentes mejoran o empeoran.' },
-            { emoji: '🔗', name: 'Integracion de herramientas', desc: 'Conectar agentes con apps reales', badge: 'EVOLUCIONA DE APIs', detail: 'Hacer que los agentes usen herramientas reales: email, bases de datos, webs.' },
+            { emoji: '💰', name: 'Gestión de costes IA', desc: 'Controlar cuánto gasta cada agente', badge: 'NUEVA', detail: 'Cada llamada a la IA cuesta dinero. Hay que optimizar para no gastar de más.' },
+            { emoji: '⏱️', name: 'Planificación de sprints', desc: 'Organizar ciclos de trabajo con agentes', badge: 'SE MANTIENE', detail: 'Igual que antes, pero ahora planificas trabajo para humanos Y para agentes.' },
+            { emoji: '📈', name: 'Métricas de calidad', desc: 'Medir si los agentes lo hacen bien', badge: 'EVOLUCIONA DE Testing', detail: 'Crear dashboards y métricas para saber si tus agentes mejoran o empeoran.' },
+            { emoji: '🔗', name: 'Integración de herramientas', desc: 'Conectar agentes con apps reales', badge: 'EVOLUCIONA DE APIs', detail: 'Hacer que los agentes usen herramientas reales: email, bases de datos, webs.' },
             { emoji: '👥', name: 'Equipos humano-IA', desc: 'Coordinar personas y agentes juntos', badge: 'NUEVA', detail: 'El futuro es equipos mixtos: personas y agentes trabajando juntos.' }
         ]
     },
@@ -93,10 +93,10 @@ const ORQUESTADOR_SKILLS = {
         title: 'Habilidades Humanas',
         emoji: '❤️',
         skills: [
-            { emoji: '🤔', name: 'Pensamiento critico', desc: 'No fiarse ciegamente de la IA', badge: 'SE MANTIENE', detail: 'La IA es potente pero no perfecta. Siempre hay que revisar y pensar.' },
-            { emoji: '🎨', name: 'Vision creativa', desc: 'Imaginar soluciones que la IA no ve', badge: 'SE MANTIENE', detail: 'La creatividad humana sigue siendo insustituible para las ideas originales.' },
-            { emoji: '⚖️', name: 'Etica de la IA', desc: 'Asegurarse de que la IA sea justa', badge: 'NUEVA', detail: 'Que la IA no discrimine, no miente y respete a todas las personas.' },
-            { emoji: '🗣️', name: 'Comunicacion clara', desc: 'Explicar decisiones de la IA a no-tecnicos', badge: 'SE MANTIENE', detail: 'Traducir lo que hace la IA a un idioma que todo el mundo entienda.' },
+            { emoji: '🤔', name: 'Pensamiento crítico', desc: 'No fiarse ciegamente de la IA', badge: 'SE MANTIENE', detail: 'La IA es potente pero no perfecta. Siempre hay que revisar y pensar.' },
+            { emoji: '🎨', name: 'Visión creativa', desc: 'Imaginar soluciones que la IA no ve', badge: 'SE MANTIENE', detail: 'La creatividad humana sigue siendo insustituible para las ideas originales.' },
+            { emoji: '⚖️', name: 'Ética de la IA', desc: 'Asegurarse de que la IA sea justa', badge: 'NUEVA', detail: 'Que la IA no discrimine, no miente y respete a todas las personas.' },
+            { emoji: '🗣️', name: 'Comunicación clara', desc: 'Explicar decisiones de la IA a no-técnicos', badge: 'SE MANTIENE', detail: 'Traducir lo que hace la IA a un idioma que todo el mundo entienda.' },
             { emoji: '🌱', name: 'Adaptabilidad', desc: 'La IA cambia cada semana', badge: 'SE MANTIENE', detail: 'Nuevos modelos, nuevas capacidades. Hay que aprender constantemente.' }
         ]
     }
@@ -176,34 +176,34 @@ const ALGORITHM_ROUNDS = [
         correct: ['Comparar 8 y 3', 'Intercambiar 8 y 3', 'Comparar 1 y 3', 'Comparar 3 y 5', 'Resultado: 1,3,5,8']
     },
     {
-        goal: 'Encuentra el numero mas grande en: 4, 9, 2, 7',
+        goal: 'Encuentra el número más grande en: 4, 9, 2, 7',
         emoji: '🔎',
-        blocks: ['Si siguiente > maximo, actualizar', 'Empezar con maximo = 4', 'Comprobar 9', 'Comprobar 2', 'Comprobar 7', 'El maximo es 9'],
-        correct: ['Empezar con maximo = 4', 'Comprobar 9', 'Si siguiente > maximo, actualizar', 'Comprobar 2', 'Comprobar 7', 'El maximo es 9']
+        blocks: ['Si siguiente > máximo, actualizar', 'Empezar con máximo = 4', 'Comprobar 9', 'Comprobar 2', 'Comprobar 7', 'El máximo es 9'],
+        correct: ['Empezar con máximo = 4', 'Comprobar 9', 'Si siguiente > máximo, actualizar', 'Comprobar 2', 'Comprobar 7', 'El máximo es 9']
     },
     {
         goal: 'Dibuja un cuadrado',
         emoji: '⬜',
-        blocks: ['Girar 90 grados', 'Avanzar 100 pixels', 'Repetir 4 veces', 'Empezar en centro', 'Bajar el lapiz'],
-        correct: ['Empezar en centro', 'Bajar el lapiz', 'Repetir 4 veces', 'Avanzar 100 pixels', 'Girar 90 grados']
+        blocks: ['Girar 90 grados', 'Avanzar 100 pixels', 'Repetir 4 veces', 'Empezar en centro', 'Bajar el lápiz'],
+        correct: ['Empezar en centro', 'Bajar el lápiz', 'Repetir 4 veces', 'Avanzar 100 pixels', 'Girar 90 grados']
     }
 ];
 
 // --- Prompt Master data ---
 const PROMPT_LEVELS = [
     {
-        desc: 'Un circulo rojo grande en el centro',
+        desc: 'Un círculo rojo grande en el centro',
         target: [{ shape: 'circle', color: '#e74c3c', size: 'grande', x: 0.5, y: 0.5 }]
     },
     {
-        desc: 'Un cuadrado azul con un circulo amarillo dentro',
+        desc: 'Un cuadrado azul con un círculo amarillo dentro',
         target: [
             { shape: 'square', color: '#3498db', size: 'grande', x: 0.5, y: 0.5 },
             { shape: 'circle', color: '#f1c40f', size: 'mediano', x: 0.5, y: 0.5 }
         ]
     },
     {
-        desc: 'Tres estrellas verdes arriba y un triangulo naranja abajo',
+        desc: 'Tres estrellas verdes arriba y un triángulo naranja abajo',
         target: [
             { shape: 'star', color: '#2ecc71', size: 'pequeno', x: 0.25, y: 0.25 },
             { shape: 'star', color: '#2ecc71', size: 'pequeno', x: 0.5, y: 0.25 },
@@ -212,7 +212,7 @@ const PROMPT_LEVELS = [
         ]
     },
     {
-        desc: 'Un rectangulo azul grande en el centro con dos circulos rojos pequenos a los lados',
+        desc: 'Un rectángulo azul grande en el centro con dos círculos rojos pequeños a los lados',
         target: [
             { shape: 'rectangle', color: '#3498db', size: 'grande', x: 0.5, y: 0.5 },
             { shape: 'circle', color: '#e74c3c', size: 'pequeno', x: 0.15, y: 0.5 },
@@ -234,14 +234,14 @@ const PROMPT_LEVELS = [
 // --- Director de Agentes missions ---
 const AGENT_MISSIONS = [
     {
-        title: 'Fiesta de cumpleanos',
+        title: 'Fiesta de cumpleaños',
         emoji: '🎂',
-        desc: 'Organiza la mejor fiesta de cumpleanos para tu mejor amigo/a.',
+        desc: 'Organiza la mejor fiesta de cumpleaños para tu mejor amigo/a.',
         tutorial: true,
         tasks: [
             { text: 'Hacer lista de 20 invitados', agent: 'analista', keywords: ['lista', 'nombres', 'cuantos', 'contar', 'numero'] },
-            { text: 'Disenar las invitaciones', agent: 'creativo', keywords: ['diseno', 'bonito', 'colores', 'dibujar', 'crear'] },
-            { text: 'Escribir el mensaje de invitacion', agent: 'escritor', keywords: ['texto', 'escribir', 'mensaje', 'redactar', 'carta'] },
+            { text: 'Diseñar las invitaciones', agent: 'creativo', keywords: ['diseno', 'bonito', 'colores', 'dibujar', 'crear'] },
+            { text: 'Escribir el mensaje de invitación', agent: 'escritor', keywords: ['texto', 'escribir', 'mensaje', 'redactar', 'carta'] },
             { text: 'Buscar sitios para celebrar', agent: 'investigador', keywords: ['buscar', 'encontrar', 'opciones', 'investigar', 'sitio'] },
             { text: 'Calcular el presupuesto', agent: 'analista', keywords: ['precio', 'coste', 'dinero', 'calcular', 'presupuesto'] }
         ]
@@ -249,12 +249,12 @@ const AGENT_MISSIONS = [
     {
         title: 'App para el colegio',
         emoji: '📱',
-        desc: 'Crea una app increible para que todos los alumnos la usen.',
+        desc: 'Crea una app increíble para que todos los alumnos la usen.',
         tasks: [
-            { text: 'Investigar que apps usan otros colegios', agent: 'investigador', keywords: ['buscar', 'investigar', 'comparar', 'otros'] },
-            { text: 'Disenar las pantallas de la app', agent: 'creativo', keywords: ['diseno', 'pantallas', 'interfaz', 'visual'] },
+            { text: 'Investigar qué apps usan otros colegios', agent: 'investigador', keywords: ['buscar', 'investigar', 'comparar', 'otros'] },
+            { text: 'Diseñar las pantallas de la app', agent: 'creativo', keywords: ['diseno', 'pantallas', 'interfaz', 'visual'] },
             { text: 'Escribir instrucciones para alumnos', agent: 'escritor', keywords: ['escribir', 'explicar', 'guia', 'instrucciones'] },
-            { text: 'Calcular cuantos alumnos la usaran', agent: 'analista', keywords: ['calcular', 'numero', 'cuantos', 'estadistica'] },
+            { text: 'Calcular cuántos alumnos la usarán', agent: 'analista', keywords: ['calcular', 'numero', 'cuantos', 'estadistica'] },
             { text: 'Crear el logo de la app', agent: 'creativo', keywords: ['logo', 'disenar', 'imagen', 'marca', 'crear'] }
         ]
     },
@@ -265,9 +265,9 @@ const AGENT_MISSIONS = [
         tasks: [
             { text: 'Buscar las mejores recetas de limonada', agent: 'investigador', keywords: ['buscar', 'receta', 'investigar', 'encontrar'] },
             { text: 'Calcular costes y precio de venta', agent: 'analista', keywords: ['calcular', 'precio', 'coste', 'dinero', 'beneficio'] },
-            { text: 'Disenar el puesto y los vasos', agent: 'creativo', keywords: ['disenar', 'decorar', 'puesto', 'bonito'] },
+            { text: 'Diseñar el puesto y los vasos', agent: 'creativo', keywords: ['disenar', 'decorar', 'puesto', 'bonito'] },
             { text: 'Escribir los carteles publicitarios', agent: 'escritor', keywords: ['escribir', 'cartel', 'publicidad', 'eslogan'] },
-            { text: 'Investigar donde hay mas gente', agent: 'investigador', keywords: ['investigar', 'buscar', 'lugar', 'gente', 'donde'] },
+            { text: 'Investigar dónde hay más gente', agent: 'investigador', keywords: ['investigar', 'buscar', 'lugar', 'gente', 'donde'] },
             { text: 'Hacer plan de gastos e ingresos', agent: 'analista', keywords: ['plan', 'gastos', 'ingresos', 'calcular', 'dinero'] }
         ]
     },
@@ -278,55 +278,55 @@ const AGENT_MISSIONS = [
         tasks: [
             { text: 'Buscar destinos para familias', agent: 'investigador', keywords: ['buscar', 'destino', 'investigar', 'opciones'] },
             { text: 'Comparar precios de vuelos y hotel', agent: 'analista', keywords: ['comparar', 'precio', 'calcular', 'coste'] },
-            { text: 'Disenar el itinerario dia a dia', agent: 'creativo', keywords: ['disenar', 'itinerario', 'plan', 'organizar', 'dia'] },
+            { text: 'Diseñar el itinerario día a día', agent: 'creativo', keywords: ['disenar', 'itinerario', 'plan', 'organizar', 'dia'] },
             { text: 'Escribir email al hotel para reservar', agent: 'escritor', keywords: ['escribir', 'email', 'carta', 'reservar', 'mensaje'] },
             { text: 'Calcular presupuesto total', agent: 'analista', keywords: ['calcular', 'presupuesto', 'total', 'dinero', 'suma'] },
-            { text: 'Buscar actividades para ninos', agent: 'investigador', keywords: ['buscar', 'actividades', 'ninos', 'encontrar'] }
+            { text: 'Buscar actividades para niños', agent: 'investigador', keywords: ['buscar', 'actividades', 'ninos', 'encontrar'] }
         ]
     },
     {
-        title: 'Campana salvar el parque',
+        title: 'Campaña salvar el parque',
         emoji: '🌳',
-        desc: 'El parque de tu barrio esta en peligro. Organizad una campana para salvarlo.',
+        desc: 'El parque de tu barrio está en peligro. Organizad una campaña para salvarlo.',
         tasks: [
             { text: 'Investigar la historia del parque', agent: 'investigador', keywords: ['investigar', 'historia', 'buscar', 'informacion'] },
-            { text: 'Disenar carteles de campana', agent: 'creativo', keywords: ['disenar', 'carteles', 'imagen', 'visual', 'crear'] },
+            { text: 'Diseñar carteles de campaña', agent: 'creativo', keywords: ['disenar', 'carteles', 'imagen', 'visual', 'crear'] },
             { text: 'Escribir carta al alcalde', agent: 'escritor', keywords: ['escribir', 'carta', 'redactar', 'alcalde', 'formal'] },
             { text: 'Calcular firmas necesarias', agent: 'analista', keywords: ['calcular', 'firmas', 'numero', 'cuantas', 'necesario'] },
-            { text: 'Buscar leyes de proteccion', agent: 'investigador', keywords: ['buscar', 'leyes', 'proteccion', 'investigar', 'normas'] },
-            { text: 'Redactar publicacion para redes', agent: 'escritor', keywords: ['redactar', 'publicacion', 'redes', 'escribir', 'post'] }
+            { text: 'Buscar leyes de protección', agent: 'investigador', keywords: ['buscar', 'leyes', 'proteccion', 'investigar', 'normas'] },
+            { text: 'Redactar publicación para redes', agent: 'escritor', keywords: ['redactar', 'publicacion', 'redes', 'escribir', 'post'] }
         ]
     }
 ];
 
 const AGENTS = [
-    { id: 'investigador', emoji: '🔍', name: 'Investigador', color: '#3498db', desc: 'Busca informacion' },
+    { id: 'investigador', emoji: '🔍', name: 'Investigador', color: '#3498db', desc: 'Busca información' },
     { id: 'escritor', emoji: '✍️', name: 'Escritor', color: '#2ecc71', desc: 'Redacta textos' },
-    { id: 'creativo', emoji: '🎨', name: 'Creativo', color: '#9b59b6', desc: 'Disena cosas' },
-    { id: 'analista', emoji: '📊', name: 'Analista', color: '#e67e22', desc: 'Calcula numeros' }
+    { id: 'creativo', emoji: '🎨', name: 'Creativo', color: '#9b59b6', desc: 'Diseña cosas' },
+    { id: 'analista', emoji: '📊', name: 'Analista', color: '#e67e22', desc: 'Calcula números' }
 ];
 
 // --- Evolution data ---
 const EVOLUTION_MAP = [
-    { from: 'Lenguajes de programacion', to: 'Prompt Engineering', type: 'transforma', color: '#f1c40f' },
-    { from: 'Testing', to: 'Metricas de calidad IA', type: 'transforma', color: '#f1c40f' },
-    { from: 'Arquitectura', to: 'Diseno multi-agente', type: 'transforma', color: '#f1c40f' },
-    { from: 'Debugging', to: 'Iteracion de resultados', type: 'transforma', color: '#f1c40f' },
-    { from: 'APIs', to: 'Integracion de herramientas', type: 'transforma', color: '#f1c40f' },
-    { from: 'Escribir codigo', to: null, type: 'desaparece', color: '#e74c3c' },
+    { from: 'Lenguajes de programación', to: 'Prompt Engineering', type: 'transforma', color: '#f1c40f' },
+    { from: 'Testing', to: 'Métricas de calidad IA', type: 'transforma', color: '#f1c40f' },
+    { from: 'Arquitectura', to: 'Diseño multi-agente', type: 'transforma', color: '#f1c40f' },
+    { from: 'Debugging', to: 'Iteración de resultados', type: 'transforma', color: '#f1c40f' },
+    { from: 'APIs', to: 'Integración de herramientas', type: 'transforma', color: '#f1c40f' },
+    { from: 'Escribir código', to: null, type: 'desaparece', color: '#e74c3c' },
     { from: 'Memorizar sintaxis', to: null, type: 'desaparece', color: '#e74c3c' },
-    { from: null, to: 'Orquestacion de flujos', type: 'nueva', color: '#2ecc71' },
-    { from: null, to: 'Etica de la IA', type: 'nueva', color: '#2ecc71' },
-    { from: null, to: 'Evaluacion de modelos', type: 'nueva', color: '#2ecc71' },
-    { from: 'Pensamiento critico', to: 'Pensamiento critico', type: 'mantiene', color: '#3498db' },
-    { from: 'Creatividad', to: 'Vision creativa', type: 'mantiene', color: '#3498db' },
-    { from: 'Comunicacion', to: 'Comunicacion clara', type: 'mantiene', color: '#3498db' }
+    { from: null, to: 'Orquestación de flujos', type: 'nueva', color: '#2ecc71' },
+    { from: null, to: 'Ética de la IA', type: 'nueva', color: '#2ecc71' },
+    { from: null, to: 'Evaluación de modelos', type: 'nueva', color: '#2ecc71' },
+    { from: 'Pensamiento crítico', to: 'Pensamiento crítico', type: 'mantiene', color: '#3498db' },
+    { from: 'Creatividad', to: 'Visión creativa', type: 'mantiene', color: '#3498db' },
+    { from: 'Comunicación', to: 'Comunicación clara', type: 'mantiene', color: '#3498db' }
 ];
 
 const TIMELINE_ENTRIES = [
-    { year: 2000, text: 'Todo se escribia a mano', emoji: '⌨️' },
+    { year: 2000, text: 'Todo se escribía a mano', emoji: '⌨️' },
     { year: 2015, text: 'Autocompletado inteligente', emoji: '💡' },
-    { year: 2020, text: 'Copilot sugiere codigo', emoji: '🤖' },
+    { year: 2020, text: 'Copilot sugiere código', emoji: '🤖' },
     { year: 2024, text: 'Agentes escriben programas enteros', emoji: '🧠' },
     { year: 2026, text: 'Orquestadores dirigen equipos de agentes', emoji: '🎯' },
     { year: 2030, text: '¿???', emoji: '🔮' }
@@ -1946,8 +1946,8 @@ function showEvolucion(ui, controls, canvas, container) {
     html += `
     <div style="text-align: center; margin-bottom: 16px;">
         <div style="font-size: 2rem;">🔄</div>
-        <h2 style="color: #cba6f7; margin: 4px 0; font-size: 1rem;">Mapa de Transformacion</h2>
-        <p style="color: #888; font-size: 0.7rem;">Como cambian las habilidades del programador al orquestador</p>
+        <h2 style="color: #cba6f7; margin: 4px 0; font-size: 1rem;">Mapa de Transformación</h2>
+        <p style="color: #888; font-size: 0.7rem;">Cómo cambian las habilidades del programador al orquestador</p>
     </div>`;
 
     // Legend
@@ -1995,9 +1995,9 @@ function showEvolucion(ui, controls, canvas, container) {
     html += `
     <div style="margin-top: 20px; background: linear-gradient(135deg, rgba(155, 89, 182, 0.15), rgba(52, 152, 219, 0.15)); border-radius: 14px; padding: 16px; border: 1px solid #9b59b644;">
         <div style="font-size: 1.3rem; text-align: center;">💡</div>
-        <div style="text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.85rem; margin: 6px 0;">Sabias que...</div>
+        <div style="text-align: center; color: #f1c40f; font-weight: bold; font-size: 0.85rem; margin: 6px 0;">Sabías que...</div>
         <div style="text-align: center; color: #ccc; font-size: 0.78rem; line-height: 1.5;">
-            Esta misma app fue hecha por un padre y su hija usando un orquestador de agentes. Miles de lineas de codigo en una tarde, sin escribir ni una linea a mano.
+            Esta misma app fue hecha por un padre y su hija usando un orquestador de agentes. Miles de líneas de código en una tarde, sin escribir ni una línea a mano.
         </div>
     </div>`;
 
@@ -2027,9 +2027,9 @@ function showEvolucion(ui, controls, canvas, container) {
         const cy = rh / 2;
         const maxR = rw * 0.38;
         const labels = [
-            'Logica', 'Creatividad', 'Comunicacion', 'Liderazgo',
-            'Tecnica', 'Estrategia', 'Etica', 'Adaptabilidad',
-            'Colaboracion', 'Analisis', 'Diseno', 'Planificacion'
+            'Lógica', 'Creatividad', 'Comunicación', 'Liderazgo',
+            'Técnica', 'Estrategia', 'Ética', 'Adaptabilidad',
+            'Colaboración', 'Análisis', 'Diseño', 'Planificación'
         ];
         const programadorData = [0.9, 0.5, 0.5, 0.3, 0.95, 0.4, 0.3, 0.6, 0.6, 0.7, 0.4, 0.6];
         const orquestadorData = [0.6, 0.8, 0.9, 0.9, 0.4, 0.95, 0.8, 0.9, 0.85, 0.7, 0.6, 0.8];

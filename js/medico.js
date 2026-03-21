@@ -14,23 +14,23 @@ const PATIENTS = [
 ];
 
 const XRAYS = [
-    { image: '🦴💢', problem: 'Fractura en el femur', location: 'Pierna izquierda', treatment: 'Escayola 6 semanas' },
-    { image: '🫁🔍', problem: 'Congestion en pulmon derecho', location: 'Torax', treatment: 'Reposo y tratamiento' },
-    { image: '🦷💢', problem: 'Muela rota', location: 'Mandibula', treatment: 'Extraccion dental' },
-    { image: '🖐️💢', problem: 'Fractura en metacarpo', location: 'Mano derecha', treatment: 'Ferula 4 semanas' },
-    { image: '🦴✅', problem: 'Sin anomalias', location: 'Columna vertebral', treatment: 'Alta medica' },
-    { image: '🧠💢', problem: 'Pequeno golpe en la cabeza', location: 'Cabeza', treatment: 'Reposo y observacion' }
+    { image: '🦴💢', problem: 'Fractura en el fémur', location: 'Pierna izquierda', treatment: 'Escayola 6 semanas' },
+    { image: '🫁🔍', problem: 'Congestión en pulmón derecho', location: 'Tórax', treatment: 'Reposo y tratamiento' },
+    { image: '🦷💢', problem: 'Muela rota', location: 'Mandíbula', treatment: 'Extracción dental' },
+    { image: '🖐️💢', problem: 'Fractura en metacarpo', location: 'Mano derecha', treatment: 'Férula 4 semanas' },
+    { image: '🦴✅', problem: 'Sin anomalías', location: 'Columna vertebral', treatment: 'Alta médica' },
+    { image: '🧠💢', problem: 'Pequeño golpe en la cabeza', location: 'Cabeza', treatment: 'Reposo y observación' }
 ];
 
 const SURGERY_STEPS = [
     { step: 'Lavar y desinfectar las manos', icon: '🧼' },
     { step: 'Colocar anestesia al paciente', icon: '💉' },
-    { step: 'Preparar el instrumental medico', icon: '🏥' },
+    { step: 'Preparar el instrumental médico', icon: '🏥' },
     { step: 'Localizar el problema con cuidado', icon: '🔍' },
     { step: 'Reparar la zona afectada', icon: '✨' },
     { step: 'Cerrar con puntos', icon: '🪡' },
     { step: 'Aplicar vendaje protector', icon: '🩹' },
-    { step: 'Enviar a recuperacion', icon: '🛏️' }
+    { step: 'Enviar a recuperación', icon: '🛏️' }
 ];
 
 function startMedico(subtype) {
@@ -54,7 +54,7 @@ function medicoGeneral(ui, controls) {
     function showPatient() {
         if (patientIndex >= patients.length) {
             showResult('Consulta terminada', `${correct}/${patients.length}`,
-                correct >= 4 ? 'Excelente diagnostico!' : correct >= 2 ? 'Puedes mejorar' : 'Sigue practicando',
+                correct >= 4 ? 'Excelente diagnóstico!' : correct >= 2 ? 'Puedes mejorar' : 'Sigue practicando',
                 () => { patientIndex = 0; correct = 0; startMedico('general'); }
             );
             return;
@@ -131,7 +131,7 @@ function medicoCirujano(ui, controls) {
 
         if (currentStep >= steps.length) {
             addScore(50);
-            showResult('Operacion exitosa!', score + ' pts', 'Has completado la operacion correctamente.', () => startMedico('cirujano'));
+            showResult('Operación exitosa!', score + ' pts', 'Has completado la operación correctamente.', () => startMedico('cirujano'));
             return;
         }
 
@@ -175,8 +175,8 @@ function medicoRadiologo(ui, controls) {
 
     function showXray() {
         if (idx >= xrays.length) {
-            showResult('Analisis completado', `${correct}/${xrays.length}`,
-                correct >= 3 ? 'Gran ojo clinico!' : 'Sigue practicando', () => startMedico('radiologo'));
+            showResult('Análisis completado', `${correct}/${xrays.length}`,
+                correct >= 3 ? 'Gran ojo clínico!' : 'Sigue practicando', () => startMedico('radiologo'));
             return;
         }
         const x = xrays[idx];
@@ -225,7 +225,7 @@ function medicoFarmaceutico(ui, controls) {
     function showCase() {
         if (idx >= cases.length) {
             showResult('Farmacia cerrada', `${correct}/${cases.length}`,
-                correct >= 4 ? 'Farmaceutico experto!' : 'Revisa el vademecum', () => startMedico('farmaceutico'));
+                correct >= 4 ? 'Farmacéutico experto!' : 'Revisa el vademécum', () => startMedico('farmaceutico'));
             return;
         }
         const c = cases[idx];

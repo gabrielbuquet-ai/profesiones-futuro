@@ -5,14 +5,14 @@
 const COUNTRIES = {
     europa: [
         {
-            flag: '🇫🇷', name: 'Francia', capital: 'Paris',
+            flag: '🇫🇷', name: 'Francia', capital: 'París',
             highlights: ['Torre Eiffel', 'Louvre', 'Versalles', 'Mont Saint-Michel'],
             cuisine: 'Croissants, queso, crepes',
             bestTime: 'Abril - Octubre',
             budget: '€€€ - Caro',
-            tips: ['Aprende frances basico', 'Reserva museos online', 'Usa el metro de Paris'],
-            pros: ['Cultura increible', 'Gastronomia mundial', 'Monumentos iconicos', 'Buena red de trenes'],
-            cons: ['Muy turistico', 'Precios altos', 'Barreras de idioma', 'Mucha gente en zonas turisticas']
+            tips: ['Aprende francés básico', 'Reserva museos online', 'Usa el metro de París'],
+            pros: ['Cultura increíble', 'Gastronomía mundial', 'Monumentos icónicos', 'Buena red de trenes'],
+            cons: ['Muy turístico', 'Precios altos', 'Barreras de idioma', 'Mucha gente en zonas turísticas']
         },
         {
             flag: '🇮🇹', name: 'Italia', capital: 'Roma',
@@ -20,30 +20,30 @@ const COUNTRIES = {
             cuisine: 'Pizza, pasta, gelato',
             bestTime: 'Mayo - Septiembre',
             budget: '€€ - Moderado',
-            tips: ['Evita restaurantes turisticos', 'Visita al amanecer', 'Compra la Roma Pass'],
+            tips: ['Evita restaurantes turísticos', 'Visita al amanecer', 'Compra la Roma Pass'],
             pros: ['Historia milenaria', 'Mejor cocina del mundo', 'Arte en cada esquina', 'Gente muy amable'],
-            cons: ['Masificacion turistica', 'Trenes con retrasos', 'Precios altos en zonas turisticas', 'Calor extremo en verano']
+            cons: ['Masificación turística', 'Trenes con retrasos', 'Precios altos en zonas turísticas', 'Calor extremo en verano']
         },
         {
-            flag: '🇩🇪', name: 'Alemania', capital: 'Berlin',
-            highlights: ['Puerta de Brandeburgo', 'Muro de Berlin', 'Castillo Neuschwanstein', 'Selva Negra'],
+            flag: '🇩🇪', name: 'Alemania', capital: 'Berlín',
+            highlights: ['Puerta de Brandeburgo', 'Muro de Berlín', 'Castillo Neuschwanstein', 'Selva Negra'],
             cuisine: 'Salchichas, pretzels, pasteles',
             bestTime: 'Mayo - Septiembre (Diciembre para mercadillos)',
             budget: '€€ - Moderado',
-            tips: ['Compra billetes de tren con antelacion', 'Lleva efectivo', 'Visita mercadillos navidenos'],
-            pros: ['Muy organizado', 'Transporte excelente', 'Limpio y seguro', 'Mercadillos navidenos'],
-            cons: ['Clima frio', 'Idioma dificil', 'Domingos todo cerrado', 'Comida repetitiva']
+            tips: ['Compra billetes de tren con antelación', 'Lleva efectivo', 'Visita mercadillos navideños'],
+            pros: ['Muy organizado', 'Transporte excelente', 'Limpio y seguro', 'Mercadillos navideños'],
+            cons: ['Clima frío', 'Idioma difícil', 'Domingos todo cerrado', 'Comida repetitiva']
         }
     ],
     asia: [
         {
-            flag: '🇯🇵', name: 'Japon', capital: 'Tokio',
+            flag: '🇯🇵', name: 'Japón', capital: 'Tokio',
             highlights: ['Monte Fuji', 'Templos de Kioto', 'Shibuya', 'Parque de Nara'],
             cuisine: 'Sushi, ramen, takoyaki',
             bestTime: 'Marzo - Mayo (cerezos) / Octubre - Noviembre',
             budget: '€€€ - Caro',
             tips: ['Compra Japan Rail Pass', 'Aprende a usar palillos', 'Respeta las costumbres'],
-            pros: ['Cultura fascinante', 'Seguridad maxima', 'Tecnologia avanzada', 'Comida extraordinaria'],
+            pros: ['Cultura fascinante', 'Seguridad máxima', 'Tecnología avanzada', 'Comida extraordinaria'],
             cons: ['Barrera de idioma', 'Muy caro', 'Puede ser abrumador', 'Poco espacio personal']
         },
         {
@@ -53,49 +53,49 @@ const COUNTRIES = {
             bestTime: 'Noviembre - Febrero',
             budget: '€ - Barato',
             tips: ['Regatear es normal', 'Respeta los templos', 'Cuidado con el picante'],
-            pros: ['Muy barato', 'Playas paradisiacas', 'Gente sonriente', 'Comida callejera increible'],
-            cons: ['Calor extremo', 'Muy diferente a Europa', 'Trafico terrible', 'Monzones en verano']
+            pros: ['Muy barato', 'Playas paradisíacas', 'Gente sonriente', 'Comida callejera increíble'],
+            cons: ['Calor extremo', 'Muy diferente a Europa', 'Tráfico terrible', 'Monzones en verano']
         },
         {
             flag: '🇨🇳', name: 'China', capital: 'Pekin',
             highlights: ['Gran Muralla', 'Ciudad Prohibida', 'Guerreros de Terracota', 'Shanghai'],
-            cuisine: 'Dim sum, pato pekin, dumplings',
+            cuisine: 'Dim sum, pato pekín, dumplings',
             bestTime: 'Abril - Mayo / Septiembre - Octubre',
             budget: '€€ - Moderado',
             tips: ['Necesitas VPN', 'Descarga traductor offline', 'Lleva efectivo o WeChat Pay'],
             pros: ['Historia milenaria', 'Paisajes impresionantes', 'Comida variada', 'Precios razonables'],
-            cons: ['Barrera de idioma enorme', 'Internet diferente', 'Mucha contaminacion en ciudades', 'Masificacion']
+            cons: ['Barrera de idioma enorme', 'Internet diferente', 'Mucha contaminación en ciudades', 'Masificación']
         }
     ],
     america: [
         {
             flag: '🇺🇸', name: 'Estados Unidos', capital: 'Washington D.C.',
-            highlights: ['Nueva York', 'Gran Canon', 'Los Angeles', 'Parques Disney'],
+            highlights: ['Nueva York', 'Gran Cañón', 'Los Ángeles', 'Parques Disney'],
             cuisine: 'Hamburguesas, BBQ, apple pie',
-            bestTime: 'Depende del estado - todo el ano',
+            bestTime: 'Depende del estado - todo el año',
             budget: '€€€ - Caro',
             tips: ['Necesitas ESTA', 'Alquila coche', 'Propinas obligatorias (15-20%)'],
             pros: ['Diversidad enorme', 'Parques nacionales', 'Entretenimiento', 'Compras'],
             cons: ['Muy caro', 'Necesitas coche', 'Sistema sanitario caro', 'Distancias enormes']
         },
         {
-            flag: '🇲🇽', name: 'Mexico', capital: 'Ciudad de Mexico',
-            highlights: ['Chichen Itza', 'Cancun', 'Oaxaca', 'Ciudad de Mexico'],
+            flag: '🇲🇽', name: 'México', capital: 'Ciudad de México',
+            highlights: ['Chichén Itzá', 'Cancún', 'Oaxaca', 'Ciudad de México'],
             cuisine: 'Tacos, mole, guacamole',
             bestTime: 'Noviembre - Abril',
             budget: '€ - Barato',
-            tips: ['Bebe agua embotellada', 'Aprende espanol basico', 'Viaja siempre con un adulto'],
-            pros: ['Cultura rica', 'Comida increible', 'Playas hermosas', 'Muy barato'],
-            cons: ['Calor intenso', 'Mucha gente en zonas turisticas', 'Distancias largas', 'Mejor beber agua embotellada']
+            tips: ['Bebe agua embotellada', 'Aprende español básico', 'Viaja siempre con un adulto'],
+            pros: ['Cultura rica', 'Comida increíble', 'Playas hermosas', 'Muy barato'],
+            cons: ['Calor intenso', 'Mucha gente en zonas turísticas', 'Distancias largas', 'Mejor beber agua embotellada']
         },
         {
             flag: '🇧🇷', name: 'Brasil', capital: 'Brasilia',
-            highlights: ['Cristo Redentor', 'Cataratas de Iguazu', 'Amazonia', 'Copacabana'],
+            highlights: ['Cristo Redentor', 'Cataratas de Iguazú', 'Amazonia', 'Copacabana'],
             cuisine: 'Feijoada, churrasco, acai',
             bestTime: 'Mayo - Septiembre (o Febrero para Carnaval)',
             budget: '€€ - Moderado',
-            tips: ['Usa proteccion solar', 'Aprende portugues basico', 'Viaja siempre acompanado'],
-            pros: ['Naturaleza espectacular', 'Gente alegre', 'Musica y carnaval', 'Playas increibles'],
+            tips: ['Usa protección solar', 'Aprende portugués básico', 'Viaja siempre acompañado'],
+            pros: ['Naturaleza espectacular', 'Gente alegre', 'Música y carnaval', 'Playas increíbles'],
             cons: ['Distancias enormes', 'Mucho calor', 'Mosquitos', 'Hay que planificar bien']
         }
     ],
@@ -103,31 +103,31 @@ const COUNTRIES = {
         {
             flag: '🇲🇦', name: 'Marruecos', capital: 'Rabat',
             highlights: ['Marrakech', 'Desierto del Sahara', 'Fez', 'Chefchaouen (ciudad azul)'],
-            cuisine: 'Tajin, cuscus, te de menta',
+            cuisine: 'Tajín, cuscús, té de menta',
             bestTime: 'Marzo - Mayo / Septiembre - Noviembre',
             budget: '€ - Barato',
             tips: ['Regatear siempre', 'Viste con respeto', 'No te pierdas el hammam'],
-            pros: ['Cultura exotica', 'Muy barato', 'Cerca de Europa', 'Gastronomia unica'],
+            pros: ['Cultura exótica', 'Muy barato', 'Cerca de Europa', 'Gastronomía única'],
             cons: ['Mucha gente en los zocos', 'Regateo agotador', 'Calor extremo', 'Muy diferente a Europa']
         },
         {
             flag: '🇰🇪', name: 'Kenia', capital: 'Nairobi',
             highlights: ['Safari Masai Mara', 'Monte Kenia', 'Mombasa', 'Lago Nakuru'],
             cuisine: 'Nyama choma, ugali, chapati',
-            bestTime: 'Julio - Octubre (gran migracion)',
+            bestTime: 'Julio - Octubre (gran migración)',
             budget: '€€ - Moderado (safaris caros)',
-            tips: ['Reserva safari con guia', 'Vacunas obligatorias', 'Lleva proteccion solar'],
-            pros: ['Safaris increibles', 'Naturaleza salvaje', 'Gente amable', 'Paisajes unicos'],
+            tips: ['Reserva safari con guía', 'Vacunas obligatorias', 'Lleva protección solar'],
+            pros: ['Safaris increíbles', 'Naturaleza salvaje', 'Gente amable', 'Paisajes únicos'],
             cons: ['Safaris muy caros', 'Necesitas vacunas', 'Infraestructura limitada', 'Lejos de Europa']
         },
         {
-            flag: '🇿🇦', name: 'Sudafrica', capital: 'Pretoria',
-            highlights: ['Ciudad del Cabo', 'Kruger Park', 'Ruta Jardin', 'Robben Island'],
+            flag: '🇿🇦', name: 'Sudáfrica', capital: 'Pretoria',
+            highlights: ['Ciudad del Cabo', 'Kruger Park', 'Ruta Jardín', 'Robben Island'],
             cuisine: 'Biltong, braai, bobotie',
             bestTime: 'Septiembre - Noviembre',
             budget: '€€ - Moderado',
-            tips: ['Alquila coche', 'Viaja siempre acompanado', 'Visita los jardines de Kirstenbosch'],
-            pros: ['Paisajes variados', 'Animales increibles', 'Safaris accesibles', 'Ciudad del Cabo es increible'],
+            tips: ['Alquila coche', 'Viaja siempre acompañado', 'Visita los jardines de Kirstenbosch'],
+            pros: ['Paisajes variados', 'Animales increíbles', 'Safaris accesibles', 'Ciudad del Cabo es increíble'],
             cons: ['Muy lejos de Europa', 'Distancias largas', 'Clima muy variable', 'Necesitas coche']
         }
     ]
@@ -175,17 +175,17 @@ function startViajes(subtype) {
                 </div>
 
                 <div class="eval-item eval-neutral">
-                    <div class="label">Que ver</div>
+                    <div class="label">Qué ver</div>
                     <div class="value">${country.highlights.join(' • ')}</div>
                 </div>
 
                 <div class="eval-item eval-neutral">
-                    <div class="label">Gastronomia</div>
+                    <div class="label">Gastronomía</div>
                     <div class="value">${country.cuisine}</div>
                 </div>
 
                 <div class="eval-item eval-neutral">
-                    <div class="label">Mejor epoca</div>
+                    <div class="label">Mejor época</div>
                     <div class="value">${country.bestTime}</div>
                 </div>
 

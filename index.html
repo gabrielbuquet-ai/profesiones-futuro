@@ -11,8 +11,24 @@
         <!-- Pantalla de inicio -->
         <div id="screen-home" class="screen active">
             <div class="home-header">
+                <div id="home-player-info" style="display:none; text-align:center; margin-bottom:8px;">
+                    <span id="player-greeting" style="font-size:1.1em; color:#e0e0e0;"></span>
+                </div>
                 <h1 class="app-title">PROFESIONES<br><span>DEL FUTURO</span></h1>
-                <p class="app-subtitle">Entrena para tu profesion</p>
+                <p class="app-subtitle">Entrena para tu profesión</p>
+                <button id="btn-perfil" onclick="showPerfil()" style="
+                    margin-top: 10px;
+                    padding: 10px 24px;
+                    border: none;
+                    border-radius: 25px;
+                    background: linear-gradient(135deg, #7c3aed, #a855f7);
+                    color: white;
+                    font-size: 1em;
+                    font-weight: bold;
+                    cursor: pointer;
+                    box-shadow: 0 4px 15px rgba(124,58,237,0.4);
+                    transition: transform 0.2s, box-shadow 0.2s;
+                ">👤 Mi Perfil</button>
             </div>
             <div class="menu-sections">
                 <h2 class="section-label">PROFESIONES</h2>
@@ -27,7 +43,7 @@
                     </div>
                     <div class="card card-medico" onclick="navigateTo('medico')">
                         <div class="card-icon">🩺</div>
-                        <div class="card-name">Medico</div>
+                        <div class="card-name">Médico</div>
                     </div>
                     <div class="card card-cocina" onclick="navigateTo('cocina')">
                         <div class="card-icon">👨‍🍳</div>
@@ -58,7 +74,7 @@
                     </div>
                     <div class="card card-musica" onclick="navigateTo('musica')">
                         <div class="card-icon">🎵</div>
-                        <div class="card-name">Musica</div>
+                        <div class="card-name">Música</div>
                     </div>
                     <div class="card card-pintura" onclick="navigateTo('pintura')">
                         <div class="card-icon">🎨</div>
@@ -101,6 +117,11 @@
             </div>
             <div id="game-controls"></div>
         </div>
+
+        <!-- Pantalla de perfil -->
+        <div id="screen-perfil" class="screen" style="display:none">
+            <div id="perfil-content"></div>
+        </div>
     </div>
 
     <script src="js/app.js"></script>
@@ -112,7 +133,6 @@
     <script src="js/hobbies.js"></script>
     <script src="js/pintura.js"></script>
     <script src="js/universidad.js"></script>
-    <script src="js/programador.js"></script>
     <script src="js/programador.js"></script>
 </body>
 </html>

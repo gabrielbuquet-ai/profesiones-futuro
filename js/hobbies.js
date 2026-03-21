@@ -1451,14 +1451,14 @@ function deporteNatacion(ui, controls, canvas) {
             const won = playerDist >= target && aiDist < target;
             addScore(won ? 50 : 10);
             showResult(won ? 'Has ganado!' : 'Has perdido!', `${Math.floor(taps)} brazadas`,
-                won ? 'Llegaste primero!' : 'La IA fue mas rapida',
+                won ? 'Llegaste primero!' : 'La IA fue más rápida',
                 () => deporteNatacion(ui, controls, canvas));
         }
         if (aiDist >= target && !finished) {
             finished = true;
             running = false;
             addScore(10);
-            showResult('Has perdido!', `${Math.floor(taps)} brazadas`, 'La IA llego primero!',
+            showResult('Has perdido!', `${Math.floor(taps)} brazadas`, 'La IA llegó primero!',
                 () => deporteNatacion(ui, controls, canvas));
         }
     }
@@ -1485,7 +1485,7 @@ function deporteNatacion(ui, controls, canvas) {
     document.getElementById('swim-btn').addEventListener('mousedown', (e) => { e.preventDefault(); swim(); });
     document.getElementById('swim-btn').addEventListener('touchstart', (e) => { e.preventDefault(); swim(); });
 
-    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">Pulsa Espacio o el boton lo mas rapido posible!</div>');
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">Pulsa Espacio o el botón lo más rápido posible!</div>');
 
     loop();
     currentGame = { cleanup: () => { running = false; finished = true; cancelAnimationFrame(animId); document.removeEventListener('keydown', kbHandler); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
@@ -1736,7 +1736,7 @@ function deporteAtletismo(ui, controls, canvas) {
     document.getElementById('jump-btn').addEventListener('mousedown', (e) => { e.preventDefault(); jump(); });
     document.getElementById('jump-btn').addEventListener('touchstart', (e) => { e.preventDefault(); jump(); });
 
-    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">Espacio: correr | W/↑: saltar obstaculos | Compite contra 3 IA!</div>');
+    controls.insertAdjacentHTML('beforeend', '<div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">Espacio: correr | W/↑: saltar obstáculos | Compite contra 3 IA!</div>');
 
     loop();
     currentGame = { cleanup: () => { running = false; finished = true; cancelAnimationFrame(animId); document.removeEventListener('keydown', kbHandler); canvas.style.display = 'none'; ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
@@ -3064,7 +3064,7 @@ function startConducir(subtype) {
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 20px Poppins, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(isMoto ? 'Simulador de Moto' : isManual ? 'Conduccion Manual' : 'Conduccion Automatica', W / 2, H * 0.1);
+        ctx.fillText(isMoto ? 'Simulador de Moto' : isManual ? 'Conducción Manual' : 'Conducción Automática', W / 2, H * 0.1);
 
         ctx.font = '12px Poppins, sans-serif';
         ctx.fillStyle = '#eee';
@@ -3086,11 +3086,11 @@ function startConducir(subtype) {
             lines.push('P: Parking | R: Reversa | D: Drive');
         }
         lines.push('');
-        lines.push('Respeta semaforos (rojo = para)');
-        lines.push('Respeta limites de velocidad');
+        lines.push('Respeta semáforos (rojo = para)');
+        lines.push('Respeta límites de velocidad');
         lines.push('Evita chocar con otros coches');
         lines.push('');
-        lines.push('60 segundos - conduce lo mas lejos posible!');
+        lines.push('60 segundos - conduce lo más lejos posible!');
         lines.push('');
         lines.push('Pulsa cualquier tecla para empezar...');
 
@@ -3345,7 +3345,7 @@ function startConducir(subtype) {
                 running = false;
                 clearInterval(gameTimer);
                 const finalScore = Math.max(0, Math.floor(distance / 10 + smoothBonus - penalties));
-                showResult('Conduccion terminada!', `${(distance / 1000).toFixed(1)} km`,
+                showResult('Conducción terminada!', `${(distance / 1000).toFixed(1)} km`,
                     `Puntos: ${finalScore} | Bonus: +${Math.floor(smoothBonus)} | Penalizaciones: -${Math.floor(penalties)}`,
                     () => startConducir(subtype));
             }
@@ -3736,7 +3736,7 @@ function musicaPiano(ui, controls) {
     };
     document.addEventListener('keydown', kbHandler);
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca las teclas para crear melodias 🎹</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Blancas: A S D F G H J K · Negras: W E T Y U</div>`;
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca las teclas para crear melodías 🎹</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Blancas: A S D F G H J K · Negras: W E T Y U</div>`;
     currentGame = { cleanup: () => { document.removeEventListener('keydown', kbHandler); audioCtx.close(); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };
 }
 

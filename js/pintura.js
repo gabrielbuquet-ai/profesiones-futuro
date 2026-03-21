@@ -964,12 +964,12 @@ function pinturaDibujo(canvas, ctx, W, H, ui, controls) {
             {
                 id: 'ruler',
                 icon: '📏',
-                name: 'Regla (lineas rectas)'
+                name: 'Regla (líneas rectas)'
             },
             {
                 id: 'grid_toggle',
                 icon: '📐',
-                name: 'Cuadricula',
+                name: 'Cuadrícula',
                 onActivate: () => {
                     showGrid = !showGrid;
                     drawGridOverlay();

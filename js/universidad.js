@@ -1144,7 +1144,7 @@ function uniMonitor(canvas, ctx, ui, controls) {
 
     animId = requestAnimationFrame(loop);
 
-    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Memoriza la secuencia y repitela con las flechas</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: repetir secuencia · Toca los botones en pantalla</div>';
+    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Memoriza la secuencia y repítela con las flechas</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: repetir secuencia · Toca los botones en pantalla</div>';
 
     currentGame = {
         cleanup: () => {
@@ -1411,7 +1411,7 @@ function uniDependiente(canvas, ctx, ui, controls) {
 
     animId = requestAnimationFrame(loop);
 
-    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Busca el producto que pide el cliente en las estanterias</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: mover cursor · Espacio: seleccionar · Click/Tap en producto</div>';
+    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Busca el producto que pide el cliente en las estanterías</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ Flechas: mover cursor · Espacio: seleccionar · Click/Tap en producto</div>';
 
     currentGame = {
         cleanup: () => {
@@ -1679,7 +1679,7 @@ function uniTutor(canvas, ctx, ui, controls) {
 
     animId = requestAnimationFrame(loop);
 
-    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Resuelve problemas de matematicas lo mas rapido posible</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ 1-4: elegir respuesta · Click/Tap en opcion</div>';
+    controls.innerHTML = '<div style="text-align:center;width:100%;color:#aaa;font-size:0.8rem;">Resuelve problemas de matemáticas lo más rápido posible</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ 1-4: elegir respuesta · Click/Tap en opción</div>';
 
     currentGame = {
         cleanup: () => {

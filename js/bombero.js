@@ -531,7 +531,7 @@ function bomberoForestal(ui, controls) {
     }
     document.addEventListener('keydown', kbHandler);
 
-    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los fuegos rapidamente antes de que se propaguen!</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ WASD/Flechas: mover · Enter/Espacio: apagar</div>`;
+    controls.innerHTML = `<div style="text-align: center; width: 100%; color: #aaa; font-size: 0.8rem;">Toca los fuegos rápidamente antes de que se propaguen!</div><div style="text-align:center;width:100%;color:#666;font-size:0.65rem;margin-top:4px;">⌨️ WASD/Flechas: mover · Enter/Espacio: apagar</div>`;
     render();
 
     currentGame = { cleanup: () => { clearInterval(spreadTimer); document.removeEventListener('keydown', kbHandler); ui.innerHTML = ''; ui.style.pointerEvents = ''; controls.innerHTML = ''; } };

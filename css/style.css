@@ -1006,3 +1006,478 @@ body {
     flex-direction: column;
     gap: 10px;
 }
+
+/* ========================================
+   MOBILE RESPONSIVE - 320px to 428px
+   ======================================== */
+
+@media screen and (max-width: 428px) {
+
+    /* --- Base adjustments --- */
+    body {
+        overflow-x: hidden;
+    }
+
+    #app {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    /* --- Home Screen --- */
+    #screen-home {
+        padding: 14px;
+        padding-bottom: 40px;
+    }
+
+    .home-header {
+        padding: 16px 0 4px;
+    }
+
+    /* Header title: prevent overflow on small screens */
+    .app-title {
+        font-size: 1.6rem;
+        letter-spacing: 2px;
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+    .app-title span {
+        font-size: 1.2rem;
+    }
+
+    .app-subtitle {
+        font-size: 0.72rem;
+        letter-spacing: 2px;
+        margin-top: 6px;
+    }
+
+    .section-label {
+        font-size: 0.62rem;
+        letter-spacing: 3px;
+        margin: 20px 0 10px;
+    }
+
+    /* --- Cards grid: 2 columns with proper gaps --- */
+    .cards-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .card {
+        border-radius: 16px;
+        padding: 18px 10px 16px;
+        /* Ensure minimum 44px touch target */
+        min-height: 44px;
+    }
+
+    .card-icon {
+        font-size: 2.2rem;
+        margin-bottom: 6px;
+    }
+
+    .card-name {
+        font-size: 0.78rem;
+        line-height: 1.2;
+    }
+
+    /* 5th card still spans full */
+    .cards-grid .card:nth-child(5) {
+        grid-column: 1 / -1;
+    }
+
+    /* --- Difficulty Selector: no horizontal overflow --- */
+    .difficulty-selector {
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px;
+    }
+    .diff-label {
+        width: 100%;
+        text-align: center;
+        margin-right: 0;
+        margin-bottom: 2px;
+        font-size: 11px;
+    }
+    .diff-btn {
+        padding: 8px 14px;
+        font-size: 11px;
+        /* 44px minimum touch target */
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* --- Subtypes Screen --- */
+    #screen-subtypes {
+        padding: 14px;
+    }
+
+    .screen-header {
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .screen-header h2 {
+        font-size: 1.1rem;
+    }
+
+    .btn-back {
+        padding: 10px 16px;
+        font-size: 0.78rem;
+        /* 44px touch target */
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Subtype list items: proper padding for touch */
+    .subtype-card {
+        padding: 16px;
+        border-radius: 14px;
+        /* 44px minimum touch height */
+        min-height: 44px;
+    }
+    .subtype-card h3 {
+        font-size: 0.95rem;
+    }
+    .subtype-card p {
+        font-size: 0.73rem;
+    }
+    .subtype-card .subtype-icon {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
+    }
+
+    /* --- Game Screen --- */
+    .game-header {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+    .game-header h2 {
+        font-size: 0.82rem;
+    }
+    .game-score {
+        padding: 5px 12px;
+        font-size: 0.72rem;
+    }
+
+    /* Canvas container fills available space */
+    #game-container {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+    }
+    #game-canvas {
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Game controls: scrollable if overflows */
+    #game-controls {
+        padding: 8px 10px;
+        gap: 6px;
+        max-height: 40vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .control-btn {
+        padding: 10px 14px;
+        font-size: 0.78rem;
+        border-radius: 12px;
+        /* 44px touch target */
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* --- Game grid cells --- */
+    .game-grid {
+        gap: 3px;
+        padding: 6px;
+    }
+    .grid-cell {
+        border-radius: 8px;
+        font-size: 1.4rem;
+        /* touch target */
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* --- Toolbar --- */
+    .toolbar {
+        padding: 6px 8px;
+        gap: 5px;
+    }
+    .tool-item {
+        padding: 8px 10px;
+        min-width: 60px;
+        min-height: 44px;
+        border-radius: 12px;
+    }
+    .tool-item .tool-icon {
+        font-size: 1.3rem;
+    }
+    .tool-item .tool-label {
+        font-size: 0.55rem;
+    }
+
+    /* --- Info panel / modal: properly sized for mobile --- */
+    .info-panel {
+        padding: 16px;
+        border-radius: 18px 18px 0 0;
+        max-height: 70vh;
+    }
+    .info-panel h3 {
+        font-size: 1rem;
+    }
+    .info-panel p {
+        font-size: 0.8rem;
+    }
+
+    /* --- Result overlay (modal) --- */
+    .result-overlay {
+        padding: 20px 16px;
+    }
+    .result-overlay h2 {
+        font-size: 1.4rem;
+    }
+    .result-overlay .result-score {
+        font-size: 2.4rem;
+    }
+    .result-overlay .result-msg {
+        font-size: 0.82rem;
+    }
+
+    .btn-primary {
+        padding: 14px 32px;
+        font-size: 0.9rem;
+        border-radius: 16px;
+        /* 44px touch target */
+        min-height: 48px;
+        width: 100%;
+        max-width: 280px;
+    }
+
+    /* --- Country cards (travel agent) --- */
+    .country-cards {
+        padding: 8px;
+        gap: 10px;
+    }
+    .country-card {
+        padding: 14px;
+        border-radius: 14px;
+        min-height: 44px;
+    }
+    .country-card .country-flag {
+        font-size: 2rem;
+    }
+    .country-card h3 {
+        font-size: 0.9rem;
+    }
+    .country-card p {
+        font-size: 0.7rem;
+    }
+
+    /* --- Eval section --- */
+    .eval-section {
+        padding: 12px;
+    }
+    .eval-item {
+        padding: 12px;
+        border-radius: 12px;
+    }
+    .eval-item .label {
+        font-size: 0.65rem;
+    }
+    .eval-item .value {
+        font-size: 0.85rem;
+    }
+
+    /* --- Sport grid --- */
+    .sport-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 8px;
+    }
+    .sport-item {
+        padding: 14px 6px;
+        border-radius: 14px;
+        /* 44px touch target */
+        min-height: 44px;
+    }
+    .sport-item .sport-icon {
+        font-size: 1.6rem;
+    }
+    .sport-item .sport-name {
+        font-size: 0.65rem;
+    }
+
+    /* --- Drum pads --- */
+    .drum-grid {
+        gap: 10px;
+        padding: 12px;
+    }
+    .drum-pad {
+        font-size: 0.7rem;
+        min-width: 44px;
+        min-height: 44px;
+    }
+    .drum-pad .pad-label {
+        font-size: 0.58rem;
+    }
+
+    /* --- Driving game --- */
+    .gear-display {
+        gap: 14px;
+        padding: 14px;
+    }
+    .speedometer {
+        width: 150px;
+        height: 150px;
+        border-width: 3px;
+    }
+    .speed-value {
+        font-size: 2.2rem;
+    }
+    .speed-unit {
+        font-size: 0.7rem;
+    }
+    .gear-indicator {
+        font-size: 1rem;
+    }
+    .gear-shifter {
+        gap: 6px;
+        max-width: 200px;
+    }
+    .gear-btn {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+        font-size: 1rem;
+    }
+    .pedals {
+        gap: 10px;
+    }
+    .pedal {
+        width: 80px;
+        height: 60px;
+        border-radius: 14px;
+        font-size: 0.72rem;
+        /* 44px touch target */
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* --- Recipe --- */
+    .recipe-area {
+        padding: 8px;
+        gap: 8px;
+    }
+    .recipe-step {
+        padding: 12px;
+        gap: 10px;
+        border-radius: 12px;
+    }
+    .recipe-step .step-text {
+        font-size: 0.78rem;
+    }
+
+    /* --- Ingredients shelf --- */
+    .ingredients-shelf {
+        padding: 6px 8px;
+        gap: 6px;
+    }
+    .ingredient-item {
+        padding: 8px 10px;
+        min-width: 58px;
+        min-height: 44px;
+        border-radius: 12px;
+    }
+    .ingredient-item .ing-icon {
+        font-size: 1.3rem;
+    }
+    .ingredient-item .ing-name {
+        font-size: 0.5rem;
+    }
+
+    /* --- Stars --- */
+    .stars {
+        font-size: 1.2rem;
+    }
+}
+
+/* Extra-small screens (320px) */
+@media screen and (max-width: 350px) {
+
+    .app-title {
+        font-size: 1.35rem;
+        letter-spacing: 1px;
+    }
+    .app-title span {
+        font-size: 1.05rem;
+    }
+
+    .app-subtitle {
+        font-size: 0.65rem;
+        letter-spacing: 1.5px;
+    }
+
+    .cards-grid {
+        gap: 8px;
+    }
+
+    .card {
+        padding: 14px 8px 12px;
+        border-radius: 14px;
+    }
+    .card-icon {
+        font-size: 1.9rem;
+        margin-bottom: 4px;
+    }
+    .card-name {
+        font-size: 0.7rem;
+    }
+
+    .diff-btn {
+        padding: 8px 10px;
+        font-size: 10px;
+    }
+
+    .screen-header h2 {
+        font-size: 0.95rem;
+    }
+
+    .sport-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .speedometer {
+        width: 120px;
+        height: 120px;
+    }
+    .speed-value {
+        font-size: 1.8rem;
+    }
+    .gear-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 0.9rem;
+    }
+    .pedal {
+        width: 65px;
+        height: 50px;
+        font-size: 0.65rem;
+    }
+
+    .result-overlay h2 {
+        font-size: 1.2rem;
+    }
+    .result-overlay .result-score {
+        font-size: 2rem;
+    }
+}
