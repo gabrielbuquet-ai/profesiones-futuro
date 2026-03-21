@@ -318,6 +318,8 @@ function showWelcomeModal() {
         savePlayerData(data);
         backdrop.remove();
         updateHomeGreeting();
+        // Firebase sync
+        try { if (typeof FirebaseSync !== 'undefined') FirebaseSync.registerUser(nombre); } catch(e) {}
     }
 
     btn.onclick = submitName;
@@ -365,12 +367,25 @@ function saveGameResult(points) {
 
     savePlayerData(data);
     updateHomeGreeting();
+    // Firebase score sync
+    try {
+        if (typeof FirebaseSync !== 'undefined') {
+            FirebaseSync.saveScore(
+                data.jugador.nombre,
+                subtypeId,
+                professionId,
+                points
+            );
+        }
+    } catch(e) {}
 }
 
 // --- Navegacion ---
 function navigateTo(professionId) {
     var prof = PROFESSIONS[professionId];
     if (!prof) return;
+    // Firebase analytics
+    try { if (typeof FirebaseSync !== 'undefined') FirebaseSync.logProfessionView(professionId); } catch(e) {}
 
     document.getElementById('subtypes-title').textContent = prof.title;
     var list = document.getElementById('subtypes-list');
@@ -459,6 +474,8 @@ function startGame(professionId, subtypeId, title) {
     canvas.style.display = 'none';
 
     showScreen('game');
+    // Firebase analytics
+    try { if (typeof FirebaseSync !== 'undefined') FirebaseSync.logGameStart(subtypeId, professionId); } catch(e) {}
 
     switch (professionId) {
         case 'arquitectura': startArquitectura(subtypeId); break;
@@ -526,6 +543,8 @@ function showPerfil() {
         showWelcomeModal();
         return;
     }
+    // Firebase analytics
+    try { if (typeof FirebaseSync !== 'undefined') FirebaseSync.logProfileView(); } catch(e) {}
 
     var content = document.getElementById('perfil-content');
     content.innerHTML = '';
@@ -846,5 +865,11 @@ document.addEventListener('DOMContentLoaded', function() {
         showWelcomeModal();
     } else {
         updateHomeGreeting();
+        // Firebase session init for returning users
+        try {
+            if (typeof FirebaseSync !== 'undefined' && data.jugador && data.jugador.nombre) {
+                FirebaseSync.initSession(data.jugador.nombre);
+            }
+        } catch(e) {}
     }
 });
