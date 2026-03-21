@@ -17,7 +17,8 @@ const PROFESSIONS = {
             { id: 'urbanismo', icon: '🏙️', name: 'Urbanismo', desc: 'Disena ciudades: coloca edificios, parques, escuelas y mas' },
             { id: 'paisajismo', icon: '🌳', name: 'Paisajismo', desc: 'Disena jardines, parques y espacios verdes' },
             { id: 'sostenible', icon: '♻️', name: 'Sostenible', desc: 'Construye edificios ecologicos y eficientes' }
-        ]
+        ],
+        perfil: { creatividad:8, logica:7, empatia:5, precision:9, liderazgo:7, velocidad:4, memoria:6, comunicacion:6, pensamiento_sistemico:9, iteracion:7, juicio_critico:8, adaptabilidad:5 }
     },
     interiorismo: {
         title: '🛋️ Interiorismo',
@@ -29,7 +30,8 @@ const PROFESSIONS = {
             { id: 'int_cocina', icon: '🍳', name: 'Cocina', desc: 'Disena una cocina equipada' },
             { id: 'int_colegio', icon: '🏫', name: 'Colegio', desc: 'Organiza un aula escolar' },
             { id: 'int_iglesia', icon: '⛪', name: 'Iglesia', desc: 'Disena el interior de una iglesia' }
-        ]
+        ],
+        perfil: { creatividad:9, logica:5, empatia:7, precision:8, liderazgo:5, velocidad:4, memoria:6, comunicacion:7, pensamiento_sistemico:6, iteracion:8, juicio_critico:9, adaptabilidad:6 }
     },
     medico: {
         title: '🩺 Medico',
@@ -38,7 +40,8 @@ const PROFESSIONS = {
             { id: 'cirujano', icon: '🔪', name: 'Cirujano', desc: 'Realiza operaciones quirurgicas paso a paso' },
             { id: 'radiologo', icon: '🩻', name: 'Radiologo', desc: 'Analiza radiografias y encuentra problemas' },
             { id: 'farmaceutico', icon: '💊', name: 'Farmaceutico', desc: 'Receta los medicamentos correctos' }
-        ]
+        ],
+        perfil: { creatividad:4, logica:8, empatia:9, precision:10, liderazgo:6, velocidad:5, memoria:9, comunicacion:8, pensamiento_sistemico:8, iteracion:5, juicio_critico:10, adaptabilidad:7 }
     },
     cocina: {
         title: '👨‍🍳 Cocina',
@@ -47,7 +50,8 @@ const PROFESSIONS = {
             { id: 'italiana', icon: '🍕', name: 'Cocina Italiana', desc: 'Pizza, pasta y risotto' },
             { id: 'japonesa', icon: '🍣', name: 'Cocina Japonesa', desc: 'Sushi, ramen y tempura' },
             { id: 'pasteleria', icon: '🎂', name: 'Pasteleria', desc: 'Tartas, galletas y postres' }
-        ]
+        ],
+        perfil: { creatividad:9, logica:4, empatia:6, precision:8, liderazgo:5, velocidad:7, memoria:7, comunicacion:5, pensamiento_sistemico:4, iteracion:9, juicio_critico:8, adaptabilidad:6 }
     },
     bombero: {
         title: '🚒 Bomberos',
@@ -56,7 +60,8 @@ const PROFESSIONS = {
             { id: 'rescate', icon: '🆘', name: 'Rescate', desc: 'Rescata personas atrapadas' },
             { id: 'conduccion', icon: '🚒', name: 'Conduccion', desc: 'Conduce el camion de bomberos' },
             { id: 'forestal', icon: '🌲', name: 'Incendio Forestal', desc: 'Combate incendios en el bosque' }
-        ]
+        ],
+        perfil: { creatividad:3, logica:6, empatia:7, precision:7, liderazgo:8, velocidad:9, memoria:5, comunicacion:8, pensamiento_sistemico:7, iteracion:3, juicio_critico:7, adaptabilidad:9 }
     },
     viajes: {
         title: '✈️ Agente de Viajes',
@@ -65,7 +70,8 @@ const PROFESSIONS = {
             { id: 'asia', icon: '🌏', name: 'Asia', desc: 'Japon, Tailandia, China y mas' },
             { id: 'america', icon: '🌎', name: 'America', desc: 'EEUU, Mexico, Brasil y mas' },
             { id: 'africa', icon: '🌍', name: 'Africa', desc: 'Marruecos, Kenia, Sudafrica y mas' }
-        ]
+        ],
+        perfil: { creatividad:6, logica:5, empatia:8, precision:6, liderazgo:5, velocidad:4, memoria:7, comunicacion:9, pensamiento_sistemico:5, iteracion:6, juicio_critico:6, adaptabilidad:8 }
     },
     deportes: {
         title: '⚽ Deportes',
@@ -76,7 +82,8 @@ const PROFESSIONS = {
             { id: 'natacion', icon: '🏊', name: 'Natacion', desc: 'Nada lo mas rapido posible' },
             { id: 'atletismo', icon: '🏃', name: 'Atletismo', desc: 'Corre y salta obstaculos' },
             { id: 'boxeo', icon: '🥊', name: 'Boxeo', desc: 'Entrena tecnica con el saco de boxeo' }
-        ]
+        ],
+        perfil: { creatividad:5, logica:4, empatia:6, precision:6, liderazgo:7, velocidad:9, memoria:5, comunicacion:7, pensamiento_sistemico:5, iteracion:7, juicio_critico:6, adaptabilidad:8 }
     },
     conducir: {
         title: '🚗 Conducir',
@@ -84,7 +91,8 @@ const PROFESSIONS = {
             { id: 'manual', icon: '🔧', name: 'Coche Manual', desc: 'Aprende a usar el embrague y las marchas' },
             { id: 'automatico', icon: '🅰️', name: 'Coche Automatico', desc: 'Conduce sin preocuparte de marchas' },
             { id: 'moto', icon: '🏍️', name: 'Moto', desc: 'Conduce una motocicleta' }
-        ]
+        ],
+        perfil: { creatividad:3, logica:5, empatia:4, precision:8, liderazgo:3, velocidad:8, memoria:6, comunicacion:4, pensamiento_sistemico:6, iteracion:5, juicio_critico:7, adaptabilidad:7 }
     },
     musica: {
         title: '🎵 Musica',
@@ -93,7 +101,8 @@ const PROFESSIONS = {
             { id: 'piano', icon: '🎹', name: 'Piano', desc: 'Toca melodias con el teclado' },
             { id: 'guitarra', icon: '🎸', name: 'Guitarra', desc: 'Rasguea acordes y melodias' },
             { id: 'dj', icon: '🎧', name: 'DJ', desc: 'Mezcla musica y crea sets' }
-        ]
+        ],
+        perfil: { creatividad:9, logica:5, empatia:6, precision:7, liderazgo:4, velocidad:6, memoria:8, comunicacion:5, pensamiento_sistemico:4, iteracion:9, juicio_critico:8, adaptabilidad:6 }
     },
     pintura: {
         title: '🎨 Pintura',
@@ -102,7 +111,8 @@ const PROFESSIONS = {
             { id: 'oleo', icon: '🖌️', name: 'Oleo', desc: 'Pinta con oleos gruesos y vibrantes' },
             { id: 'graffiti', icon: '🎨', name: 'Graffiti', desc: 'Arte urbano con spray' },
             { id: 'dibujo', icon: '✏️', name: 'Dibujo', desc: 'Dibuja con lapiz y carbon' }
-        ]
+        ],
+        perfil: { creatividad:10, logica:3, empatia:6, precision:7, liderazgo:3, velocidad:4, memoria:6, comunicacion:5, pensamiento_sistemico:3, iteracion:10, juicio_critico:9, adaptabilidad:7 }
     },
     ajedrez: {
         title: '♟️ Ajedrez',
@@ -110,7 +120,8 @@ const PROFESSIONS = {
             { id: 'clasico', icon: '♔', name: 'Clasico', desc: 'Partida completa contra la IA' },
             { id: 'rapido', icon: '⏱️', name: 'Rapido', desc: 'Partida a 5 minutos por jugador' },
             { id: 'puzzle', icon: '🧩', name: 'Puzzles', desc: 'Encuentra la mejor jugada' }
-        ]
+        ],
+        perfil: { creatividad:6, logica:10, empatia:3, precision:9, liderazgo:4, velocidad:5, memoria:9, comunicacion:3, pensamiento_sistemico:10, iteracion:6, juicio_critico:9, adaptabilidad:5 }
     },
     universidad: {
         title: '🎓 Camino a la Universidad',
@@ -121,7 +132,24 @@ const PROFESSIONS = {
             { id: 'monitor', icon: '🧑‍🏫', name: 'Monitor', desc: 'Organiza actividades para los ninos' },
             { id: 'dependiente', icon: '🏪', name: 'Dependiente', desc: 'Encuentra productos para los clientes' },
             { id: 'tutor', icon: '📐', name: 'Tutor', desc: 'Da clases particulares de matematicas' }
-        ]
+        ],
+        perfil: { creatividad:5, logica:6, empatia:7, precision:5, liderazgo:6, velocidad:7, memoria:6, comunicacion:8, pensamiento_sistemico:5, iteracion:7, juicio_critico:6, adaptabilidad:9 }
+    },
+    programador: {
+        title: '🤖 Programador / Orquestador',
+        name: 'Programador / Orquestador',
+        icon: '🤖',
+        color: '#7c3aed',
+        subtypes: [
+            { id: 'programador_skills', icon: '💻', name: 'El Programador', desc: 'Asi se hacia hasta ahora' },
+            { id: 'orquestador_skills', icon: '🎭', name: 'El Orquestador', desc: 'Asi se hara en el futuro' },
+            { id: 'debug_detective', icon: '🔍', name: 'Debug Detective', desc: 'Encuentra los errores en el codigo' },
+            { id: 'algoritmo', icon: '🧩', name: 'Construye el Algoritmo', desc: 'Ordena las instrucciones' },
+            { id: 'prompt_master', icon: '✨', name: 'Prompt Master', desc: 'Aprende a dar instrucciones a la IA' },
+            { id: 'director_agentes', icon: '🎬', name: 'Director de Agentes', desc: 'Dirige un equipo de agentes IA' },
+            { id: 'evolucion', icon: '🔄', name: 'Evolucion', desc: 'Del programador al orquestador' }
+        ],
+        perfil: { creatividad:6, logica:9, empatia:4, precision:9, liderazgo:6, velocidad:6, memoria:7, comunicacion:7, pensamiento_sistemico:8, iteracion:8, juicio_critico:8, adaptabilidad:8 }
     }
 };
 
@@ -226,6 +254,7 @@ function startGame(professionId, subtypeId, title) {
         case 'pintura': startPintura(subtypeId); break;
         case 'ajedrez': startAjedrez(subtypeId); break;
         case 'universidad': startUniversidad(subtypeId); break;
+        case 'programador': startProgramador(subtypeId); break;
     }
 }
 
