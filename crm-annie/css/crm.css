@@ -1,0 +1,504 @@
+/* ====== Buquet Abogados · CRM ============ */
+
+:root {
+  --bg: #0f172a;
+  --bg-2: #1e293b;
+  --surface: #ffffff;
+  --surface-2: #f8fafc;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --text-soft: #64748b;
+  --primary: #1e40af;
+  --primary-2: #3b82f6;
+  --accent: #c4933a;     /* dorado abogada */
+  --green: #10b981;
+  --red: #ef4444;
+  --amber: #f59e0b;
+  --purple: #a78bfa;
+  --shadow: 0 1px 2px rgba(15,23,42,.04), 0 4px 12px rgba(15,23,42,.06);
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+button { font: inherit; cursor: pointer; }
+input, select, textarea { font: inherit; color: inherit; }
+
+/* ============ Topbar ============ */
+
+.topbar {
+  background: var(--bg);
+  color: #e2e8f0;
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+.brand { display: flex; align-items: center; gap: 12px; }
+.logo {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), #8a6517);
+  display: grid; place-items: center;
+  color: #1a1a1a; font-weight: 800; font-size: 22px;
+  font-family: Georgia, serif;
+}
+.brand-title { font-weight: 700; font-size: 16px; }
+.brand-sub { font-size: 12px; color: #94a3b8; }
+
+.nav { display: flex; gap: 4px; flex: 1; }
+.nav-btn {
+  background: transparent; color: #cbd5e1; border: 0;
+  padding: 8px 16px; border-radius: 8px; font-size: 14px;
+}
+.nav-btn:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nav-btn.active { background: var(--primary); color: #fff; }
+
+.user-switch { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #94a3b8; }
+.user-switch select {
+  background: var(--bg-2); color: #e2e8f0; border: 1px solid #334155;
+  border-radius: 6px; padding: 6px 8px;
+}
+
+/* ============ Layout ============ */
+
+main {
+  padding: 28px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.view-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 20px;
+}
+.view-header h1 { margin: 0; font-size: 28px; }
+
+.hero-row {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 8px;
+}
+.hero-row h1 { margin: 0 0 4px; font-size: 30px; }
+.hero-sub { color: var(--text-soft); margin: 0 0 16px; }
+
+/* ============ Buttons ============ */
+
+.btn {
+  background: white; border: 1px solid var(--border);
+  padding: 9px 16px; border-radius: 8px; font-weight: 500;
+  color: var(--text); display: inline-flex; align-items: center; gap: 6px;
+  text-decoration: none;
+}
+.btn:hover { background: var(--surface-2); }
+.btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+.btn-primary:hover { background: var(--primary-2); }
+.btn-danger { background: var(--red); color: #fff; border-color: var(--red); }
+.btn-danger:hover { opacity: .9; }
+.btn-ghost { background: transparent; border: 0; color: var(--primary); padding: 4px 8px; }
+.btn-sm { padding: 5px 10px; font-size: 13px; }
+
+/* ============ KPI Grid ============ */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.kpi {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex; flex-direction: column; gap: 4px;
+  border: 1px solid var(--border);
+}
+.kpi-label { font-size: 12px; color: var(--text-soft); text-transform: uppercase; letter-spacing: .5px; }
+.kpi-value { font-size: 26px; font-weight: 700; color: var(--text); }
+
+/* ============ Cards ============ */
+
+.card {
+  background: var(--surface);
+  padding: 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+}
+.card h2 { margin: 0 0 4px; font-size: 18px; }
+.card-sub { color: var(--text-soft); margin: 0 0 14px; font-size: 14px; }
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+/* ============ SLA alert ============ */
+
+.alert-sla {
+  background: linear-gradient(90deg, #fef2f2, #fee2e2);
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 12px;
+  font-weight: 500;
+}
+.alert-sla::before { content: "⏱"; font-size: 22px; }
+
+/* ============ Lead list / cards ============ */
+
+.lead-list { display: flex; flex-direction: column; gap: 8px; }
+.lead-card {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .15s;
+}
+.lead-card:hover { background: #fff; border-color: var(--primary-2); transform: translateY(-1px); }
+.lead-info b { display: block; font-weight: 600; }
+.lead-info small { color: var(--text-soft); font-size: 12px; }
+.lead-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.lead-meta .deuda { font-weight: 700; color: var(--primary); }
+.timer { font-size: 12px; color: var(--text-soft); }
+.timer.warn { color: var(--amber); font-weight: 600; }
+.timer.danger { color: var(--red); font-weight: 700; }
+
+.badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  background: #e0e7ff; color: var(--primary);
+  font-weight: 500;
+}
+.badge-origen { background: #dbeafe; color: #1e40af; }
+.badge-elena { background: #fef3c7; color: #92400e; }
+.badge-annie { background: #ddd6fe; color: #5b21b6; }
+.badge-warn  { background: #fee2e2; color: #991b1b; }
+
+/* ============ Kanban ============ */
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+.kanban-col {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  min-height: 400px;
+}
+.kanban-col header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.kanban-col header b { font-size: 14px; }
+.kanban-col header span.count {
+  background: var(--surface-2); border-radius: 999px;
+  font-size: 12px; padding: 2px 8px; color: var(--text-soft);
+}
+.kanban-col .stripe {
+  height: 3px; border-radius: var(--radius) var(--radius) 0 0;
+}
+.kanban-cards {
+  padding: 10px; display: flex; flex-direction: column; gap: 8px;
+  overflow-y: auto; max-height: 70vh; flex: 1;
+}
+.kanban-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all .15s;
+  font-size: 13px;
+}
+.kanban-card:hover { background: #fff; border-color: var(--primary-2); transform: translateY(-1px); }
+.kanban-card b { font-size: 14px; display: block; margin-bottom: 2px; }
+.kanban-card .row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; gap: 6px; flex-wrap: wrap; }
+
+/* ============ Casos grid ============ */
+
+.casos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 14px;
+}
+.caso-card {
+  background: var(--surface);
+  padding: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: all .15s;
+}
+.caso-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
+.caso-card .exp { font-family: monospace; color: var(--text-soft); font-size: 12px; }
+.caso-card h3 { margin: 4px 0 8px; font-size: 16px; }
+.caso-card .progress {
+  background: var(--surface-2);
+  height: 6px; border-radius: 3px; overflow: hidden;
+  margin: 8px 0 4px;
+}
+.caso-card .progress > div {
+  height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 3px;
+}
+
+/* ============ Tareas ============ */
+
+.tareas { display: flex; flex-direction: column; gap: 6px; }
+.tarea-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.tarea-item.hecho { opacity: .55; text-decoration: line-through; }
+.tarea-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+.tarea-item .tarea-text { flex: 1; font-size: 14px; }
+
+/* ============ Modal ============ */
+
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(15, 23, 42, .55);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 40px 20px;
+  z-index: 100;
+  overflow-y: auto;
+}
+.modal {
+  background: white;
+  border-radius: var(--radius);
+  max-width: 720px;
+  width: 100%;
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.25);
+}
+.modal h2 { margin: 0 0 16px; font-size: 22px; }
+.modal-actions {
+  display: flex; gap: 10px; justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.modal-tabs {
+  display: flex; gap: 4px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.modal-tabs button {
+  background: transparent; border: 0;
+  padding: 8px 14px;
+  font-size: 14px; color: var(--text-soft);
+  border-bottom: 2px solid transparent;
+}
+.modal-tabs button.active {
+  color: var(--primary); border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* ============ Forms ============ */
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-row {
+  display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+label {
+  display: flex; flex-direction: column; gap: 4px;
+  font-size: 13px; color: var(--text-soft); font-weight: 500;
+}
+input[type=text], input[type=email], input[type=tel], input[type=number],
+input[type=date], input[type=datetime-local], input[type=month],
+select, textarea {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text);
+}
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primary-2);
+  outline-offset: -1px;
+  background: white;
+}
+textarea { min-height: 80px; resize: vertical; }
+
+/* ============ Detalle caso ============ */
+
+.caso-header {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 16px;
+}
+.caso-header h2 { margin: 0; font-size: 22px; }
+.caso-header .exp { font-family: monospace; color: var(--text-soft); }
+
+.fases-timeline {
+  display: flex;
+  gap: 4px;
+  margin: 16px 0;
+}
+.fase-pill {
+  flex: 1;
+  padding: 10px 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all .15s;
+  position: relative;
+}
+.fase-pill.completa { background: var(--green); color: white; border-color: var(--green); }
+.fase-pill.actual { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+.fase-pill:hover { transform: translateY(-1px); }
+
+.checklist { display: flex; flex-direction: column; gap: 6px; }
+.checklist-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 4px;
+}
+.checklist-item input[type="checkbox"] { width: 18px; height: 18px; }
+
+.timeline {
+  border-left: 2px solid var(--border);
+  padding-left: 16px;
+  margin-top: 12px;
+}
+.timeline-item {
+  margin-bottom: 12px;
+  position: relative;
+}
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -22px; top: 6px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.timeline-fecha { font-size: 12px; color: var(--text-soft); }
+
+/* ============ Funnel & origin chart ============ */
+
+.funnel-step {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
+}
+.funnel-step .label { width: 130px; font-size: 13px; color: var(--text-soft); }
+.funnel-step .bar {
+  flex: 1;
+  background: var(--surface-2);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  height: 28px;
+}
+.funnel-step .bar-fill {
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  height: 100%;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: flex-end;
+  padding-right: 10px;
+  color: white; font-weight: 600; font-size: 13px;
+  min-width: 30px;
+}
+
+.origen-row {
+  display: grid; grid-template-columns: 130px 1fr 50px;
+  gap: 10px; align-items: center;
+  margin-bottom: 8px; font-size: 14px;
+}
+.origen-row .bar { background: var(--surface-2); border-radius: 6px; height: 18px; overflow: hidden; }
+.origen-row .bar > div { background: var(--accent); height: 100%; border-radius: 6px; }
+
+/* ============ Tablas ============ */
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.data-table th {
+  font-size: 12px; color: var(--text-soft);
+  font-weight: 600; text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.data-table tr:hover { background: var(--surface-2); }
+
+/* ============ Empty states ============ */
+
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+/* ============ Plantillas (modal de comunicación) ============ */
+
+.plantilla-box {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+  font-size: 13px;
+  white-space: pre-wrap;
+  max-height: 360px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+
+/* ============ Responsive ============ */
+
+@media (max-width: 768px) {
+  main { padding: 16px; }
+  .topbar { flex-wrap: wrap; padding: 12px 16px; gap: 12px; }
+  .nav { order: 3; width: 100%; overflow-x: auto; }
+  .nav-btn { padding: 6px 10px; font-size: 13px; }
+  .hero-row { flex-direction: column; gap: 12px; align-items: stretch; }
+  .kanban { grid-template-columns: repeat(7, 240px); }
+}
