@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buquet Abogados · CRM Ley Segunda Oportunidad</title>
+<link rel="stylesheet" href="css/crm.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">B</div>
+    <div>
+      <div class="brand-title">Buquet Abogados</div>
+      <div class="brand-sub">CRM · Ley de Segunda Oportunidad · Valladolid</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button data-view="dashboard" class="nav-btn active">Dashboard</button>
+    <button data-view="pipeline"  class="nav-btn">Pipeline</button>
+    <button data-view="casos"     class="nav-btn">Casos</button>
+    <button data-view="metricas"  class="nav-btn">Métricas</button>
+    <button data-view="ajustes"   class="nav-btn">Ajustes</button>
+  </nav>
+  <div class="user-switch">
+    <label>Usuario</label>
+    <select id="userSwitch">
+      <option value="annie">Annie</option>
+      <option value="elena">Elena</option>
+    </select>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<!-- ============== TEMPLATES ============== -->
+
+<template id="tpl-dashboard">
+  <section class="view view-dashboard">
+    <div class="hero-row">
+      <div class="hero-left">
+        <h1>Hola <span data-bind="userName">Annie</span> 👋</h1>
+        <p class="hero-sub">Esto es lo que tienes hoy. La regla es simple: cada lead nuevo, contactado en menos de <b>5 minutos</b>.</p>
+      </div>
+      <button class="btn btn-primary" id="btnNuevoLead">+ Nuevo lead</button>
+    </div>
+
+    <div class="alert-sla" id="slaAlert" hidden></div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span class="kpi-label">Leads este mes</span><span class="kpi-value" id="kpiLeads">0</span></div>
+      <div class="kpi"><span class="kpi-label">CPL medio</span><span class="kpi-value" id="kpiCPL">—</span></div>
+      <div class="kpi"><span class="kpi-label">Tasa cierre</span><span class="kpi-value" id="kpiCierre">—</span></div>
+      <div class="kpi"><span class="kpi-label">Ingresos del mes</span><span class="kpi-value" id="kpiIngresos">0 €</span></div>
+      <div class="kpi"><span class="kpi-label">ROAS</span><span class="kpi-value" id="kpiROAS">—</span></div>
+      <div class="kpi"><span class="kpi-label">Casos activos</span><span class="kpi-value" id="kpiCasos">0</span></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>🔥 Acción inmediata</h2>
+        <p class="card-sub">Leads sin contactar. Ordenados por urgencia.</p>
+        <div id="urgentList" class="lead-list"></div>
+      </div>
+      <div class="card">
+        <h2>📅 Próximas citas</h2>
+        <div id="citasList" class="lead-list"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>💼 Tareas para Elena</h2>
+      <p class="card-sub">Tareas abiertas asignadas a la becaria en casos activos.</p>
+      <div id="tareasElena" class="tareas"></div>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-pipeline">
+  <section class="view view-pipeline">
+    <div class="view-header">
+      <h1>Pipeline</h1>
+      <button class="btn btn-primary" id="btnNuevoLead">+ Nuevo lead</button>
+    </div>
+    <div class="kanban" id="kanban"></div>
+  </section>
+</template>
+
+<template id="tpl-casos">
+  <section class="view view-casos">
+    <div class="view-header">
+      <h1>Casos abiertos</h1>
+    </div>
+    <div id="casosList" class="casos-grid"></div>
+  </section>
+</template>
+
+<template id="tpl-metricas">
+  <section class="view view-metricas">
+    <div class="view-header">
+      <h1>Métricas</h1>
+      <input type="month" id="mesSelector">
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><span class="kpi-label">Inversión Google</span><span class="kpi-value" id="mInvGoogle">0 €</span></div>
+      <div class="kpi"><span class="kpi-label">Inversión Meta</span><span class="kpi-value" id="mInvMeta">0 €</span></div>
+      <div class="kpi"><span class="kpi-label">Leads</span><span class="kpi-value" id="mLeads">0</span></div>
+      <div class="kpi"><span class="kpi-label">CPL</span><span class="kpi-value" id="mCPL">—</span></div>
+      <div class="kpi"><span class="kpi-label">Clientes nuevos</span><span class="kpi-value" id="mClientes">0</span></div>
+      <div class="kpi"><span class="kpi-label">CAC</span><span class="kpi-value" id="mCAC">—</span></div>
+      <div class="kpi"><span class="kpi-label">Ingresos</span><span class="kpi-value" id="mIngresos">0 €</span></div>
+      <div class="kpi"><span class="kpi-label">ROAS</span><span class="kpi-value" id="mROAS">—</span></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h2>Embudo del mes</h2>
+        <div id="funnel"></div>
+      </div>
+      <div class="card">
+        <h2>Origen de los leads</h2>
+        <div id="origenChart"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Palabras clave que más convierten</h2>
+      <table class="data-table" id="kwTable">
+        <thead><tr><th>Palabra clave</th><th>Leads</th><th>Ganados</th><th>Conv.</th><th>Coste estimado</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Inversión publicitaria del mes</h2>
+      <div class="form-row">
+        <label>Google Ads (€)<input type="number" id="invGoogle" min="0" step="10"></label>
+        <label>Meta Ads (€)<input type="number" id="invMeta" min="0" step="10"></label>
+        <button class="btn" id="guardarInversion">Guardar</button>
+      </div>
+    </div>
+  </section>
+</template>
+
+<template id="tpl-ajustes">
+  <section class="view view-ajustes">
+    <div class="view-header"><h1>Ajustes</h1></div>
+
+    <div class="card">
+      <h2>Despacho</h2>
+      <div class="form-grid">
+        <label>Nombre del despacho<input data-ajuste="nombre"></label>
+        <label>Letrada<input data-ajuste="letrada"></label>
+        <label>Colegio<input data-ajuste="colegio"></label>
+        <label>Nº colegiado<input data-ajuste="colegiado"></label>
+        <label>Dirección<input data-ajuste="direccion"></label>
+        <label>Teléfono<input data-ajuste="telefono"></label>
+        <label>Email<input data-ajuste="email"></label>
+        <label>IBAN provisión<input data-ajuste="iban"></label>
+      </div>
+      <button class="btn btn-primary" id="guardarAjustes">Guardar</button>
+    </div>
+
+    <div class="card">
+      <h2>Datos demo</h2>
+      <p class="card-sub">El CRM viene con 7 leads de ejemplo para que veas cómo funciona. Cuando estés lista para empezar de verdad, vacía los datos:</p>
+      <button class="btn btn-danger" id="resetData">Vaciar todos los datos</button>
+    </div>
+
+    <div class="card">
+      <h2>Export / Import</h2>
+      <button class="btn" id="exportData">Descargar copia (JSON)</button>
+      <label class="btn">Importar JSON<input type="file" id="importData" hidden accept="application/json"></label>
+    </div>
+  </section>
+</template>
+
+<!-- ============== MODALES ============== -->
+
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ============== SCRIPTS ============== -->
+
+<script src="js/store.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
