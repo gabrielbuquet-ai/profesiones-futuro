@@ -111,14 +111,31 @@
   function bootstrap() {
     bindLogin();
     bindNav();
-    // Re-render cuando el store cambia (subscripciones a colecciones)
-    window.Store.subscribe(() => {
-      // Solo refrescamos si la vista activa puede haber cambiado.
-      render();
-    });
-    // Auth listener
-    window.fb.onAuthStateChanged(window.fb.auth, onAuth);
+    window.Store.subscribe(() => render());
+    try {
+      window.fb.onAuthStateChanged(window.fb.auth, onAuth);
+    } catch (e) {
+      console.error('onAuthStateChanged error', e);
+      const g = document.getElementById('globalError');
+      if (g) {
+        g.hidden = false;
+        g.textContent = 'Firebase Auth no disponible. ¿Has habilitado Google como proveedor en la consola Firebase y añadido eratours.es a Authorized domains? Detalle: ' + (e.message || e);
+      }
+      showLogin();
+    }
   }
+
+  // Si Firebase tarda más de 4s en cargar, muestra el login igualmente con un aviso.
+  setTimeout(function(){
+    if (!window.fb) {
+      showLogin();
+      const g = document.getElementById('globalError');
+      if (g) {
+        g.hidden = false;
+        g.textContent = 'Firebase no se cargó (¿bloqueador de scripts? ¿sin conexión?). Recarga la página.';
+      }
+    }
+  }, 4000);
 
   if (window.fb) bootstrap();
   else window.addEventListener('fb-ready', bootstrap, { once: true });

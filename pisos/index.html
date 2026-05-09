@@ -8,8 +8,11 @@
 </head>
 <body>
 
+<!-- Banner de error global (se rellena desde JS si algo peta) -->
+<div id="globalError" class="global-error" hidden></div>
+
 <!-- ============== LOGIN GATE ============== -->
-<div id="loginGate" class="login-gate" hidden>
+<div id="loginGate" class="login-gate">
   <div class="login-card">
     <div class="brand-block">
       <div class="brand-logo">A</div>
@@ -299,17 +302,40 @@
     storageBucket: "profesiones-futuro.firebasestorage.app",
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+  try {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    window.fb = {
+      auth, db, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+      collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc,
+      query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch
+    };
+    window.dispatchEvent(new Event('fb-ready'));
+  } catch (e) {
+    console.error('Firebase init error', e);
+    const g = document.getElementById('globalError');
+    if (g) {
+      g.hidden = false;
+      g.textContent = 'Error al inicializar Firebase: ' + (e.message || e) + '. Revisa la consola del navegador.';
+    }
+  }
+</script>
 
-  // Expose to non-module scripts
-  window.fb = {
-    auth, db, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
-    collection, doc, addDoc, setDoc, getDoc, getDocs, updateDoc, deleteDoc,
-    query, where, orderBy, limit, onSnapshot, serverTimestamp, writeBatch
-  };
-  window.dispatchEvent(new Event('fb-ready'));
+<script>
+  // Captura errores JS no manejados y los muestra en pantalla.
+  window.addEventListener('error', function(ev){
+    var g = document.getElementById('globalError');
+    if (!g) return;
+    g.hidden = false;
+    g.textContent = 'Error JS: ' + (ev.message || ev.error) + ' (' + (ev.filename || '') + ':' + (ev.lineno || '') + ')';
+  });
+  window.addEventListener('unhandledrejection', function(ev){
+    var g = document.getElementById('globalError');
+    if (!g) return;
+    g.hidden = false;
+    g.textContent = 'Promesa rechazada: ' + (ev.reason && ev.reason.message ? ev.reason.message : ev.reason);
+  });
 </script>
 
 <script src="js/store.js"></script>
