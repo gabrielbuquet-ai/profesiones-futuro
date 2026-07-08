@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObraMatch · Panel de operaciones</title>
+<link rel="stylesheet" href="css/obramatch.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <a href="index.html" class="logo" title="Volver a la web">◪</a>
+    <div>
+      <div class="brand-title">ObraMatch</div>
+      <div class="brand-sub">Bolsa viva de oficios · Asturias</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <button data-view="dashboard"     class="nav-btn active">Dashboard</button>
+    <button data-view="solicitudes"   class="nav-btn">Solicitudes</button>
+    <button data-view="profesionales" class="nav-btn">Bolsa</button>
+    <button data-view="constructoras" class="nav-btn">Clientes</button>
+    <button data-view="ajustes"       class="nav-btn">Ajustes</button>
+  </nav>
+  <a href="index.html" class="btn btn-ghost btn-web">← Web pública</a>
+</header>
+
+<main id="app"></main>
+
+<!-- Modal -->
+<div class="modal-backdrop" id="modal" hidden>
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script src="js/store.js"></script>
+<script src="js/templates.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/views.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
