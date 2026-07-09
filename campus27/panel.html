@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campus 27 · Modelo de negocio</title>
+<link rel="stylesheet" href="css/campus27.css">
+</head>
+<body class="panel-page">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="index.html" class="brand" style="text-decoration:none">
+    <span class="logo">C27</span>
+    <div>
+      <div class="brand-title">Campus 27</div>
+      <div class="brand-sub">Modelo de negocio · piloto Madrid</div>
+    </div>
+  </a>
+  <nav class="top-nav">
+    <button class="nav-btn active" data-view="resumen">Resumen</button>
+    <button class="nav-btn" data-view="pnl">P&amp;L interactivo</button>
+    <button class="nav-btn" data-view="estructura">Estructura societaria</button>
+    <button class="nav-btn" data-view="roadmap">Roadmap</button>
+    <button class="nav-btn" data-view="proyectos">Proyectos reales</button>
+  </nav>
+  <a href="index.html" class="top-web">← Landing</a>
+</div>
+
+<main class="panel-main">
+
+  <!-- RESUMEN -->
+  <section id="view-resumen" class="pview active">
+    <div class="pview-head">
+      <h1>Resumen del negocio</h1>
+      <p>Campus 27 convierte graduados de 22 años en profesionales operativos de 25–30, con experiencia real, portfolio verificable y dominio de IA. Producto: madurar talento sobre un activo Living con cinco capas de ingresos.</p>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Ingresos estabilizados</div><div class="kpi-value">2,49 M€</div><div class="kpi-sub">piloto 120 plazas</div></div>
+      <div class="kpi"><div class="kpi-label">EBITDA OpCo</div><div class="kpi-value pos">336 K€</div><div class="kpi-sub">~13,5% margen</div></div>
+      <div class="kpi"><div class="kpi-label">Relación económica</div><div class="kpi-value">2–5 años</div><div class="kpi-sub">vs 9 meses residencia</div></div>
+      <div class="kpi"><div class="kpi-label">Ingresos no-alojamiento</div><div class="kpi-value">53%</div><div class="kpi-sub">diversificación</div></div>
+    </div>
+
+    <div class="pcard">
+      <h2>La tesis en una frase</h2>
+      <p class="pc-sub">Dónde madura hoy un joven si la empresa ya no lo contrata como junior.</p>
+      <p style="font-size:18px;font-weight:600;line-height:1.5;margin:0">La universidad no debe competir con ChatGPT o Claude enseñando teoría. Debe convertirse en el sitio donde un joven <span style="color:var(--primary)">madura profesionalmente</span> usando IA, clientes reales, responsabilidad real y convivencia intensa. Campus 27 es esa capa nueva entre universidad y empresa: <span style="color:var(--accent-2)">maduración profesional residencializada</span>.</p>
+    </div>
+
+    <div class="pgrid-2">
+      <div class="pcard" style="margin-bottom:0">
+        <h2>Cinco capas de ingresos</h2>
+        <p class="pc-sub">Sobre un mismo activo físico.</p>
+        <table class="pnl">
+          <tbody>
+            <tr><td>1 · Alojamiento</td><td class="num">renta mensual</td></tr>
+            <tr><td>2 · Programa formativo</td><td class="num">4–12 K€/año</td></tr>
+            <tr><td>3 · Proyectos corporativos</td><td class="num">10–75 K€+</td></tr>
+            <tr><td>4 · Recruiting / cantera</td><td class="num">suscripción + fee</td></tr>
+            <tr><td>5 · Venture studio</td><td class="num">equity + carry</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pcard" style="margin-bottom:0">
+        <h2>De dónde viene el valor real</h2>
+        <p class="pc-sub">Tres motores, no solo el EBITDA del año 1.</p>
+        <table class="pnl">
+          <tbody>
+            <tr><td>Activo inmobiliario estabilizado</td><td class="num">yield + plusvalía</td></tr>
+            <tr><td>Operadora con marca y contratos universitarios</td><td class="num">escala a otros edificios</td></tr>
+            <tr><td>Plataforma de talento / proyectos / IA</td><td class="num">escalable, ligera</td></tr>
+          </tbody>
+        </table>
+        <p class="note">El activo es <b>reversible</b>: si el modelo educativo no escala, funciona como PBSA / coliving / flex living convencional. El downside está protegido por el uso Living tradicional.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- P&L INTERACTIVO -->
+  <section id="view-pnl" class="pview">
+    <div class="pview-head">
+      <h1>Cuenta de resultados interactiva</h1>
+      <p>Piloto de 120 plazas en Madrid, ingresos anuales estabilizados. Mueve los supuestos y recalcula el EBITDA del OpCo en tiempo real.</p>
+    </div>
+
+    <div id="pnlKpis" class="kpi-grid"></div>
+
+    <div class="pcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div><h2>Supuestos del piloto</h2><p class="pc-sub" style="margin:0">Caso base = cifras del business case.</p></div>
+        <button class="btn" id="resetBtn">↺ Restaurar caso base</button>
+      </div>
+      <div class="assump" id="assumptions" style="margin-top:18px"></div>
+    </div>
+
+    <div class="pcard">
+      <h2>P&amp;L OpCo · anual estabilizado</h2>
+      <p class="pc-sub">Ingresos por capa y costes operativos, incluyendo master lease al PropCo.</p>
+      <div style="overflow-x:auto">
+        <table class="pnl">
+          <thead><tr><th>Concepto</th><th class="num">Importe</th><th class="num">% </th></tr></thead>
+          <tbody id="pnlBody"></tbody>
+        </table>
+      </div>
+      <div class="ebitda-box" id="ebitdaBox"></div>
+      <p class="note">EBITDA OpCo estimado del caso base: <b>300.000–400.000 €/año</b>. No es espectacular al principio, pero es muy defendible si el edificio está bien comprado y la marca escala. Cifras ilustrativas, no proyecciones garantizadas.</p>
+    </div>
+  </section>
+
+  <!-- ESTRUCTURA -->
+  <section id="view-estructura" class="pview">
+    <div class="pview-head">
+      <h1>Estructura societaria</h1>
+      <p>Separar claramente las piezas permite financiar o vender cada una de forma distinta.</p>
+    </div>
+    <div class="struct-grid">
+      <div class="struct-card" style="--sc:#4f46e5">
+        <h3>PropCo</h3>
+        <p class="st-role">Dueña o arrendataria principal del inmueble.</p>
+        <ul><li>Renta estable</li><li>Revalorización</li><li>Yield compression si se vende como PBSA / flex living</li><li>Contrato largo con OpCo</li></ul>
+      </div>
+      <div class="struct-card" style="--sc:#10b981">
+        <h3>OpCo</h3>
+        <p class="st-role">Opera Campus 27.</p>
+        <ul><li>Gestión de alojamiento</li><li>Fees educativos</li><li>Proyectos y recruiting</li><li>Sponsorships y eventos</li></ul>
+      </div>
+      <div class="struct-card" style="--sc:#f59e0b">
+        <h3>EduCo / Academic Partner</h3>
+        <p class="st-role">Vehículo con universidad o escuela acreditadora.</p>
+        <ul><li>Matrícula</li><li>Acreditación y marca</li><li>Captación</li><li>Empleabilidad</li></ul>
+      </div>
+      <div class="struct-card" style="--sc:#8b5cf6">
+        <h3>VentureCo</h3>
+        <p class="st-role">Invierte o participa en startups de los fellows.</p>
+        <ul><li>Equity</li><li>Revenue share</li><li>IP</li><li>Exits</li></ul>
+      </div>
+    </div>
+    <div class="pcard" style="margin-top:20px">
+      <h2>Programa físico ideal (piloto serio)</h2>
+      <p class="pc-sub">100–150 camas. El edificio es parte del producto educativo, pero debe ser reversible.</p>
+      <div class="proj-grid">
+        <div class="proj-chip">Habitaciones compactas con baño o estudios</div>
+        <div class="proj-chip">10–20 unidades premium para fellows de 25–30</div>
+        <div class="proj-chip">Coworking y salas de proyecto</div>
+        <div class="proj-chip">Aulas pequeñas + sala de presentaciones</div>
+        <div class="proj-chip">Espacio de eventos</div>
+        <div class="proj-chip">Cafetería / comedor ligero</div>
+        <div class="proj-chip">Gimnasio básico</div>
+        <div class="proj-chip">Taller / lab de prototipos</div>
+        <div class="proj-chip">Despachos para empresas colaboradoras</div>
+        <div class="proj-chip">Zona de convivencia potente</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROADMAP -->
+  <section id="view-roadmap" class="pview">
+    <div class="pview-head">
+      <h1>Roadmap de validación</h1>
+      <p>No empezar comprando un edificio grande. Probar demanda, disposición a pagar y colocación de talento antes del capex.</p>
+    </div>
+    <div class="pcard">
+      <div class="roadmap">
+        <div class="rm-item">
+          <div class="rm-when">Fase 1<span>90 días</span></div>
+          <div class="rm-body">
+            <h3>Prueba académica y comercial</h3>
+            <p class="muted" style="color:var(--text-soft);margin:0">Validar demanda antes de capex. Cobrar desde el día uno: 2–3 K€/alumno, 10–15 K€/empresa, becas parciales para atraer talento top. Métrica clave: que las empresas repitan y los alumnos recomienden.</p>
+            <div class="rm-metrics"><span class="rm-metric">Universidad partner</span><span class="rm-metric">25 alumnos</span><span class="rm-metric">5 empresas</span><span class="rm-metric">10 proyectos</span><span class="rm-metric">Coworking + habitaciones opcionales</span></div>
+          </div>
+        </div>
+        <div class="rm-item">
+          <div class="rm-when">Fase 2<span>6–9 meses</span></div>
+          <div class="rm-body">
+            <h3>Cohorte con living parcial</h3>
+            <p class="muted" style="color:var(--text-soft);margin:0">Probar convivencia y comunidad. Primeros contratos de contratación con empresas, 1 demo day, 1 bolsa de empleo, 1 informe de impacto.</p>
+            <div class="rm-metrics"><span class="rm-metric">40–60 alumnos</span><span class="rm-metric">20–30 camas</span><span class="rm-metric">Ocupación &gt;85%</span><span class="rm-metric">NPS alumnos &gt;55</span><span class="rm-metric">NPS empresas &gt;50</span><span class="rm-metric">70% con salida</span><span class="rm-metric">30% ingresos no-alojamiento</span></div>
+          </div>
+        </div>
+        <div class="rm-item">
+          <div class="rm-when">Fase 3<span>18–24 meses</span></div>
+          <div class="rm-body">
+            <h3>Primer Campus 27 completo</h3>
+            <p class="muted" style="color:var(--text-soft);margin:0">Activo de 100–150 camas. Edificio propio, alquilado o en joint venture, con contrato universitario y tres verticales.</p>
+            <div class="rm-metrics"><span class="rm-metric">100–150 residentes</span><span class="rm-metric">50 empresas</span><span class="rm-metric">3 verticales</span><span class="rm-metric">60–80 proyectos/año</span><span class="rm-metric">Primeros fellows 25–30</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pcard">
+      <h2>Piloto concreto para empezar</h2>
+      <p class="pc-sub">Campus 27 Madrid — Real Estate, Living &amp; AI Residency.</p>
+      <div class="proj-grid">
+        <div class="proj-chip"><span class="pn">9</span> meses de duración</div>
+        <div class="proj-chip"><span class="pn">30</span> alumnos en la cohorte</div>
+        <div class="proj-chip"><span class="pn">3–5 K€</span> precio por alumno</div>
+        <div class="proj-chip"><span class="pn">5–8</span> empresas colaboradoras</div>
+        <div class="proj-chip"><span class="pn">12</span> proyectos reales</div>
+        <div class="proj-chip"><span class="pn">0€</span> inmueble hasta validar demanda</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROYECTOS -->
+  <section id="view-proyectos" class="pview">
+    <div class="pview-head">
+      <h1>Proyectos reales para el arranque</h1>
+      <p>Ventaja: Alfareal / Trees / Harmonices ya generan casos reales. El alumno no aprende “casos Harvard”: resuelve problemas reales de Madrid.</p>
+    </div>
+    <div class="pcard">
+      <h2>Cartera inicial de retos</h2>
+      <p class="pc-sub">Cada reto es un entregable evaluable con expediente profesional vivo.</p>
+      <div class="proj-grid">
+        <div class="proj-chip"><span class="pn">01</span> Análisis de inversión de un edificio para coliving</div>
+        <div class="proj-chip"><span class="pn">02</span> Modelo financiero: compra + capex + explotación + venta</div>
+        <div class="proj-chip"><span class="pn">03</span> Comparativo de constructoras</div>
+        <div class="proj-chip"><span class="pn">04</span> Control de desviaciones de obra</div>
+        <div class="proj-chip"><span class="pn">05</span> Automatización de incidencias con IA</div>
+        <div class="proj-chip"><span class="pn">06</span> Auditoría de licencias urbanísticas</div>
+        <div class="proj-chip"><span class="pn">07</span> Plan comercial para llenar un activo</div>
+        <div class="proj-chip"><span class="pn">08</span> Revenue management de habitaciones</div>
+        <div class="proj-chip"><span class="pn">09</span> Dashboard de reporting a inversores</div>
+        <div class="proj-chip"><span class="pn">10</span> Manual operativo de residencia</div>
+        <div class="proj-chip"><span class="pn">11</span> Due diligence de un activo</div>
+        <div class="proj-chip"><span class="pn">12</span> Estudio de cambio de uso</div>
+        <div class="proj-chip"><span class="pn">13</span> Licitación de FF&amp;E</div>
+        <div class="proj-chip"><span class="pn">14</span> Análisis de rentas por zona</div>
+        <div class="proj-chip"><span class="pn">15</span> Preparación de teaser para inversores</div>
+      </div>
+      <p class="note"><span class="pill-mini">Metodología</span> &nbsp;20% teoría · 30% simulaciones · 50% proyectos reales. La evaluación no es “entrégame un trabajo”: es demostrar cómo pensaste, qué le pediste a la IA, qué verificaste, qué descartaste y qué impacto tuvo.</p>
+    </div>
+  </section>
+
+</main>
+
+<script src="js/model.js"></script>
+</body>
+</html>
